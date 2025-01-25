@@ -1,4 +1,4 @@
-import arcade
+import libs.arcade as arcade
 
 fenetre_largeur=1000
 fenetre_hauteur=500
@@ -13,7 +13,7 @@ class VueJeu(arcade.Window):
         self.player_sprite.center_x=16
         self.player_sprite.center_y=14
 
-    def setup(selfself):
+    def setup(self):
         #Set up le jeu ici. Call pour redemarrer le jeu.
         pass
 
