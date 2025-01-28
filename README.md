@@ -1,5 +1,5 @@
 # Guerre-des-fourmilieres
-Version d'arcade utilisé: 3.0.0.dev42
+Version d'arcade utilisée: 3.0
 
 # Installation de packages
 Lancer le fichier `setup.py` pour installer les packages nécessaires.
