@@ -12,9 +12,10 @@ def run_game():
 
 if __name__ == '__main__':
     # Activate the virtual environment
-    activate_this = os.path.join('projet', 'Scripts', 'activate_this.py')
-    with open(activate_this) as file_:
-        exec(file_.read(), dict(__file__=activate_this))
+    activate_script = os.path.join('projet', 'Scripts', 'activate')
+    if os.name == 'nt':
+        activate_script += '.bat'
+    subprocess.call(activate_script, shell=True)
 
     install_dependencies()
     run_game()
