@@ -1,14 +1,19 @@
-import libs.arcade as arcade
+import os.path
+
+import arcade
 
 fenetre_largeur=1000
 fenetre_hauteur=500
 fenetre_titre="Titre"
 
+def trouver_img(nom: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "..", "assets", nom)
+
 class VueJeu(arcade.Window):
     def __init__(self):
         super().__init__(fenetre_largeur,fenetre_hauteur,fenetre_titre)
         self.background_color=arcade.csscolor.CORNFLOWER_BLUE
-        self.player_texture=arcade.load_texture("assets/Fourmi.png")
+        self.player_texture=arcade.load_texture(trouver_img("Fourmi.png"))
         self.player_sprite=arcade.Sprite(self.player_texture)
         self.player_sprite.center_x=16
         self.player_sprite.center_y=14

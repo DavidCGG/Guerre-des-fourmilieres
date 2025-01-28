@@ -16,6 +16,8 @@ class Ouvriere(Fourmis):
     def attack(self, other):
         other.hp -= self.atk
 
+
+
 class Soldat(Fourmis):
     def __init__(self):
         super().__init__(hp=25, atk=5)
