@@ -1,3 +1,0 @@
-print('lol')
-
-print('hello')
