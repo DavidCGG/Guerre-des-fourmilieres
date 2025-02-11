@@ -1,17 +1,14 @@
 import pygame
 import sys
 import os
-from Fourmis import FourmisSprite, Ouvriere
+from Fourmis import FourmisSprite, Ouvriere, Soldat
+from config import WIDTH, HEIGHT
 
 # Initialize Pygame
 pygame.init()
 
-# Screen dimensions
-screen_width = 800
-screen_height = 600
-
 # Set up the display
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Menu Principal")
 
 # Define colors
@@ -38,7 +35,7 @@ font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74)
 small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
 
 spritesheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
-fourmis = Ouvriere(600, 300, 10)
+fourmis = Soldat(600, 300, 8.5, "random")
 fourmis_sprite = FourmisSprite(fourmis, spritesheet, 16, 16, 4, 300)
 
 sprites = pygame.sprite.Group()
@@ -50,7 +47,7 @@ def main_menu():
     clock = pygame.time.Clock()
 
     while True:
-        dt = clock.tick(60)
+        dt = clock.tick(30)
         screen.fill(pygame.Color("black"))
 
         # Draw menu options
