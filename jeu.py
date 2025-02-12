@@ -25,12 +25,16 @@ class Bouton():
         self.texte = texte
         self.police = police
         self.fonction_sur_click = fonction_sur_click
-        self.couleurs = { 'normale': '#ffffff', 'survol': '#666666', 'clické': '#333333'}
+        self.couleurs = { 'normale': '#ffffff',
+                          'survol': '#666666',
+                          'clické': '#333333'}
         self.surface = pygame.Surface((self.largeur,self.hauteur))
         self.rectangle = pygame.Rect(self.x,self.y,self.largeur,self.hauteur)
         self.texte_render = police.render(self.texte,True,"black")
         self.deja_clicke = False
         objets.append(self)
+
+        self.pas_encore_blit=True
 
     def process(self):
         position_souris = pygame.mouse.get_pos()
@@ -46,13 +50,13 @@ class Bouton():
                     print('Bouton \''+self.texte+'\' clické')
                     self.fonction_sur_click()
                     self.deja_clicke=True
-                    for a in objets:
-                        print(a)
             else:
                 self.deja_clicke=False
 
-        self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2])
-        screen.blit(self.surface,self.rectangle)
+        if self.pas_encore_blit:
+            self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2])
+            screen.blit(self.surface,self.rectangle)
+            self.pas_encore_blit=False
 
 class Fourmiliere():
     def __init__(self,salles):
@@ -93,10 +97,12 @@ class Partie():
         a.fill('red')
         screen.blit(a, (screen.get_width()/2, 100))
 
+
 def nouvelle_partie():
     objets.clear()
     partie = Partie()
     screen.fill('blue')
+    pygame.display.update()
     print('Nouvelle parite')
 
 
@@ -112,6 +118,7 @@ def menu_principal():
     screen.blit(surface_titre, (screen.get_width()/2-surface_titre.get_rect().width/2,screen.get_height()/10-surface_titre.get_rect().height/2))
     bouton_nouvelle_partie = Bouton(screen.get_width() / 2, screen.get_height() / 5, 300, 50, 'Nouvelle partie',police_titre, nouvelle_partie)
     bouton_options = Bouton(screen.get_width() / 2, screen.get_height() * 2 / 5, 300, 50, 'Options',police_titre, menu_options)
+
 
 
 menu_principal()
