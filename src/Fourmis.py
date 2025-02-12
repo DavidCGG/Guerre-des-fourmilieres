@@ -5,8 +5,6 @@ import pygame
 from config import WIDTH, HEIGHT
 
 
-
-
 class Fourmis(ABC):
     def __init__(self, hp: int, atk: int, scale,  x0, y0, mouvement=None):
         super().__init__()
@@ -17,7 +15,7 @@ class Fourmis(ABC):
         self.target_y = y0
         self.speed = 2
         self.type_mouvement = mouvement
-        self.facing = 0 # 0 bright
+        self.facing = 0 # 0 : droite, 1 : gauche
         self.hp = hp
         self.atk = atk
         self.width = 0
@@ -55,6 +53,12 @@ class Fourmis(ABC):
         self.target_x = self.centre_x + distance*math.cos(angle)
         self.target_y = self.centre_y + distance*math.sin(angle)
 
+
+        ## On s'assure que la cible est dans les limites de l'écran
+        self.target_x = max(0+self.width//2, min(WIDTH-self.width//2, self.target_x))
+        self.target_y = max(0+self.height//2, min(HEIGHT-self.height//2, self.target_y))
+
+
     def goto_target(self):
         dx = self.target_x - self.centre_x
         dy = self.target_y - self.centre_y
@@ -65,9 +69,9 @@ class Fourmis(ABC):
             self.centre_y += self.speed*dy/distance
 
         elif distance <= self.speed:
-            print("Arrived")
             self.centre_x = self.target_x
             self.centre_y = self.target_y
+
         if dx > 0:
             self.facing = 0
         else:
@@ -127,7 +131,9 @@ class FourmisSprite(pygame.sprite.Sprite):
         self.fourmis.update(dt)
         if self.fourmis.pause_timer > 0:
             return
+
         self.timer += dt
+
         while self.timer > self.frame_duration:
             self.timer -= self.frame_duration
             self.current_frame = (self.current_frame + 1) % self.num_frames
