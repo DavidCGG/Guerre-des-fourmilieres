@@ -1,4 +1,7 @@
+#import sys
+
 import pygame
+from pygame.locals import *
 
 pygame.init()
 screen = pygame.display.set_mode((1280,720))
@@ -7,7 +10,7 @@ running = True
 dt=0
 objets = []
 
-police_titre = pygame.font.SysFont("Comic Sans MS",50)
+police = pygame.font.SysFont("Comic Sans MS",50)
 
 player_pos = pygame.Vector2(screen.get_width()/2,screen.get_height()/2)
 
@@ -17,7 +20,7 @@ image_icone=pygame.image.load('assets/fourmi_noire.png')
 pygame.display.set_icon(image_icone)
 
 class Bouton():
-    def __init__(self,x,y,largeur,hauteur,texte,police,fonction_sur_click):
+    def __init__(self,x,y,largeur,hauteur,texte,fonction_sur_click):
         self.x=x-largeur/2
         self.y=y-hauteur/2
         self.largeur = largeur
@@ -67,24 +70,29 @@ class Salle():
         self.type=type
         self.salles_reliees=salles_reliees
 
+
 class Fourmi():
     def __init__(self,x,y):
         self.image=pygame.image.load('assets/fourmi_noire.png')
         self.x=x
         self.y=y
+
         """
         if type=='lourd':
-            self.PV_max=100
-            self.attaque=25
-            self.charge_max=100
+            self.HP_max=100
+            self.poids_max=100
+            self.vitesse_base=25
+            self.dexterite=25
         elif type=='moyen':
-            self.PV_max=75
-            self.attaque=75
-            self.charge_max=75
+            self.HP_max=75
+            self.poids_max=50
+            self.vitesse_base=50
+            self.dexterite=50
         elif type=='leger':
-            self.PV_max=75
-            self.attaque=100
-            self.charge_max=50
+            self.HP_max=50
+            self.poids_max=25
+            self.vitesse_max=100
+            self.dexterite=100
         """
 
 class Partie():
@@ -93,33 +101,34 @@ class Partie():
         objets.append(self)
     def process(self):
         self.temps+=1
-        a = pygame.Surface((100, 100))
-        a.fill('red')
-        screen.blit(a, (screen.get_width()/2, 100))
-
 
 def nouvelle_partie():
     objets.clear()
     partie = Partie()
     screen.fill('blue')
-    pygame.display.update()
+    #pygame.display.update()
     print('Nouvelle parite')
-
-
 
 def menu_options():
     print('menu options')
     objets.clear()
-    pygame.display.update()
+    #pygame.display.update()
     screen.fill('green')
+    bouton_retour = Bouton(screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal)
+
+def quitter():
+    quit()
 
 def menu_principal():
-    surface_titre = police_titre.render("Guerre des fourmilières",True,"blue")
+    objets.clear()
+    screen.fill('cyan')
+    surface_titre = police.render("Guerre des fourmilières",True,'black')
     screen.blit(surface_titre, (screen.get_width()/2-surface_titre.get_rect().width/2,screen.get_height()/10-surface_titre.get_rect().height/2))
-    bouton_nouvelle_partie = Bouton(screen.get_width() / 2, screen.get_height() / 5, 300, 50, 'Nouvelle partie',police_titre, nouvelle_partie)
-    bouton_options = Bouton(screen.get_width() / 2, screen.get_height() * 2 / 5, 300, 50, 'Options',police_titre, menu_options)
-
-
+    image_menu_principal=pygame.transform.scale(image_icone,(screen.get_height()*image_icone.get_height()/100,screen.get_height()*image_icone.get_height()/100))
+    screen.blit(image_menu_principal,(screen.get_width()/2-image_menu_principal.get_width()/2,screen.get_height()*3/10-image_menu_principal.get_height()/2))
+    bouton_nouvelle_partie = Bouton(screen.get_width() / 2, screen.get_height() * 5 / 10, screen.get_width()/3, screen.get_height()/15, 'Nouvelle partie', nouvelle_partie)
+    bouton_options = Bouton(screen.get_width() / 2, screen.get_height() * 6 / 10, screen.get_width()/3, screen.get_height()/15, 'Options', menu_options)
+    bouton_quitter = Bouton(screen.get_width() / 2, screen.get_height() * 7 / 10, screen.get_width()/3, screen.get_height()/15, 'Quitter', quitter)
 
 menu_principal()
 while running:
@@ -142,3 +151,4 @@ while running:
     dt = clock.tick() / 1000
 
 pygame.quit()
+#sys.exit()
