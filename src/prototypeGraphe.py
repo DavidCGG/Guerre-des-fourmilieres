@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 
 class Noeud:
-    def __init__(self, nb, voisins = None):
+    def __init__(self, nb = -1, voisins = None):
         self.nb = nb #numéro du noeud
         #Dict contenant les voisins
         #{voisin: poid}
@@ -114,7 +114,7 @@ class Graph:
         #Initialisation
         queue: list[Noeud] = [] #queue qui permet de savoir quel noeud visiter
         distance: dict[Noeud, int] = dict() #distance du départ à une node
-        previous: dict[Noeud: Noeud] = dict() #noeud par lequel on est arrivé à ce noeud
+        previous: dict[Noeud, Noeud] = dict() #noeud par lequel on est arrivé à ce noeud
         visited: set[Noeud] = set() #noeuds dont tous les voisins ont été visités
 
         queue.append(depart)
@@ -165,32 +165,17 @@ class Graph:
         return s
     
 if __name__ == "__main__":
+    n0 = Noeud(0)
     n1 = Noeud(1)
     n2 = Noeud(2)
     n3 = Noeud(3)
     n4 = Noeud(4)
-    n5 = Noeud(5)
-    n6 = Noeud(6)
-    n7 = Noeud(7)
-    n8 = Noeud(8)
-    n9 = Noeud(9)
-    n10 = Noeud(10)
 
-    graph = Graph([n1, n2, n3, n4, n5, n6, n7, n8, n9, n10])
-    graph.connect_noeuds(n1, n2, 2)
-    graph.connect_noeuds(n1, n3, 2)
-    graph.connect_noeuds(n1, n6, 3)
-    graph.connect_noeuds(n2, n7, 1)
-    graph.connect_noeuds(n3, n4, 2)
-    graph.connect_noeuds(n3, n5, 3)
-    graph.connect_noeuds(n3, n6, 5)
-    graph.connect_noeuds(n4, n8, 1)
-    graph.connect_noeuds(n4, n9, 2)
-    graph.connect_noeuds(n6, n7, 8)
-    graph.connect_noeuds(n7, n10, 3)
+    n0.add_voisin(n1)
+    n0.add_voisin(n2)
+    n2.add_voisin(n3)
+    n2.add_voisin(n4)
 
-    chemin = graph.dijkstra(n8, n10)
-    for n in chemin:
-        print(n)
-
-    graph.afficher_weighted()
+    graph = Graph()
+    graph.add_noeuds([n0, n1, n2, n3, n4])
+    graph.afficher()
