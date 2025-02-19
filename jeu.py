@@ -1,16 +1,17 @@
 #import sys
-
+from carte import Map
 import pygame
+
 from pygame.locals import *
 
 pygame.init()
-screen = pygame.display.set_mode((1280,720))
+screen = pygame.display.set_mode((1280,720), pygame.SCALED)
 clock = pygame.time.Clock()
 running = True
 dt=0
 objets = []
 
-police = pygame.font.SysFont("Comic Sans MS",50)
+police = pygame.font.SysFont("Comic Sans MS",45)
 
 player_pos = pygame.Vector2(screen.get_width()/2,screen.get_height()/2)
 
@@ -38,6 +39,8 @@ class Bouton():
         objets.append(self)
 
         self.pas_encore_blit=True
+
+        print(self.x, self.y)
 
     def process(self):
         position_souris = pygame.mouse.get_pos()
@@ -108,6 +111,8 @@ def nouvelle_partie():
     screen.fill('blue')
     #pygame.display.update()
     print('Nouvelle parite')
+    game = Map()
+    game.start_game()
 
 def menu_options():
     print('menu options')
