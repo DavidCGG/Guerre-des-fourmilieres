@@ -2,6 +2,21 @@ import pygame
 from numpy import array
 from config import WHITE, BLACK, YELLOW
 
+class Tuile:
+    def __init__(self, x, y, largeur, hauteur, couleur, is_border=False):
+        self.x = x
+        self.y = y
+        self.largeur = largeur
+        self.hauteur = hauteur
+        self.couleur = couleur
+        self.is_border = is_border
+
+    def dessiner(self, ecran):
+        pygame.draw.rect(ecran, self.couleur, (self.x, self.y, self.largeur, self.hauteur))
+
+    def process(self):
+        pass
+
 class Map:
     def __init__(self):
         pygame.init()
@@ -10,18 +25,18 @@ class Map:
         self.TILE_SIZE = 32
         self.MAP_WIDTH = 100
         self.MAP_HEIGHT = 100
-        self.SCREEN_WIDTH = 800
-        self.SCREEN_HEIGHT = 600
+        self.SCREEN_WIDTH = 1280
+        self.SCREEN_HEIGHT = 720
 
         # Create a map with 100x100 tiles
-        self.map_data = [[0 for _ in range(self.MAP_WIDTH)] for _ in range(self.MAP_HEIGHT)]
+        self.map_data = [[Tuile(x,y,self.TILE_SIZE, self.TILE_SIZE, couleur=pygame.Color("white")) for x in range(self.MAP_WIDTH)] for y in range(self.MAP_HEIGHT)]
         arr = array(self.map_data)
         print(arr.shape)
         # Fill the map with some data (e.g., 1 for walls, 0 for empty space)
         for y in range(self.MAP_HEIGHT):
             for x in range(self.MAP_WIDTH):
                 if x == 0 or y == 0 or x == self.MAP_WIDTH - 1 or y == self.MAP_HEIGHT - 1:
-                    self.map_data[y][x] = 1  # Create a border wall
+                    self.map_data[y][x].is_border = True
 
         # Set up the display
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SCALED)
@@ -36,12 +51,30 @@ class Map:
 
     def start_game(self):
         # Main loop
+        global dragging, offset_x, offset_y
+        dragging = False
         running = True
         clock = pygame.time.Clock()
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        dragging = True
+                        mouse_x, mouse_y = event.pos
+                        offset_x = self.camera_x - mouse_x
+                        offset_y = self.camera_y - mouse_y
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        dragging = False
+                elif event.type == pygame.MOUSEMOTION:
+                    if dragging:
+                        mouse_x, mouse_y = event.pos
+                        self.camera_x = mouse_x - offset_x
+                        self.camera_y = mouse_y + offset_y
+
 
             # Clear the screen
             self.screen.fill(BLACK)
@@ -54,6 +87,9 @@ class Map:
             ### et on ajoute 1 pour s'assurer qu'on dessine meme les parties qui sont a moitie sur l'ecran
             end_x = min((self.camera_x + self.SCREEN_WIDTH) // self.TILE_SIZE + 1, self.MAP_WIDTH)
             end_y = min((self.camera_y + self.SCREEN_HEIGHT) // self.TILE_SIZE + 1, self.MAP_HEIGHT)
+
+
+
 
             ### On gere les deplacements de la camera
             keys = pygame.key.get_pressed()
@@ -90,7 +126,7 @@ class Map:
                 for x in range(start_x, end_x):
                     tile = self.map_data[y][x]
                     tile_rect = pygame.Rect(x * self.TILE_SIZE - self.camera_x, y * self.TILE_SIZE - self.camera_y, self.TILE_SIZE, self.TILE_SIZE)
-                    if tile == 1:
+                    if tile.is_border:
                         pygame.draw.rect(self.screen, self.RED, tile_rect)
                     else:
                         pygame.draw.rect(self.screen, WHITE, tile_rect)
