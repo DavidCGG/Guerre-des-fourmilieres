@@ -1,6 +1,5 @@
 ## Fichier pour declarer les variables de configuration
 ## et les constantes du jeu
-import venv_setup
 import pygame
 
 WIDTH = 800

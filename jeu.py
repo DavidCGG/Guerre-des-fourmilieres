@@ -11,7 +11,7 @@ running = True
 dt=0
 objets = []
 
-police = pygame.font.SysFont("Comic Sans MS",45)
+police = pygame.font.SysFont("Comic Sans MS",42)
 
 player_pos = pygame.Vector2(screen.get_width()/2,screen.get_height()/2)
 
@@ -38,31 +38,24 @@ class Bouton():
         self.deja_clicke = False
         objets.append(self)
 
-        self.pas_encore_blit=True
-
-        print(self.x, self.y)
-
     def process(self):
         position_souris = pygame.mouse.get_pos()
         self.surface.fill(self.couleurs['normale'])
         if self.rectangle.collidepoint(position_souris):
             #survol:
+            print("adssd")
             self.surface.fill(self.couleurs['survol'])
 
             if pygame.mouse.get_pressed(num_buttons=3)[0]:
                 #sur click tenu :
                 self.surface.fill(self.couleurs['clické'])
-                if not self.deja_clicke:
-                    print('Bouton \''+self.texte+'\' clické')
-                    self.fonction_sur_click()
-                    self.deja_clicke=True
-            else:
-                self.deja_clicke=False
+                self.fonction_sur_click()
+                self.deja_clicke=True
 
-        if self.pas_encore_blit:
-            self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2])
+        if not self.deja_clicke:
+            self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2-3])
+            pygame.draw.rect(self.surface, pygame.Color("black"), self.surface.get_rect(), 3)
             screen.blit(self.surface,self.rectangle)
-            self.pas_encore_blit=False
 
 class Fourmiliere():
     def __init__(self,salles):
@@ -108,8 +101,7 @@ class Partie():
 def nouvelle_partie():
     objets.clear()
     partie = Partie()
-    screen.fill('blue')
-    #pygame.display.update()
+
     print('Nouvelle parite')
     game = Map()
     game.start_game()
