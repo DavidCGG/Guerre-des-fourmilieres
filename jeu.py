@@ -43,7 +43,6 @@ class Bouton():
         self.surface.fill(self.couleurs['normale'])
         if self.rectangle.collidepoint(position_souris):
             #survol:
-            print("adssd")
             self.surface.fill(self.couleurs['survol'])
 
             if pygame.mouse.get_pressed(num_buttons=3)[0]:
@@ -52,10 +51,9 @@ class Bouton():
                 self.fonction_sur_click()
                 self.deja_clicke=True
 
-        if not self.deja_clicke:
-            self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2-3])
-            pygame.draw.rect(self.surface, pygame.Color("black"), self.surface.get_rect(), 3)
-            screen.blit(self.surface,self.rectangle)
+        self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2-3])
+        pygame.draw.rect(self.surface, pygame.Color("black"), self.surface.get_rect(), 3)
+        screen.blit(self.surface,self.rectangle)
 
 class Fourmiliere():
     def __init__(self,salles):
