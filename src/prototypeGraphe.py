@@ -53,7 +53,7 @@ class Graph:
         if noeud1 in noeud2.voisins:
             noeud2.voisins.pop(noeud1)
 
-    def afficher(self) -> None:
+    def afficher(self, ax=None) -> None:
         G = nx.Graph()
 
         for n in self.noeuds:
@@ -62,9 +62,10 @@ class Graph:
         for n in self.noeuds:
             for v in n.voisins:
                 G.add_edge(n.nb, v.nb)
+        if ax is None:
+            fig, ax = plt.subplots()
 
-        nx.draw(G, with_labels=True, node_color='lightblue', edge_color='gray', node_size=800, font_size=10)
-        plt.show()
+        nx.draw(G, with_labels=True, node_color='lightblue', edge_color='gray', node_size=800, font_size=10, ax=ax)
 
     def afficher_weighted(self) -> None:
         G = nx.Graph()
@@ -165,17 +166,22 @@ class Graph:
         return s
     
 if __name__ == "__main__":
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+    graph1 = Graph()
     n0 = Noeud(0)
     n1 = Noeud(1)
     n2 = Noeud(2)
+    n0.add_voisin(n1)
+    n1.add_voisin(n2)
+    graph1.add_noeuds([n0, n1, n2])
+    graph1.afficher(ax=axes[0])
+
+    graph2 = Graph()
     n3 = Noeud(3)
     n4 = Noeud(4)
+    n3.add_voisin(n4)
+    graph2.add_noeuds([n3, n4])
+    graph2.afficher(ax=axes[1])
 
-    n0.add_voisin(n1)
-    n0.add_voisin(n2)
-    n2.add_voisin(n3)
-    n2.add_voisin(n4)
-
-    graph = Graph()
-    graph.add_noeuds([n0, n1, n2, n3, n4])
-    graph.afficher()
+    plt.show()
