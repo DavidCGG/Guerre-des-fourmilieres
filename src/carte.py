@@ -24,6 +24,13 @@ class Carte:
         self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
         self.surface_map = pygame.Surface((self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE))
 
+    def decouvrir_tuiles(self, x_tuile, y_tuile):
+        for y in range(y_tuile - 2, y_tuile+3):
+            for x in range(x_tuile - 2, x_tuile+3):
+                if abs(x - x_tuile) + abs(y - y_tuile) <= 2:
+                    if 0 <= x < self.MAP_WIDTH and 0 <= y < self.MAP_HEIGHT:
+                        self.map_data[y][x].toggle_color()
+
 
     def draw_top_bar(self):
         pygame.draw.rect(self.screen, BLACK, (0, 0, self.size[0], 50))
@@ -64,8 +71,8 @@ class Carte:
                 grid_y = int((event.pos[1] + self.camera.y - 50) // tile_size)
 
                 if 0 <= grid_x < self.MAP_WIDTH and 0 <= grid_y < self.MAP_HEIGHT:
-                    self.map_data[grid_y][grid_x].toggle_color()
-
+                    self.decouvrir_tuiles(grid_x, grid_y)
+                    print(f'Clicked on tile x:{grid_x}, y:{grid_y}')
             elif event.button == 4:  # Scroll up
                 self.camera.zoom_camera(*event.pos, "in")
             elif event.button == 5:  # Scroll down

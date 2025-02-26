@@ -7,7 +7,7 @@ class Tuile:
         self.y = y
         self.width = width
         self.height = height
-        self.color = WHITE
+        self.color = BLACK
         self.is_border = is_border
         self.tuile_debut = False
         self.decouverte = False if not self.tuile_debut else True
@@ -16,12 +16,14 @@ class Tuile:
 
 
     def toggle_color(self):
-        if self.color == WHITE:
-            self.color = BLUE
-        else:
+        if self.color == BLACK and not self.is_border:
             self.color = WHITE
+
 
     def draw(self, screen, rect):
         pygame.draw.rect(screen, self.color, rect)
         if not self.is_border:
             pygame.draw.rect(screen, BLACK, rect, 1)
+
+
+
