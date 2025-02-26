@@ -13,7 +13,8 @@ class Fourmis(ABC):
         self.scale = scale
         self.target_x = x0
         self.target_y = y0
-        self.speed = 2
+        self.base_speed = 2
+        self.speed = self.base_speed * self.scale
         self.type_mouvement = mouvement
         self.facing = 0 # 0 : droite, 1 : gauche
         self.hp = hp
@@ -32,18 +33,18 @@ class Fourmis(ABC):
             return
 
         if self.type_mouvement == "random":
-            self.random_mouvement()
+            self.random_mouvement(dt)
         elif self.type_mouvement == "pathfind":
-            self.pathfind_mouvement()
+            self.pathfind_mouvement(dt)
         elif self.type_mouvement is None:
             pass
 
-    def random_mouvement(self):
+    def random_mouvement(self, dt):
         if self.centre_x == self.target_x and self.centre_y == self.target_y:
             self.set_nouv_target()
             self.pause_timer = random.uniform(800, 2000)
 
-        self.goto_target()
+        self.goto_target(dt)
 
     def set_nouv_target(self):
 
@@ -59,16 +60,16 @@ class Fourmis(ABC):
         self.target_y = max(0+self.height//2, min(HEIGHT-self.height//2, self.target_y))
 
 
-    def goto_target(self):
+    def goto_target(self, dt):
         dx = self.target_x - self.centre_x
         dy = self.target_y - self.centre_y
         distance = math.sqrt(dx**2 + dy**2)
 
-        if distance > self.speed:
-            self.centre_x += self.speed*dx/distance
-            self.centre_y += self.speed*dy/distance
+        if distance > 0.5:
+            self.centre_x += self.speed * dx/distance * (dt/1000)
+            self.centre_y += self.speed * dy/distance * (dt/1000)
 
-        elif distance <= self.speed:
+        else:
             self.centre_x = self.target_x
             self.centre_y = self.target_y
 
@@ -84,7 +85,8 @@ class Fourmis(ABC):
 class Ouvriere(Fourmis):
     def __init__(self, x0, y0, scale=1.0, mouvement=None):
         super().__init__(hp=10, atk=2, scale=scale, x0=x0, y0=y0, mouvement=mouvement)
-        self.speed = 2.5
+        self.base_speed = 3
+        self.speed = self.base_speed * self.scale
 
     def attack(self, other):
         other.hp -= self.atk
@@ -92,7 +94,8 @@ class Ouvriere(Fourmis):
 class Soldat(Fourmis):
     def __init__(self, x0, y0, scale=1.0, mouvement="random"):
         super().__init__(hp=25, atk=5, scale=scale, x0=x0, y0=y0, mouvement=mouvement)
-        self.speed = 1.5
+        self.base_speed = 1.5
+        self.speed = self.base_speed * self.scale
 
     def attack(self, other):
         other.hp -= self.atk

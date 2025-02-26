@@ -31,11 +31,12 @@ def trouver_img(nom: str) -> str:
 def trouver_font(nom: str) -> str:
     return os.path.join(os.path.dirname(__file__), "..", "assets", "fonts", nom)
 
+pygame.display.set_icon(pygame.image.load(trouver_img("Fourmi.png")))
 font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74)
 small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
 
 spritesheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
-fourmis = Soldat(600, 300, 8.5, "random")
+fourmis = Ouvriere(600, 300, 8.5, "random")
 fourmis_sprite = FourmisSprite(fourmis, spritesheet, 16, 16, 4, 300)
 
 sprites = pygame.sprite.Group()
@@ -47,7 +48,7 @@ def main_menu():
     clock = pygame.time.Clock()
 
     while True:
-        dt = clock.tick(30)
+        dt = clock.tick(60)
         screen.fill(pygame.Color("black"))
 
         # Draw menu options
