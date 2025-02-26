@@ -1,166 +1,106 @@
 import pygame
+import os
 from numpy import array
-from config import WHITE, BLACK, YELLOW, RED
+from config import WHITE, BLACK, YELLOW, RED, BLUE
+from camera import Camera
 
-class Tuile:
-    def __init__(self, x, y, largeur, hauteur, couleur, is_border=False):
+class Tile:
+    def __init__(self, x, y, width, color, height, is_border=False):
         self.x = x
         self.y = y
-        self.largeur = largeur
-        self.hauteur = hauteur
-        self.couleur = couleur
+        self.width = width
+        self.height = height
+        self.color = WHITE
         self.is_border = is_border
 
-    def dessiner(self, ecran):
-        pygame.draw.rect(ecran, self.couleur, (self.x, self.y, self.largeur, self.hauteur))
+    def toggle_color(self):
+        if self.color == WHITE:
+            self.color = BLUE
+        else:
+            self.color = WHITE
 
-    def process(self):
-        pass
+    def draw(self, screen, rect):
+        pygame.draw.rect(screen, self.color, rect)
+        if not self.is_border:
+            pygame.draw.rect(screen, BLACK, rect, 1)
 
-class Map:
+class MapApp:
     def __init__(self):
         pygame.init()
+        self.running = True
+        self.size = (1280, 720)
+        self.screen = pygame.display.set_mode(self.size, pygame.SCALED)
+        pygame.display.set_caption("Tile Map with Camera")
 
-        # Constants
         self.TILE_SIZE = 32
         self.MAP_WIDTH = 100
         self.MAP_HEIGHT = 100
-        self.SCREEN_WIDTH = 1280
-        self.SCREEN_HEIGHT = 720
-
-        # Create a map with 100x100 tiles
-        self.map_data = [[Tuile(x,y,self.TILE_SIZE, self.TILE_SIZE, couleur=pygame.Color("white")) for x in range(self.MAP_WIDTH)] for y in range(self.MAP_HEIGHT)]
-        arr = array(self.map_data)
-        print(arr.shape)
-        # Fill the map with some data (e.g., 1 for walls, 0 for empty space)
+        self.map_data = [[Tile(x, y, self.TILE_SIZE, self.TILE_SIZE, WHITE) for x in range(self.MAP_WIDTH)] for y in range(self.MAP_HEIGHT)]
         for y in range(self.MAP_HEIGHT):
             for x in range(self.MAP_WIDTH):
                 if x == 0 or y == 0 or x == self.MAP_WIDTH - 1 or y == self.MAP_HEIGHT - 1:
                     self.map_data[y][x].is_border = True
+                    self.map_data[y][x].color = RED
 
-        # Set up the display
-        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SCALED)
-        pygame.display.set_caption("Tile Map with Camera")
+        self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
 
-        # Define colors
-        self.RED = (255, 0, 0)
+    def draw_top_bar(self):
+        pygame.draw.rect(self.screen, BLACK, (0, 0, self.size[0], 50))
+        font = pygame.font.Font(None, 24)
+        camera_info = font.render(f'Camera X: {int(self.camera.x)}, Camera Y: {int(self.camera.y)}', True, YELLOW)
+        zoom_info = font.render(f'Zoom: {self.camera.get_zoom() * 100:.2f}%', True, YELLOW)
+        self.screen.blit(camera_info, (10, 10))
+        self.screen.blit(zoom_info, (10, 30))
 
-        # Camera position
-        self.camera_x = 0
-        self.camera_y = 0
-        self.offset_x = 0
-        self.offset_y = 0
-        self.old_camera_x = 0
-        self.old_camera_y = 0
-        self.zoom = 1
+    def draw_tiles(self):
+        tile_size = int(self.TILE_SIZE * self.camera.zoom)
+        start_x = max(0, self.camera.x // tile_size)
+        start_y = max(0, self.camera.y // tile_size)
+        end_x = min((self.camera.x + self.size[0]) // tile_size + 1, self.MAP_WIDTH)
+        end_y = min((self.camera.y + self.size[1]) // tile_size + 1, self.MAP_HEIGHT)
 
-    def start_game(self):
-        # Main loop
+        for y in range(int(start_y), int(end_y)):
+            for x in range(int(start_x), int(end_x)):
+                tile = self.map_data[y][x]
+                tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+                tile.draw(self.screen, self.camera.apply(tile_rect))
 
-        dragging = False
-        running = True
+    def handle_event(self, event):
+        if event.type == pygame.QUIT:
+            self.running = False
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left click
+                self.camera.start_drag(*event.pos)
+                tile_size = int(self.TILE_SIZE * self.camera.zoom)
+                grid_x = int((event.pos[0] + self.camera.x) // tile_size)
+                grid_y = int((event.pos[1] + self.camera.y - 50) // tile_size)
+                if 0 <= grid_x < self.MAP_WIDTH and 0 <= grid_y < self.MAP_HEIGHT:
+                    self.map_data[grid_y][grid_x].toggle_color()
+            elif event.button == 4:  # Scroll up
+                self.camera.zoom_camera(*event.pos, "in")
+            elif event.button == 5:  # Scroll down
+                self.camera.zoom_camera(*event.pos, "out")
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                self.camera.stop_drag()
+
+        elif event.type == pygame.MOUSEMOTION:
+            self.camera.drag(*event.pos)
+
+    def run(self):
         clock = pygame.time.Clock()
-        while running:
+        while self.running:
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-
-                if event.type == pygame.MOUSEBUTTONDOWN:
-
-                    if event.button == 1:
-                        dragging = True
-                        mouse_x, mouse_y = event.pos
-                        self.offset_x = mouse_x - self.old_camera_x
-                        self.offset_y = mouse_y - self.old_camera_y
-
-                    elif event.button == 4:
-                        print('scroll up')
-                        self.zoom += 0.1
-
-
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
-                        dragging = False
-                        ### On sauvegarde la position de la camera avant de relacher le bouton
-                        self.old_camera_x = self.camera_x
-                        self.old_camera_y = self.camera_y
-
-                elif event.type == pygame.MOUSEMOTION:
-                    if dragging:
-                        mouse_x, mouse_y = event.pos
-                        ### On calcule la nouvelle position de la camera en fonction de la position de la souris
-                        ### tout en gardant la position qu'on avait avant de reglisser
-                        self.camera_x = (self.offset_x - mouse_x) + self.old_camera_x*2
-                        self.camera_y = (self.offset_y - mouse_y) + self.old_camera_y*2
-
-                        ### La camera commence au coin (0,0) et on voit jusqua (800,600) qui est SCREEN_WIDTH, SCREEN_HEIGHT
-                        ### MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH soit 3200-800=2400 est la position maximale de la camera en x
-                        ### MAP_HEIGHT * TILE_SIZE - SCREEN_HEIGHT est la position maximale de la camera en y
-                        ### Ainsi, si camera_x veut aller vers la gauche, on fait que le max est 0 (aucun mouv.) pour ne pas aller plus loin que la bordure
-                        ### On prend le min pour ne pas depasser la bordure de l'ecran droite
-                        self.camera_x = max(0, min(self.camera_x, self.MAP_WIDTH * self.TILE_SIZE - self.SCREEN_WIDTH))
-                        self.camera_y = max(0, min(self.camera_y, self.MAP_HEIGHT * self.TILE_SIZE - self.SCREEN_HEIGHT + 50))
-
-
-
-            ### On calcule les tuiles a dessiner en fonction de la position de la camera
-            start_x = self.camera_x // self.TILE_SIZE
-            start_y = self.camera_y // self.TILE_SIZE
-
-            ### On prend le minimum comme ca on s'assure qu'on ne cherche pas en dehors de la map
-            ### et on ajoute 1 pour s'assurer qu'on dessine meme les parties qui sont a moitie sur l'ecran
-            end_x = min((self.camera_x + self.SCREEN_WIDTH) // self.TILE_SIZE + 1, self.MAP_WIDTH)
-            end_y = min((self.camera_y + self.SCREEN_HEIGHT) // self.TILE_SIZE + 1, self.MAP_HEIGHT)
-
-
-            ### On gere les deplacements de la camera
-            # keys = pygame.key.get_pressed()
-            # if keys[pygame.K_LEFT]:
-            #     self.camera_x -= 4
-            #     print(f'start_x: {start_x}, start_y: {start_y}')
-            #     print(f'end_x: {end_x}, end_y: {end_y}')
-            #     print(f'camera_x: {self.camera_x}, camera_y: {self.camera_y}')
-            # if keys[pygame.K_RIGHT]:
-            #     self.camera_x += 16 ## haute vitesse seulement pour tester
-            #     print(f'start_x: {start_x}, start_y: {start_y}')
-            #     print(f'end_x: {end_x}, end_y: {end_y}')
-            #     print(f'camera_x: {self.camera_x}, camera_y: {self.camera_y}')
-            # if keys[pygame.K_UP]:
-            #     self.camera_y -= 4
-            #     print(f'start_x: {start_x}, start_y: {start_y}')
-            #     print(f'end_x: {end_x}, end_y: {end_y}')
-            #     print(f'camera_x: {self.camera_x}, camera_y: {self.camera_y}')
-            # if keys[pygame.K_DOWN]:
-            #     print(f'start_x: {start_x}, start_y: {start_y}')
-            #     print(f'end_x: {end_x}, end_y: {end_y}')
-            #     print(f'camera_x: {self.camera_x}, camera_y: {self.camera_y}')
-            #     self.camera_y += 4
-
-            # On dessine les tuiles avec draw.rect, cest plus simple pour l'instant a la place de blit
-            # blit est plus pour les images
-            for y in range(start_y, end_y):
-                for x in range(start_x, end_x):
-                    tile = self.map_data[y][x]
-                    tile_rect = pygame.Rect(x * self.TILE_SIZE - self.camera_x, y * self.TILE_SIZE - self.camera_y + 50, self.TILE_SIZE, self.TILE_SIZE)
-                    if tile.is_border:
-                        pygame.draw.rect(self.screen, self.RED, tile_rect)
-                    else:
-                        pygame.draw.rect(self.screen, WHITE, tile_rect)
-                        pygame.draw.rect(self.screen, BLACK, tile_rect, 1)  # Draw black border
-
-            # Menu et mise a jour de l'ecran
-            pygame.draw.rect(self.screen, BLACK, (0, 0, self.SCREEN_WIDTH, 50))
-            font = pygame.font.SysFont(None, 24)
-            ## J'ajoute la demi des dimensions de l'ecran pour avoir la position de la camera par rapport au centre
-            ## on peut l'enlever pour avoir la position par rapport au coin en haut a gauche
-            ## je ne sais pas si ca l'importe
-            camera_info = font.render(f'Camera X: {self.camera_x+self.SCREEN_WIDTH//2}, Camera Y: {self.camera_y+self.SCREEN_HEIGHT//2}', True, YELLOW)
-            self.screen.blit(camera_info, (10, 10))
+                self.handle_event(event)
+            self.screen.fill(BLACK)
+            self.draw_tiles()
+            self.draw_top_bar()
             pygame.display.flip()
             clock.tick(120)
-
         pygame.quit()
 
 if __name__ == "__main__":
-    game = Map()
-    game.start_game()
+    app = MapApp()
+    app.run()
