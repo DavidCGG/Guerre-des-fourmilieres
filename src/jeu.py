@@ -2,8 +2,7 @@
 from carte import Carte
 import config
 import pygame
-
-from pygame.locals import *
+from bouton import Bouton
 
 pygame.init()
 screen = pygame.display.set_mode((1280,720), pygame.SCALED)
@@ -20,41 +19,6 @@ pygame.display.set_caption("Guerre des fourmilières")
 
 image_icone=pygame.image.load(config.trouver_img('fourmi_noire.png'))
 pygame.display.set_icon(image_icone)
-
-class Bouton():
-    def __init__(self,x,y,largeur,hauteur,texte,fonction_sur_click):
-        self.x=x-largeur/2
-        self.y=y-hauteur/2
-        self.largeur = largeur
-        self.hauteur = hauteur
-        self.texte = texte
-        self.police = police
-        self.fonction_sur_click = fonction_sur_click
-        self.couleurs = { 'normale': '#ffffff',
-                          'survol': '#666666',
-                          'clické': '#333333'}
-        self.surface = pygame.Surface((self.largeur,self.hauteur))
-        self.rectangle = pygame.Rect(self.x,self.y,self.largeur,self.hauteur)
-        self.texte_render = police.render(self.texte,True,"black")
-        self.deja_clicke = False
-        objets.append(self)
-
-    def process(self):
-        position_souris = pygame.mouse.get_pos()
-        self.surface.fill(self.couleurs['normale'])
-        if self.rectangle.collidepoint(position_souris):
-            #survol:
-            self.surface.fill(self.couleurs['survol'])
-
-            if pygame.mouse.get_pressed(num_buttons=3)[0]:
-                #sur click tenu :
-                self.surface.fill(self.couleurs['clické'])
-                self.fonction_sur_click()
-                self.deja_clicke=True
-
-        self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2-3])
-        pygame.draw.rect(self.surface, pygame.Color("black"), self.surface.get_rect(), 3)
-        screen.blit(self.surface,self.rectangle)
 
 class Fourmiliere():
     def __init__(self,salles):
@@ -110,7 +74,8 @@ def menu_options():
     objets.clear()
     #pygame.display.update()
     screen.fill('green')
-    bouton_retour = Bouton(screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal)
+    bouton_retour = Bouton(screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal, police)
+    objets.append(bouton_retour)
 
 def quitter():
     quit()
@@ -122,9 +87,12 @@ def menu_principal():
     screen.blit(surface_titre, (screen.get_width()/2-surface_titre.get_rect().width/2,screen.get_height()/10-surface_titre.get_rect().height/2))
     image_menu_principal=pygame.transform.scale(image_icone,(screen.get_height()*image_icone.get_height()/100,screen.get_height()*image_icone.get_height()/100))
     screen.blit(image_menu_principal,(screen.get_width()/2-image_menu_principal.get_width()/2,screen.get_height()*3/10-image_menu_principal.get_height()/2))
-    bouton_nouvelle_partie = Bouton(screen.get_width() / 2, screen.get_height() * 5 / 10, screen.get_width()/3, screen.get_height()/15, 'Nouvelle partie', nouvelle_partie)
-    bouton_options = Bouton(screen.get_width() / 2, screen.get_height() * 6 / 10, screen.get_width()/3, screen.get_height()/15, 'Options', menu_options)
-    bouton_quitter = Bouton(screen.get_width() / 2, screen.get_height() * 7 / 10, screen.get_width()/3, screen.get_height()/15, 'Quitter', quitter)
+    bouton_nouvelle_partie = Bouton(screen.get_width() / 2, screen.get_height() * 5 / 10, screen.get_width()/3, screen.get_height()/15, 'Nouvelle partie', nouvelle_partie, police, screen)
+    bouton_options = Bouton(screen.get_width() / 2, screen.get_height() * 6 / 10, screen.get_width()/3, screen.get_height()/15, 'Options', menu_options, police, screen)
+    bouton_quitter = Bouton(screen.get_width() / 2, screen.get_height() * 7 / 10, screen.get_width()/3, screen.get_height()/15, 'Quitter', quitter, police, screen)
+    objets.append(bouton_nouvelle_partie)
+    objets.append(bouton_options)
+    objets.append(bouton_quitter)
 
 menu_principal()
 while running:
