@@ -1,22 +1,35 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import sys
 
-class Noeud:
+class Noeud_Generation:
     def __init__(self, nb = -1, voisins = None):
         self.nb = nb #numéro du noeud
-        #Dict contenant les voisins
-        #{voisin: poid}
-        self.voisins = voisins if voisins is not None else dict()
+        #Set contenant les voisins
+        self.voisins = voisins if voisins is not None else set()
 
     def __str__(self):
         return f"{self.nb}"
+
+    def add_voisin(self, voisin) -> None:
+        self.voisins.add(voisin)       
+    
+    def remove_voisin(self, voisin) -> None:
+        self.voisins.pop(voisin)
+
+class Noeud_Pondere:
+    def __init__(self, coord = (-1,-1), voisins = None):
+        self.coord = coord
+        #Dictionnaire contenant les voisins {voisin: poid}
+        self.voisins = voisins if voisins is not None else dict()
 
     def add_voisin(self, voisin, poid = -1) -> None:
         self.voisins[voisin] = poid        
     
     def remove_voisin(self, voisin) -> None:
         self.voisins.pop(voisin)
+
+    def __str__(self):
+        return f"{self.coord=}, {self.voisins=}"
 
 class Graph:
     def __init__(self, noeuds = None):
@@ -26,7 +39,7 @@ class Graph:
         if noeud not in self.noeuds:
             self.noeuds.add(noeud)
             for v in noeud.voisins:
-                v.voisins[noeud] = noeud.voisins[v]
+                v.voisins.add(noeud)
 
     def add_noeuds(self, noeuds) -> None:
         for n in noeuds:
@@ -55,37 +68,26 @@ class Graph:
 
     def afficher(self, ax=None) -> None:
         G = nx.Graph()
+        positions = dict()
+        num_noeud = dict()
 
-        for n in self.noeuds:
-            G.add_node(n.nb)
+        for n, noeud in enumerate(self.noeuds):
+            positions[n] = noeud.coord
+            num_noeud[noeud] = n
+            G.add_node(n)
 
-        for n in self.noeuds:
-            for v in n.voisins:
-                G.add_edge(n.nb, v.nb)
+        for noeud in self.noeuds:
+            for v in noeud.voisins:
+                G.add_edge(num_noeud[noeud] , num_noeud[v])
+
         if ax is None:
             fig, ax = plt.subplots()
 
-        nx.draw(G, with_labels=True, node_color='lightblue', edge_color='gray', node_size=800, font_size=10, ax=ax)
-
-    def afficher_weighted(self) -> None:
-        G = nx.Graph()
-
-        for n in self.noeuds:
-            G.add_node(n.nb)
-
-        for n in self.noeuds:
-            for v, poid in n.voisins.items():
-                G.add_edge(n.nb, v.nb, weight = poid)
-
-        pos = nx.spring_layout(G)
-        nx.draw(G, pos, with_labels=True, node_color='orange', node_size=2000, font_size=15)
-        edge_labels = nx.get_edge_attributes(G, 'weight')
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-
+        nx.draw(G, pos=positions, with_labels=True, node_color='lightblue', edge_color='gray', node_size=800, font_size=10, ax=ax)
         plt.show()
 
-    def dijkstra(self, depart, arrivee) -> list[Noeud]:
-        def sort_queue(arr) -> list[Noeud]:
+    def dijkstra(self, depart, arrivee) -> list[Noeud_Pondere]:
+        def sort_queue(arr) -> list[Noeud_Pondere]:
             if len(arr) <= 1:
                 return arr
 
@@ -95,7 +97,7 @@ class Graph:
 
             return merge(left_half, right_half)
 
-        def merge(left, right) -> list[Noeud]:
+        def merge(left, right) -> list[Noeud_Pondere]:
             sorted_arr = []
             i, j = 0, 0
 
@@ -113,10 +115,10 @@ class Graph:
             return sorted_arr
         
         #Initialisation
-        queue: list[Noeud] = [] #queue qui permet de savoir quel noeud visiter
-        distance: dict[Noeud, int] = dict() #distance du départ à une node
-        previous: dict[Noeud, Noeud] = dict() #noeud par lequel on est arrivé à ce noeud
-        visited: set[Noeud] = set() #noeuds dont tous les voisins ont été visités
+        queue: list[Noeud_Pondere] = [] #queue qui permet de savoir quel noeud visiter
+        distance: dict[Noeud_Pondere, int] = dict() #distance du départ à une node
+        previous: dict[Noeud_Pondere, Noeud_Pondere] = dict() #noeud par lequel on est arrivé à ce noeud
+        visited: set[Noeud_Pondere] = set() #noeuds dont tous les voisins ont été visités
 
         queue.append(depart)
         distance[depart] = 0
@@ -125,7 +127,7 @@ class Graph:
         #Naviguation
         while queue[0] != arrivee:
             sort_queue(queue)
-            current: Noeud = queue[0]
+            current: Noeud_Pondere = queue[0]
 
             for v, p in current.voisins.items():
                 if v in visited:
@@ -145,8 +147,8 @@ class Graph:
             queue.pop(0)
 
         #Reconstruction du chemin
-        chemin: list[Noeud] = [] #le chemin pris pour arriver à la fin
-        current: Noeud = arrivee
+        chemin: list[Noeud_Pondere] = [] #le chemin pris pour arriver à la fin
+        current: Noeud_Pondere = arrivee
 
         while current != None:
             chemin.append(current)
@@ -160,28 +162,10 @@ class Graph:
         for n in self.noeuds:
             s_voisins = ""
             for v, p in n.voisins.items():
-                s_voisins += f"{v.nb}, {p}; "
+                s_voisins += f"({v.coord[0]:.2f}, {v.coord[1]:.2f}); "
 
-            s += f"Numéro: {n.nb}, Voisins: {s_voisins}\n"
+            s += f"Coord: ({n.coord[0]:.2f}, {n.coord[1]:.2f}), Voisins: {s_voisins}\n"
         return s
     
 if __name__ == "__main__":
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-
-    graph1 = Graph()
-    n0 = Noeud(0)
-    n1 = Noeud(1)
-    n2 = Noeud(2)
-    n0.add_voisin(n1)
-    n1.add_voisin(n2)
-    graph1.add_noeuds([n0, n1, n2])
-    graph1.afficher(ax=axes[0])
-
-    graph2 = Graph()
-    n3 = Noeud(3)
-    n4 = Noeud(4)
-    n3.add_voisin(n4)
-    graph2.add_noeuds([n3, n4])
-    graph2.afficher(ax=axes[1])
-
-    plt.show()
+    pass
