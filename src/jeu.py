@@ -1,17 +1,18 @@
-#import sys
+import venv_setup
 from carte import Carte
 import config
 import pygame
 from bouton import Bouton
 
 pygame.init()
-screen = pygame.display.set_mode((1280,720), pygame.SCALED)
+screen = pygame.display.set_mode((1280,720))
 clock = pygame.time.Clock()
 running = True
 dt=0
 objets = []
 
-police = pygame.font.SysFont("Comic Sans MS",42)
+policeTitre = pygame.font.SysFont("Comic Sans MS", 40)
+policeBouton = pygame.font.SysFont("Comic Sans MS", 32)
 
 player_pos = pygame.Vector2(screen.get_width()/2,screen.get_height()/2)
 
@@ -62,37 +63,42 @@ class Partie():
         self.temps+=1
 
 def nouvelle_partie():
-    objets.clear()
-    partie = Partie()
-
+    global running
     print('Nouvelle parite')
+    objets.clear()
+    running = True
+
     game = Carte()
+
     game.run()
+
 
 def menu_options():
     print('menu options')
     objets.clear()
     #pygame.display.update()
     screen.fill('green')
-    bouton_retour = Bouton(screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal, police)
-    objets.append(bouton_retour)
+    bouton_retour = Bouton(screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal, policeBouton, screen,objets)
+
 
 def quitter():
-    quit()
+    global running
+    running = False
 
 def menu_principal():
     objets.clear()
     screen.fill('cyan')
-    surface_titre = police.render("Guerre des fourmilières",True,'black')
+    surface_titre = policeTitre.render("Guerre des fourmilières",True,'black')
     screen.blit(surface_titre, (screen.get_width()/2-surface_titre.get_rect().width/2,screen.get_height()/10-surface_titre.get_rect().height/2))
     image_menu_principal=pygame.transform.scale(image_icone,(screen.get_height()*image_icone.get_height()/100,screen.get_height()*image_icone.get_height()/100))
     screen.blit(image_menu_principal,(screen.get_width()/2-image_menu_principal.get_width()/2,screen.get_height()*3/10-image_menu_principal.get_height()/2))
-    bouton_nouvelle_partie = Bouton(screen.get_width() / 2, screen.get_height() * 5 / 10, screen.get_width()/3, screen.get_height()/15, 'Nouvelle partie', nouvelle_partie, police, screen)
-    bouton_options = Bouton(screen.get_width() / 2, screen.get_height() * 6 / 10, screen.get_width()/3, screen.get_height()/15, 'Options', menu_options, police, screen)
-    bouton_quitter = Bouton(screen.get_width() / 2, screen.get_height() * 7 / 10, screen.get_width()/3, screen.get_height()/15, 'Quitter', quitter, police, screen)
-    objets.append(bouton_nouvelle_partie)
-    objets.append(bouton_options)
-    objets.append(bouton_quitter)
+    bouton_nouvelle_partie = Bouton(screen.get_width() / 2, screen.get_height() * 5 / 10, screen.get_width()/3, screen.get_height()/15,
+                                    'Nouvelle partie', nouvelle_partie, policeBouton, screen, objets).add_bordure(pygame.Color("black"))
+    bouton_options = Bouton(screen.get_width() / 2, screen.get_height() * 6 / 10, screen.get_width()/3, screen.get_height()/15,
+                            'Options', menu_options, policeBouton, screen, objets).add_bordure(pygame.Color("black"))
+    bouton_quitter = Bouton(screen.get_width() / 2, screen.get_height() * 7 / 10, screen.get_width()/3, screen.get_height()/15,
+                            'Quitter', quitter, policeBouton, screen, objets).add_bordure(pygame.Color("black"))
+
 
 menu_principal()
 while running:

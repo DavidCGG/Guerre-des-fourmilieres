@@ -32,8 +32,8 @@ class Camera:
         """Deplace la camera tout en gardant la camera dans les limites de la map"""
         ### On prend le min entre le deplacement et le reste de la map pour ne pas sortir de la map du coté gauche
         ### On prend le max entre le deplacement et 0 pour ne pas sortir de la map du coté droit
-        dx = dx / self.zoom
-        dy = dy / self.zoom
+        dx = dx * self.zoom
+        dy = dy * self.zoom
 
         self.x = max(0, min(self.x - dx, self.map_width * self.tile_size * self.zoom - self.width))
         self.y = max(0, min(self.y - dy, self.map_height * self.tile_size * self.zoom - self.height + 50))
