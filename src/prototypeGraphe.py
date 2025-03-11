@@ -84,7 +84,6 @@ class Graph:
             fig, ax = plt.subplots()
 
         nx.draw(G, pos=positions, with_labels=True, node_color='lightblue', edge_color='gray', node_size=800, font_size=10, ax=ax)
-        plt.show()
 
     def dijkstra(self, depart, arrivee) -> list[Noeud_Pondere]:
         def sort_queue(arr) -> list[Noeud_Pondere]:

@@ -342,16 +342,18 @@ def interface() -> None:
     def generer_graphe() -> pg.Graph:
         root = generer_arbre()
         connecter_branches(root)
-        noeuds: list[pg.Noeud_Generation] = []
+        root = attribuer_poids(root)
 
-        visited: set[pg.Noeud_Generation] = set()
-        queue: list[pg.Noeud_Generation] = []
+        noeuds: list[pg.Noeud_Pondere] = []
+
+        visited: set[pg.Noeud_Pondere] = set()
+        queue: list[pg.Noeud_Pondere] = []
 
         queue.append(root)
         visited.add(root)
 
         while len(queue) != 0:
-            current: pg.Noeud_Generation = queue.pop(0)
+            current: pg.Noeud_Pondere = queue.pop(0)
             noeuds.append(current)
 
             for v in current.voisins:
@@ -367,42 +369,4 @@ def interface() -> None:
     initialiser()
 
 if __name__ == "__main__":
-    n0 = pg.Noeud_Generation(0)
-    n1 = pg.Noeud_Generation(1)
-    n2 = pg.Noeud_Generation(2)
-    n3 = pg.Noeud_Generation(3)
-    n4 = pg.Noeud_Generation(4)
-    n5 = pg.Noeud_Generation(5)
-
-    n0.add_voisin(n1)
-    n0.add_voisin(n2)
-    n0.add_voisin(n3)
-
-    n1.add_voisin(n2)
-    n1.add_voisin(n4)
-    n1.add_voisin(n5)
-
-    n0_pondere = attribuer_poids(n0)
-
-    noeuds: list[pg.Noeud_Pondere] = []
-
-    visited: set[pg.Noeud_Pondere] = set()
-    queue: list[pg.Noeud_Pondere] = []
-
-    queue.append(n0_pondere)
-    visited.add(n0_pondere)
-
-    while len(queue) != 0:
-        current: pg.Noeud_Pondere = queue.pop(0)
-        noeuds.append(current)
-
-        for v in current.voisins:
-            if v not in visited:
-                queue.append(v)
-                visited.add(v)
-
-    graphe = pg.Graph()
-    graphe.add_noeuds(noeuds)
-
-    print(graphe)
-    graphe.afficher()
+    interface()
