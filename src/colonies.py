@@ -4,7 +4,7 @@ import tkinter as tk
 import pygame
 
 from Fourmis import Ouvriere, Soldat
-from src.config import BLACK, trouver_font, WHITE
+from config import BLACK, trouver_font, WHITE, AQUA
 
 
 class Colonie:
@@ -18,6 +18,16 @@ class Colonie:
         self.ajouter()
 
         self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(5)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(2)]
+        self.texte_rects = {}
+        self.couleur_texte = WHITE
+        self.hover_texte = None
+
+        self.menu_surface = None
+        self.update_menu()
+
+
+
+
 
     def process(self):
         for f in self.fourmis:
@@ -34,26 +44,61 @@ class Colonie:
     def nombre_soldats(self):
         return len([f for f in self.fourmis if isinstance(f, Soldat)])
 
-    def menu_colonie(self, screen, tile_size):
+    def menu_fourmis(self, screen, type_fourmis, pos):
+        pass
+
+    def update_menu(self):
         font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
-        surface_menu = pygame.Surface((300,500))
-        surface_menu.fill(BLACK)
+        self.menu_surface = pygame.Surface((250, 375))
+        self.menu_surface.fill(BLACK)
 
         y_offset = 40
-
         info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
         info_sold = f"Soldats ({self.nombre_soldats()})"
-        info_vie = f"Vie: ({self.vie*100}%)"
-        info_nourr = f"Nourriture: ({self.nourriture})"
+        info_vie = f"Vie: {self.vie * 100}%"
+        info_nourr = f"Nourriture: {self.nourriture}"
+
+        menu_x = 1280 - self.menu_surface.get_width()
+        menu_y = 720 / 2 - self.menu_surface.get_height() / 2
 
         liste_textes = [info_ouvr, info_sold, info_vie, info_nourr]
 
         for texte in liste_textes:
-            _texte = font.render(texte, True, WHITE)
-            surface_menu.blit(_texte, (10, y_offset))
+            couleur = AQUA if texte.split()[0] == self.hover_texte else WHITE
+            _texte = font.render(texte, True, couleur)
+            _texte_rect = _texte.get_rect(center=(self.menu_surface.get_width() / 2, y_offset + _texte.get_height() / 2))
+            self.menu_surface.blit(_texte, (self.menu_surface.get_width() / 2 - _texte.get_width() / 2, y_offset))
+            if texte.startswith("Ouvrières") or texte.startswith("Soldats"):
+                self.texte_rects[texte.split()[0]] = _texte_rect.move(menu_x, menu_y)
             y_offset += 40
 
-        screen.blit(surface_menu, (1280-300,50))
+    def menu_colonie(self, screen):
+        self.update_menu()
+        if self.menu_surface is not None:
+
+            screen.blit(self.menu_surface, (1280 - self.menu_surface.get_width(), 720 / 2 - self.menu_surface.get_height() / 2))
+
+    def handle_click(self, pos, tile_x, tile_y, screen):
+        if tile_x == self.tuile_debut[0] and tile_y == self.tuile_debut[1]:
+            print(self.menu_surface is None)
+            self.menu_colonie(screen)
+            return
+
+        for key, rect in self.texte_rects.items():
+            if rect.collidepoint(pos):
+                self.couleur_texte = AQUA
+                self.update_menu()
+                return
+
+
+    def handle_hover(self, pos):
+        for key, rect in self.texte_rects.items():
+            if rect.collidepoint(pos):
+                self.hover_texte = key
+                self.update_menu()
+                return
+        self.hover_texte = None
+        self.update_menu()
 
 class AIColony:
     def __init__(self, colony_id, position):
