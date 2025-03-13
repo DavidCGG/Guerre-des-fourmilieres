@@ -3,6 +3,7 @@ import pygame
 import venv_setup
 from memory_profiler import profile
 import gc
+from colonies import Colonie
 
 from bouton import Bouton
 from camera import Camera
@@ -10,6 +11,8 @@ from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE
 from config import trouver_font
 from generation_map import GenerationMap
 from random_noise import RandomNoise
+from config import trouver_img
+from tuile import Terre, Sable, Eau, Montagne
 
 pygame.font.init()
 police = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22)
@@ -31,6 +34,8 @@ class Carte:
         self.in_menu = False
         self.close_menu = False
         self.moving = False
+        self.menu_colonie = False
+
         self.TILE_SIZE = 32
         self.MAP_WIDTH = 100
         self.MAP_HEIGHT = 100
@@ -48,8 +53,23 @@ class Carte:
         self.noise_gen = RandomNoise(self.MAP_WIDTH, self.MAP_HEIGHT, 255, extra=65)
         self.noise_gen.randomize()
         self.transformer_tuiles()
+        self.tuiles_debut = []
 
         self.placer_colonies(region_size=15, min_dist=20)
+        self.colonie_joeur = Colonie(self.get_colonies_coords()[self.rand_tuile_debut()], self.objets)
+        self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
+        self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
+
+    def rand_tuile_debut(self):
+        return random.randint(0,3)
+
+    def etoile_tuile_debut(self, start_x, start_y, end_x, end_y, tile_size):
+        x, y = self.colonie_joeur.tuile_debut
+        if start_x <= x < end_x and start_y <= y < end_y:
+            rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+            self.screen.blit(pygame.transform.scale(self.image_etoile, (tile_size, tile_size)), self.camera.apply(rect))
+
+
 
     def placer_colonies(self, min_dist=5, region_size=10):
         # On definit des regions aux coins de la carte
@@ -67,11 +87,16 @@ class Carte:
             while not placed:
                 x = random.randint(region_x, region_x + region_size - 1)
                 y = random.randint(region_y, region_y + region_size - 1)
-                if self.map_data[y][x].type == "terre" or self.map_data[y][x].type == "montagne":
+                if isinstance(self.map_data[y][x], (Terre, Montagne)):
                     self.map_data[y][x].tuile_debut = True
                     self.map_data[y][x].color = couleurs_colonies[curr_couleur]  # Red color for colonies
                     placed = True
                     curr_couleur += 1
+                    self.tuiles_debut.append((x, y))
+
+    def get_colonies_coords(self):
+        return self.tuiles_debut
+
 
     def transformer_tuiles(self):
         vals_noise = self.noise_gen.smoothNoise2d(smoothing_passes=20, upper_value_limit=1)
@@ -82,17 +107,20 @@ class Carte:
 
                 # Convert noise value to color
                 if col < int(255 * self.water_amount):  # water
+                    self.map_data[y][x] = Eau(x, y, self.TILE_SIZE, self.TILE_SIZE)
                     self.map_data[y][x].color = (0, 0, col)
-                    self.map_data[y][x].type = "eau"
                 elif col < int(255 * (self.water_amount + self.sand_amount)):  # sand
+
+                    self.map_data[y][x] = Sable(x, y, self.TILE_SIZE, self.TILE_SIZE)
                     self.map_data[y][x].color = (col, col, 0)
-                    self.map_data[y][x].type = "sable"
                 elif col < int(255 * (self.water_amount + self.sand_amount + self.land_amount)):  # land
+
+                    self.map_data[y][x] = Terre(x, y, self.TILE_SIZE, self.TILE_SIZE)
                     self.map_data[y][x].color = (0, col, 0)
-                    self.map_data[y][x].type = "terre"
                 else:
-                    self.map_data[y][x].color = (col, col, col)
-                    self.map_data[y][x].type = "montagne"
+                    self.map_data[y][x] = Montagne(x, y, self.TILE_SIZE, self.TILE_SIZE)
+                    self.map_data[y][x].color = (0, 0, 0)
+        print("Done: transformer_tuiles")
 
     def decouvrir_tuiles(self, x_tuile, y_tuile):
         for y in range(y_tuile - 2, y_tuile+3):
@@ -102,7 +130,6 @@ class Carte:
                         self.map_data[y][x].toggle_color()
 
     def draw_top_bar(self):
-
         bouton = Bouton(self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police, self.screen,self.objets)
         bouton.add_bordure(pygame.Color(192, 192, 192))
         pygame.draw.rect(self.screen, BLACK, (0, 0, self.size[0], 50))
@@ -121,25 +148,29 @@ class Carte:
                 tile.draw(self.screen, self.camera.apply(tile_rect), self.grid_mode)
 
     def menu_options(self):
-        self.objets.clear()
-        surface = pygame.Surface((300, 500))
-        surface.fill(BLACK)
-        police1 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
-        texte_render = police1.render("Options", True, WHITE)
-        police2 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
-        police_grids = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 26)
-        self.in_menu = True
+        if self.in_menu:
+            print("Retour")
+            self.retour()
+        else:
+            self.objets.clear()
+            surface = pygame.Surface((300, 500))
+            surface.fill(BLACK)
+            police1 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
+            texte_render = police1.render("Options", True, WHITE)
+            police2 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
+            police_grids = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 26)
+            self.in_menu = True
 
 
-        grid_mode_str = "ON" if self.grid_mode else "OFF"
-        surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
-        self.screen.blit(surface, (self.size[0] / 2 - 150, self.size[1] / 2 - 250))
-        bouton_retour = Bouton(self.size[0] / 2, self.size[1] / 2 + 200, self.size[0] / 8, self.size[1] / 15,
-                               'Retour', self.retour, police2, self.screen, self.objets)
-        bouton_grid_mode = Bouton(self.size[0] / 2, self.size[1] / 2 + 100, self.size[0] / 8, self.size[1] / 15,
-                                  f'Grids: {grid_mode_str}', self.toggle_grid, police_grids, self.screen, self.objets)
-        bouton_quitter = Bouton(self.size[0] / 2, self.size[1] / 2, self.size[0] / 8, self.size[1] / 15,
-                                'Quitter', self.quitter, police2, self.screen, self.objets)
+            grid_mode_str = "ON" if self.grid_mode else "OFF"
+            surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
+            self.screen.blit(surface, (self.size[0] / 2 - 150, self.size[1] / 2 - 250))
+            bouton_retour = Bouton(self.size[0] / 2, self.size[1] / 2 + 200, self.size[0] / 8, self.size[1] / 15,
+                                   'Retour', self.retour, police2, self.screen, self.objets)
+            bouton_grid_mode = Bouton(self.size[0] / 2, self.size[1] / 2 + 100, self.size[0] / 8, self.size[1] / 15,
+                                      f'Grids: {grid_mode_str}', self.toggle_grid, police_grids, self.screen, self.objets)
+            bouton_quitter = Bouton(self.size[0] / 2, self.size[1] / 2, self.size[0] / 8, self.size[1] / 15,
+                                    'Quitter', self.quitter, police2, self.screen, self.objets)
 
     def toggle_grid(self):
         self.grid_mode = not self.grid_mode
@@ -162,9 +193,6 @@ class Carte:
         self.running = False
         self.objets.clear()
 
-    def est_visible(self, obj):
-        return self.camera.apply(obj.rect).collidepoint(self.screen.get_rect())
-
     def handle_event(self, event):
         if event.type == pygame.QUIT:
             self.running = False
@@ -173,6 +201,8 @@ class Carte:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self.menu_options() if not self.in_menu else self.retour()
+            elif event.key == pygame.K_q:
+                self.menu_colonie = not self.menu_colonie
 
         elif event.type == pygame.MOUSEBUTTONDOWN and not self.in_menu:
 
@@ -223,18 +253,21 @@ class Carte:
 
 
 
-                if not self.in_menu and self.moving:
+                if not self.in_menu:
                     self.screen.fill(BLACK)
                     self.draw_tiles(start_x, start_y, end_x, end_y, tile_size)
 
-
+                self.etoile_tuile_debut(start_x, start_y, end_x, end_y, tile_size)
                 self.draw_top_bar()
+
+                if self.menu_colonie:
+                    self.colonie_joeur.menu_colonie(self.screen, tile_size)
 
                 for obj in self.objets:
                     obj.process()
 
                 pygame.display.update()
-                self.clock.tick(30)
+                self.clock.tick(60)
 
 
         finally:

@@ -78,6 +78,9 @@ class Fourmis(ABC):
         else:
             self.facing = 1
 
+    def get_tuile(self, tile_size):
+        return int(self.centre_x // tile_size), int(self.centre_y // tile_size)
+
     def pathfind_mouvement(self):
         pass
 
@@ -87,6 +90,11 @@ class Ouvriere(Fourmis):
         super().__init__(hp=10, atk=2, scale=scale, x0=x0, y0=y0, mouvement=mouvement)
         self.base_speed = 3
         self.speed = self.base_speed * self.scale
+        self.size = 1
+
+
+    def process(self):
+        pass
 
     def attack(self, other):
         other.hp -= self.atk
@@ -96,7 +104,9 @@ class Soldat(Fourmis):
         super().__init__(hp=25, atk=5, scale=scale, x0=x0, y0=y0, mouvement=mouvement)
         self.base_speed = 1.5
         self.speed = self.base_speed * self.scale
-
+        self.size = 2 # prend 2 places dans le groupe
+    def process(self):
+        pass
     def attack(self, other):
         other.hp -= self.atk
 
@@ -145,3 +155,19 @@ class FourmisSprite(pygame.sprite.Sprite):
         else:
             self.image = self.frames_LEFT[self.current_frame]
         self.rect.center = (self.fourmis.centre_x, self.fourmis.centre_y)
+
+class Groupe:
+    def __init__(self):
+        self.fourmis = []
+        self.max_capacite = 5
+
+    def ajouter_fourmis(self, fourmis):
+        if self.get_size() + fourmis.size <= self.max_capacite:
+            self.fourmis.append(fourmis)
+        else: print("pas assez de place")
+
+    def get_size(self):
+        tot = 0
+        for fourmi in self.fourmis:
+            tot += fourmi.size
+        return tot

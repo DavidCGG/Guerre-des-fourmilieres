@@ -75,10 +75,16 @@ def nouvelle_partie():
 
 def menu_options():
     print('menu options')
-    objets.clear()
-    #pygame.display.update()
     screen.fill('green')
-    bouton_retour = Bouton(screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal, policeBouton, screen,objets)
+    objets.clear()
+
+    pygame.display.update()  # Update the screen immediately after filling
+
+    bouton_retour = Bouton(screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal, policeBouton, screen, objets)
+
+    for obj in objets:
+        print(obj.texte)
+    pygame.display.flip()
 
 
 def quitter():
@@ -116,7 +122,7 @@ while running:
     for object in objets:
         object.process()
 
-    pygame.display.flip()
+    pygame.display.update()
 
     dt = clock.tick() / 1000
 

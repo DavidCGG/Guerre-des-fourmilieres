@@ -28,13 +28,16 @@ class Bouton:
         self.couleur_bordure = None
 
     def process(self):
+
         position_souris = pygame.mouse.get_pos()
+        souris_clique = pygame.mouse.get_pressed(num_buttons=3)
+
         self.surface.fill(self.couleurs['normale'])
         if self.rectangle.collidepoint(position_souris):
             #survol:
             self.surface.fill(self.couleurs['survol'])
 
-            if pygame.mouse.get_pressed(num_buttons=3)[0]:
+            if souris_clique[0]:
                 #sur click tenu :
                 self.surface.fill(self.couleurs['clické'])
                 if not self.deja_clicke:
@@ -42,12 +45,13 @@ class Bouton:
                     self.deja_clicke=True
             else:
                 self.deja_clicke=False
-        self.texte_render = self.police.render(self.texte,True,"black")
+        if self in self.objets:
+            self.texte_render = self.police.render(self.texte,True,"black")
 
-        self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2])
-        self.screen.blit(self.surface,self.rectangle)
-        if self.avec_bordure:
-            pygame.draw.rect(self.screen,self.couleur_bordure,self.rectangle,3)
+            self.surface.blit(self.texte_render,[self.rectangle.width/2-self.texte_render.get_rect().width/2,self.rectangle.height/2-self.texte_render.get_rect().height/2])
+            self.screen.blit(self.surface,self.rectangle)
+            if self.avec_bordure:
+                pygame.draw.rect(self.screen,self.couleur_bordure,self.rectangle,3)
     def ajouter(self):
         if not any(isinstance(obj, Bouton) and obj.texte == self.texte for obj in self.objets):
             self.objets.append(self)

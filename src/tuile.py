@@ -14,6 +14,8 @@ class Tuile:
         self.proprietaire = None
         self.val_noise = 0
         self.type = None
+        self.fourmis = []
+        self.en_utilisation = False #
 
 
     def toggle_color(self):
@@ -26,13 +28,28 @@ class Tuile:
         if grid_mode:
             pygame.draw.rect(screen, BLACK, rect, 1)
 
+    def get_fourmis(self):
+        if self.decouverte:
+            return self.fourmis
 
-class Eau:
-    def __init__(self):
+class Eau(Tuile):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+    def process(self):
         pass
-class Sable:
-    def __init__(self):
+class Sable(Tuile):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+    def process(self):
         pass
-class Terre:
-    def __init__(self):
+class Terre(Tuile):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+    def process(self):
+        pass
+class Montagne(Tuile):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+
+    def process(self):
         pass
