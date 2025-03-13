@@ -13,7 +13,7 @@ taux_std_dev: float = 1/3
 initial_std_dev: float = 1
 
 def generer_arbre() -> pg.Noeud_Generation:
-    #creer les enfants d'un noeud
+    #Creer les enfants d'un noeud
     def generer_enfants(noeud: pg.Noeud_Generation) -> None:
         nonlocal nb_next_niv
         nonlocal nb_noeuds
@@ -28,7 +28,7 @@ def generer_arbre() -> pg.Noeud_Generation:
             queue.append(nouveauNoeud)
             nb_next_niv += 1
 
-    #helper de generer_enfants
+    #Helper de generer_enfants
     def nb_enfants() -> int:
         mean : float = taux_mean * profondeur + initial_mean
         std_div: float = taux_std_dev * profondeur + initial_std_dev
@@ -67,34 +67,24 @@ def generer_arbre() -> pg.Noeud_Generation:
     return root
 
 def connecter_branches(root: pg.Noeud_Generation) -> pg.Noeud_Generation:
-    #connecte ou non le noeud à un noeud à droite
-    def connecter_noeud(noeud: pg.Noeud_Generation) -> None:
+    #Connecte ou non le noeud à un noeud à droite
+    def connecter_noeud(noeud: pg.Noeud_Generation, _, __) -> None:
         if random.random() > connect_chance:
             return
         
-        voisin: pg.Noeud_Generation = trouver_voisin_droite(noeud)
+        voisin: pg.Noeud_Generation = trouver_voisin_droite(noeud, root)
 
         if voisin != None:
             noeud.add_voisin(voisin)
 
-    #retourne le voisin de droite d'un noeud à un certain niveau ou None s'il n'existe pas
-    def trouver_voisin_droite(noeud: pg.Noeud_Generation) -> pg.Noeud_Generation:
+    #Retourne le voisin de droite d'un noeud à un certain niveau ou None s'il n'existe pas
+    def trouver_voisin_droite(noeud: pg.Noeud_Generation, root: pg.Noeud_Generation) -> pg.Noeud_Generation:
         profondeur_noeud: int = -1
         profondeur_cible: int = -1
         voisin = None
 
-        profondeur: int = 0
-        nb_niv: int = 1
-        nb_next_niv: int = 0
-
-        visited: set[pg.Noeud_Generation] = set()
-        queue: list[pg.Noeud_Generation] = []
-
-        queue.append(root)
-        visited.add(root)
-
-        while len(queue) != 0:
-            current = queue.pop(0)
+        def trouver_voisin_droite_helper(current: pg.Noeud_Generation, profondeur: int, _) -> None:
+            nonlocal profondeur_noeud, profondeur_cible, voisin
 
             if current.nb == noeud.nb:
                 profondeur_noeud = profondeur
@@ -102,169 +92,76 @@ def connecter_branches(root: pg.Noeud_Generation) -> pg.Noeud_Generation:
                 profondeur_cible = profondeur
                 voisin = current
 
-            for v in current.voisins:
-                if v not in visited:
-                    queue.append(v)
-                    visited.add(v)
-                    nb_next_niv += 1
+        bfs(root, trouver_voisin_droite_helper)
 
-            nb_niv -= 1
-            if nb_niv == 0:
-                profondeur += 1
-                nb_niv = nb_next_niv
-                nb_next_niv = 0
+        return voisin if profondeur_noeud == profondeur_cible else None
 
-        if profondeur_noeud != profondeur_cible:
-            return None
-
-        return voisin
-
-    #Initialisation des variables
-    visited: set[pg.Noeud_Generation] = set()
-    visited.add(root)
-
-    stack: list[pg.Noeud_Generation] = []
-    stack.append(root)
-
-    #Navigation dans l'arbre
-    while len(stack) != 0:
-        current: pg.Noeud_Generation = stack.pop()
-
-        for v in current.voisins:
-            if v not in visited:
-                stack.append(v)
-                visited.add(v)
-
-        connecter_noeud(current)
+    bfs(root, connecter_noeud)
 
 #Utilise une méthode de disposition avec ressorts
 def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
     #Créer aléatoirment les coordonnées des noeuds
-    def initialiser_coord() -> pg.Noeud_Pondere:
-
-        visited: set[pg.Noeud_Generation] = set()
-        visited.add(root)
-
-        queue: list[pg.Noeud_Generation] = []
-        queue.append(root)
-
-        profondeur: int = 0
-        nb_niv: int = 1
-        nb_next_niv: int = 0
-        nb_niv_precedents: int = 0
-
+    def initialiser_coord(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
         profondeur_max = trouver_profondeur(root)
-        root_pondere = pg.Noeud_Pondere()
-
-        queue_pondere: list[pg.Noeud_Pondere] = []
-        queue_pondere.append(root_pondere)
-
+        root_pondere = None
         lien_graphe: dict[pg.Noeud_Generation, pg.Noeud_Pondere] = dict()
 
-        #Navigation dans l'arbre
-        while len(queue) != 0:
-            current = queue.pop(0)
-            current_pondere = queue_pondere.pop(0)
+        def initialiser_lien_graphe(current: pg.Noeud_Generation, _, __) -> None:
+            nonlocal root_pondere, lien_graphe
 
-            current_pondere.coord = (nb_niv_precedents - current.nb, profondeur_max - profondeur)
+            current_pondere = pg.Noeud_Pondere()
+            lien_graphe[current] = current_pondere
+
+            if current == root:
+                root_pondere = current_pondere
+
+        def initialiser_graphe_pondere(current: pg.Noeud_Generation, _, __) -> None:
+            current_pondere = lien_graphe[current]
 
             for v in current.voisins:
-                if v not in lien_graphe:
-                    lien_graphe[v] = pg.Noeud_Pondere()
-                    current_pondere.add_voisin(lien_graphe[v])
-                else:
-                    current_pondere.add_voisin(lien_graphe[v])
+                current_pondere.add_voisin(lien_graphe[v])
 
-                if v not in visited:
-                    queue.append(v)
-                    queue_pondere.append(lien_graphe[v])
-                    visited.add(v)
-                    nb_next_niv += 1 
+        def initialiser_coord_helper(current: pg.Noeud_Generation, profondeur: int, nb_niv_precedents: int) -> None:
+            current_pondere = lien_graphe[current]
+            current_pondere.coord = (nb_niv_precedents - current.nb, profondeur_max - profondeur)
 
-            nb_niv -= 1
-            if nb_niv == 0:
-                profondeur += 1
-                nb_niv_precedents += nb_next_niv
-
-                nb_niv = nb_next_niv
-                nb_next_niv = 0
-
+        bfs(root, initialiser_lien_graphe)
+        bfs(root, initialiser_graphe_pondere)
+        bfs(root, initialiser_coord_helper)
         return root_pondere
 
     def trouver_profondeur(root: pg.Noeud_Generation) -> int:
-        visited: set[pg.Noeud_Generation] = set()
-        visited.add(root)
+        profondeur_max: int = 0
 
-        queue: list[pg.Noeud_Generation] = []
-        queue.append(root)
+        def trouver_profondeur_helper(_, profondeur, __)-> None:
+            nonlocal profondeur_max
+            profondeur_max = max(profondeur_max, profondeur)
 
-        profondeur: int = 0
-        nb_niv: int = 1
-        nb_next_niv: int = 0
-
-        while len(queue) != 0:
-            current = queue.pop(0)
-
-            for v in current.voisins:
-                if v not in visited:
-                    queue.append(v)
-                    visited.add(v)
-                    nb_next_niv += 1
-
-            nb_niv -= 1
-            if nb_niv == 0:
-                profondeur += 1
-                nb_niv = nb_next_niv
-                nb_next_niv = 0
-
-        return profondeur
+        bfs(root, trouver_profondeur_helper)
+        return profondeur_max
 
     #Applique les forces sur tous noeuds
-    def calculer_force() -> None:
-        visited: set[pg.Noeud_Pondere] = set()
-        visited.add(root_pondere)
-
-        queue: list[pg.Noeud_Pondere] = []
-        queue.append(root_pondere)
-
-        #Navigation dans l'arbre
-        while len(queue) != 0:
-            current = queue.pop(0)
-
-            calculer_repulsion(current)
-            calculer_attraction(current)
-
-            for v in current.voisins:
-                if v not in visited:
-                    queue.append(v)
-                    visited.add(v)
+    def calculer_force(root_pondere: pg.Noeud_Pondere) -> None:
+        def calculer_force_helper(noeud: pg.Noeud_Pondere, _, __) -> None:
+            calculer_repulsion(noeud, root_pondere)
+            calculer_attraction(noeud)
+        
+        bfs(root_pondere, calculer_force_helper)
 
     #Applique une force de repulsion sur un noeud
-    def calculer_repulsion(noeud: pg.Noeud_Pondere) -> None:
-        visited: set[pg.Noeud_Pondere] = set()
-        visited.add(root_pondere)
-
-        queue: list[pg.Noeud_Pondere] = []
-        queue.append(root_pondere)
-
-        #Navigation dans l'arbre
-        while len(queue) != 0:
-            current = queue.pop(0)
-
-            if current == noeud:
-                continue
-
-            dx = noeud.coord[0] - current.coord[0]
-            dy = noeud.coord[1] - current.coord[1]
+    def calculer_repulsion(noeud: pg.Noeud_Pondere, root_pondere: pg.Noeud_Pondere) -> None:
+        def calculer_repulsion_helper(autre: pg.Noeud_Pondere, _, __) -> None:
+            if autre == noeud:
+                return
+            
+            dx = noeud.coord[0] - autre.coord[0]
+            dy = noeud.coord[1] - autre.coord[1]
             dist = (dx ** 2 + dy ** 2) ** 0.5
-            force_x, force_y = 0.01 * dx / (dist ** 2), 0.01 * dy / (dist ** 2)
 
+            force_x, force_y = 0.01 * dx / (dist ** 2), 0.01 * dy / (dist ** 2)
             noeud.coord = (noeud.coord[0] + force_x, noeud.coord[1] + force_y)
 
-            for v in current.voisins:
-                if v not in visited:
-                    queue.append(v)
-                    visited.add(v)
+        bfs(root_pondere, calculer_repulsion_helper)
 
     #Applique une force d'attraction sur un noeud
     def calculer_attraction(noeud: pg.Noeud_Pondere) -> None:
@@ -275,11 +172,9 @@ def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
 
             noeud.coord = (noeud.coord[0] + force_x, noeud.coord[1] + force_y)
 
-    #Initialisation des variables
-    root_pondere = initialiser_coord()
-
+    root_pondere = initialiser_coord(root)
     for _ in range(100):
-        calculer_force()
+        calculer_force(root_pondere)
 
     return root_pondere
 
@@ -340,26 +235,15 @@ def interface() -> None:
         plt.show()
 
     def generer_graphe() -> pg.Graph:
+        def collecter_noeuds(root: pg.Noeud_Pondere, _, __) -> None:
+            noeuds.append(root)
+
         root = generer_arbre()
         connecter_branches(root)
         root = attribuer_poids(root)
 
         noeuds: list[pg.Noeud_Pondere] = []
-
-        visited: set[pg.Noeud_Pondere] = set()
-        queue: list[pg.Noeud_Pondere] = []
-
-        queue.append(root)
-        visited.add(root)
-
-        while len(queue) != 0:
-            current: pg.Noeud_Pondere = queue.pop(0)
-            noeuds.append(current)
-
-            for v in current.voisins:
-                if v not in visited:
-                    queue.append(v)
-                    visited.add(v)
+        bfs(root, collecter_noeuds)
 
         graphe = pg.Graph()
         graphe.add_noeuds(noeuds)
@@ -367,6 +251,36 @@ def interface() -> None:
         return graphe
     
     initialiser()
+
+def bfs(start, action=None) -> None:
+    queue = [start]
+    visited = set()
+    visited.add(start)
+
+    profondeur: int = 0
+    nb_niv: int = 1
+    nb_next_niv: int = 0
+    nb_niv_precedents: int = 0
+
+    while queue:
+        current = queue.pop(0)
+
+        if action:
+            action(current, profondeur, nb_niv_precedents)
+
+        for v in current.voisins:
+            if v not in visited:
+                queue.append(v)
+                visited.add(v)
+                nb_next_niv += 1
+
+        nb_niv -= 1
+        if nb_niv == 0:
+            profondeur += 1
+            nb_niv_precedents += nb_next_niv
+            nb_niv = nb_next_niv
+            nb_next_niv = 0
+
 
 if __name__ == "__main__":
     interface()
