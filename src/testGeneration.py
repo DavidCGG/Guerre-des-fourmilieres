@@ -6,6 +6,7 @@ import random
 from numpy.random import normal
 
 #Variables globales
+nb_noeuds_cible: int = 10
 connect_chance: float = 0.3
 taux_mean: float = -1
 initial_mean: float = 3
@@ -14,22 +15,24 @@ initial_std_dev: float = 1
 
 def generer_arbre() -> pg.Noeud_Generation:
     #Creer les enfants d'un noeud
-    def generer_enfants(noeud: pg.Noeud_Generation) -> None:
-        nonlocal nb_next_niv
+    def generer_enfants(current: pg.Noeud_Generation, profondeur: int, _) -> None:
         nonlocal nb_noeuds
 
-        nb = nb_enfants()
+        if len(current.voisins) != 0: #Évite de générer des enfants inutilement lors d'une ennième itération
+            return
 
+        nb = nb_enfants(profondeur)
         for i in range(nb):
-            nouveauNoeud = pg.Noeud_Generation(nb_noeuds)
+            if nb_noeuds >= nb_noeuds_cible:
+                return
+
+            enfant = pg.Noeud_Generation(nb_noeuds)
             nb_noeuds += 1
 
-            noeud.add_voisin(nouveauNoeud)
-            queue.append(nouveauNoeud)
-            nb_next_niv += 1
+            current.add_voisin(enfant)
 
     #Helper de generer_enfants
-    def nb_enfants() -> int:
+    def nb_enfants(profondeur: int) -> int:
         mean : float = taux_mean * profondeur + initial_mean
         std_div: float = taux_std_dev * profondeur + initial_std_dev
 
@@ -42,27 +45,11 @@ def generer_arbre() -> pg.Noeud_Generation:
 
         return int(nbAl)
     
-    #Initialisation des variables
     root = pg.Noeud_Generation(0)
-    queue: list[pg.Noeud_Generation] = []
-
     nb_noeuds = 1
-    profondeur: int = 0
-    nb_niv: int = 1
-    nb_next_niv: int = 0
 
-    #Navigation dans l'arbre
-    queue.append(root)
-
-    while len(queue) != 0:
-        current = queue.pop(0)
-        generer_enfants(current)
-
-        nb_niv -= 1
-        if nb_niv == 0:
-            profondeur += 1
-            nb_niv = nb_next_niv
-            nb_next_niv = 0
+    while nb_noeuds < nb_noeuds_cible:
+        bfs(root, generer_enfants)
     
     return root
 
@@ -98,7 +85,7 @@ def connecter_branches(root: pg.Noeud_Generation) -> pg.Noeud_Generation:
 
     bfs(root, connecter_noeud)
 
-#Utilise une méthode de disposition avec ressorts
+#Utilise un algorithme de disposition par forces
 def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
     #Créer aléatoirment les coordonnées des noeuds
     def initialiser_coord(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
@@ -184,8 +171,8 @@ def interface() -> None:
         root.geometry("500x300")
         root.title("Configuration des paramètres de génération de graphe")
 
-        labels = ["Chance de connection", "Taux médianne", "Médianne Initiale", "Taux écart-type", "Écart-type initial"]
-        default_values: list[float] = [connect_chance, taux_mean, initial_mean, taux_std_dev, initial_std_dev]
+        labels = ["Nombre de noeuds", "Chance de connection", "Taux médianne", "Médianne Initiale", "Taux écart-type", "Écart-type initial"]
+        default_values: list[float] = [nb_noeuds_cible, connect_chance, taux_mean, initial_mean, taux_std_dev, initial_std_dev]
         entry_vars: list[tk.StringVar] = []
 
         for i, label in enumerate(labels):
@@ -204,22 +191,24 @@ def interface() -> None:
         root.mainloop()
 
     def modifier_valeur(index: int, var: tk.StringVar):
-        global connect_chance, taux_mean, initial_mean, taux_std_dev, initial_std_dev
+        global nb_noeuds_cible, connect_chance, taux_mean, initial_mean, taux_std_dev, initial_std_dev
 
         try:
             new_value = float(var.get())
         except ValueError:
             return
 
-        if index == 0:
-            connect_chance = new_value
+        if index ==0:
+            nb_noeuds_cible = int(new_value)
         elif index == 1:
-            taux_mean = new_value
+            connect_chance = new_value
         elif index == 2:
-            initial_mean = new_value
+            taux_mean = new_value
         elif index == 3:
-            taux_std_dev = new_value
+            initial_mean = new_value
         elif index == 4:
+            taux_std_dev = new_value
+        elif index == 5:
             initial_std_dev = new_value
 
     def afficher_graphes() -> None:
