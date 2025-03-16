@@ -14,15 +14,35 @@ taux_std_dev: float = 1/3
 initial_std_dev: float = 1
 
 def generer_arbre() -> pg.Noeud_Generation:
-    #Creer les enfants d'un noeud
-    def generer_enfants(current: pg.Noeud_Generation, profondeur: int, _) -> None:
-        nonlocal nb_noeuds
+    def traverser_arbre(root: pg.Noeud_Generation) -> None:
+        nonlocal nb_next_niv, queue
+
+        queue.append(root)
+
+        profondeur: int = 0
+        nb_restants: int = 1
+        nb_next_niv = 0
+
+        while queue:
+            current = queue.pop(0)
+
+            generer_enfants(current, profondeur)
+
+            nb_restants -= 1
+            if nb_restants == 0:
+                profondeur += 1
+                nb_restants = nb_next_niv
+                nb_next_niv = 0
+
+    #Créer les enfants d'un noeud
+    def generer_enfants(current: pg.Noeud_Generation, profondeur: int) -> None:
+        nonlocal nb_noeuds, nb_next_niv, queue
 
         if len(current.voisins) != 0: #Évite de générer des enfants inutilement lors d'une ennième itération
             return
 
         nb = nb_enfants(profondeur)
-        for i in range(nb):
+        for _ in range(nb):
             if nb_noeuds >= nb_noeuds_cible:
                 return
 
@@ -30,6 +50,9 @@ def generer_arbre() -> pg.Noeud_Generation:
             nb_noeuds += 1
 
             current.add_voisin(enfant)
+
+            queue.append(enfant)
+            nb_next_niv += 1
 
     #Helper de generer_enfants
     def nb_enfants(profondeur: int) -> int:
@@ -49,7 +72,9 @@ def generer_arbre() -> pg.Noeud_Generation:
     nb_noeuds = 1
 
     while nb_noeuds < nb_noeuds_cible:
-        bfs(root, generer_enfants)
+        queue: list[pg.Noeud_Generation] = []
+        nb_next_niv: int = -1
+        traverser_arbre(root)
     
     return root
 
@@ -110,7 +135,7 @@ def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
 
         def initialiser_coord_helper(current: pg.Noeud_Generation, profondeur: int, nb_niv_precedents: int) -> None:
             current_pondere = lien_graphe[current]
-            current_pondere.coord = (nb_niv_precedents - current.nb, profondeur_max - profondeur)
+            current_pondere.coord = (current.nb - nb_niv_precedents, profondeur_max - profondeur)
 
         bfs(root, initialiser_lien_graphe)
         bfs(root, initialiser_graphe_pondere)
@@ -127,7 +152,7 @@ def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
         bfs(root, trouver_profondeur_helper)
         return profondeur_max
 
-    #Applique les forces sur tous noeuds
+    #Applique les forces sur tous les noeuds
     def calculer_force(root_pondere: pg.Noeud_Pondere) -> None:
         def calculer_force_helper(noeud: pg.Noeud_Pondere, _, __) -> None:
             calculer_repulsion(noeud, root_pondere)
@@ -160,6 +185,7 @@ def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
             noeud.coord = (noeud.coord[0] + force_x, noeud.coord[1] + force_y)
 
     root_pondere = initialiser_coord(root)
+
     for _ in range(100):
         calculer_force(root_pondere)
 
@@ -222,22 +248,6 @@ def interface() -> None:
             graphe.afficher(ax = axes[i//2, i%2])
 
         plt.show()
-
-    def generer_graphe() -> pg.Graph:
-        def collecter_noeuds(root: pg.Noeud_Pondere, _, __) -> None:
-            noeuds.append(root)
-
-        root = generer_arbre()
-        connecter_branches(root)
-        root = attribuer_poids(root)
-
-        noeuds: list[pg.Noeud_Pondere] = []
-        bfs(root, collecter_noeuds)
-
-        graphe = pg.Graph()
-        graphe.add_noeuds(noeuds)
-
-        return graphe
     
     initialiser()
 
@@ -247,6 +257,7 @@ def bfs(start, action=None) -> None:
     visited.add(start)
 
     profondeur: int = 0
+    nb_restants: int = 1
     nb_niv: int = 1
     nb_next_niv: int = 0
     nb_niv_precedents: int = 0
@@ -263,12 +274,29 @@ def bfs(start, action=None) -> None:
                 visited.add(v)
                 nb_next_niv += 1
 
-        nb_niv -= 1
-        if nb_niv == 0:
+        nb_restants -= 1
+        if nb_restants == 0:
             profondeur += 1
-            nb_niv_precedents += nb_next_niv
+            nb_niv_precedents += nb_niv
             nb_niv = nb_next_niv
+            nb_restants = nb_next_niv
             nb_next_niv = 0
+
+def generer_graphe() -> pg.Graph:
+        def collecter_noeuds(root: pg.Noeud_Pondere, _, __) -> None:
+            noeuds.append(root)
+
+        root = generer_arbre()
+        connecter_branches(root)
+        root = attribuer_poids(root)
+
+        noeuds: list[pg.Noeud_Pondere] = []
+        bfs(root, collecter_noeuds)
+
+        graphe = pg.Graph()
+        graphe.add_noeuds(noeuds)
+
+        return graphe
 
 
 if __name__ == "__main__":

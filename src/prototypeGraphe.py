@@ -29,8 +29,12 @@ class Noeud_Pondere:
         self.voisins.pop(voisin)
 
     def __str__(self):
-        return f"{self.coord=}, {self.voisins=}"
+        s_voisins = ""
+        for v, p in self.voisins.items():
+            s_voisins += f"({v.coord[0]:.2f}, {v.coord[1]:.2f}); "
 
+        return f"Coord: ({self.coord[0]:.2f}, {self.coord[1]:.2f}), Voisins: {s_voisins}"
+        
 class Graph:
     def __init__(self, noeuds = None):
         self.noeuds = noeuds if noeuds is not None else set()
