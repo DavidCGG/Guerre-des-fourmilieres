@@ -14,30 +14,12 @@ taux_std_dev: float = 1/3
 initial_std_dev: float = 1
 
 def generer_arbre() -> pg.Noeud_Generation:
-    def traverser_arbre(root: pg.Noeud_Generation) -> None:
-        nonlocal nb_next_niv, queue
-
-        queue.append(root)
-
-        profondeur: int = 0
-        nb_restants: int = 1
-        nb_next_niv = 0
-
-        while queue:
-            current = queue.pop(0)
-
-            generer_enfants(current, profondeur)
-
-            nb_restants -= 1
-            if nb_restants == 0:
-                profondeur += 1
-                nb_restants = nb_next_niv
-                nb_next_niv = 0
-
     #Créer les enfants d'un noeud
-    def generer_enfants(current: pg.Noeud_Generation, profondeur: int) -> None:
-        nonlocal nb_noeuds, nb_next_niv, queue
+    def generer_enfants(current: pg.Noeud_Generation, infos: int) -> None:
+        nonlocal nb_noeuds
 
+        profondeur, _, __ = infos
+        
         if len(current.voisins) != 0: #Évite de générer des enfants inutilement lors d'une ennième itération
             return
 
@@ -50,9 +32,6 @@ def generer_arbre() -> pg.Noeud_Generation:
             nb_noeuds += 1
 
             current.add_voisin(enfant)
-
-            queue.append(enfant)
-            nb_next_niv += 1
 
     #Helper de generer_enfants
     def nb_enfants(profondeur: int) -> int:
@@ -72,9 +51,7 @@ def generer_arbre() -> pg.Noeud_Generation:
     nb_noeuds = 1
 
     while nb_noeuds < nb_noeuds_cible:
-        queue: list[pg.Noeud_Generation] = []
-        nb_next_niv: int = -1
-        traverser_arbre(root)
+        bfs(root, generer_enfants)
     
     return root
 
