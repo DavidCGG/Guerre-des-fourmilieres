@@ -169,6 +169,3 @@ class Graph:
 
             s += f"Coord: ({n.coord[0]:.2f}, {n.coord[1]:.2f}), Voisins: {s_voisins}\n"
         return s
-    
-if __name__ == "__main__":
-    pass

@@ -1,20 +1,8 @@
 import prototypeGraphe as pg
-import tkinter as tk
-import networkx as nx
-import matplotlib.pyplot as plt
 import random
 from numpy.random import normal
 
-#Variables globales
-nb_iter_forces: int = 0
-nb_noeuds_cible: int = 10
-connect_chance: float = 0.3
-taux_mean: float = -1
-initial_mean: float = 3
-taux_std_dev: float = 1/3
-initial_std_dev: float = 1
-
-def generer_arbre() -> pg.Noeud_Generation:
+def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, taux_std_dev: float, initial_std_dev: float) -> pg.Noeud_Generation:
     def traverser_arbre(root: pg.Noeud_Generation, noeuds: list[pg.Noeud_Generation]) -> None:
         i: int = 0
         while i < len(noeuds):
@@ -63,7 +51,7 @@ def generer_arbre() -> pg.Noeud_Generation:
     
     return root
 
-def connecter_branches(root: pg.Noeud_Generation) -> pg.Noeud_Generation:
+def connecter_branches(root: pg.Noeud_Generation, connect_chance: float) -> pg.Noeud_Generation:
     #Connecte ou non le noeud à un noeud à droite
     def connecter_noeud(noeud: pg.Noeud_Generation, _) -> None:
         if random.random() > connect_chance:
@@ -98,7 +86,7 @@ def connecter_branches(root: pg.Noeud_Generation) -> pg.Noeud_Generation:
     bfs(root, connecter_noeud)
 
 #Utilise un algorithme de disposition par forces
-def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
+def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_Pondere:
     #Créer aléatoirment les coordonnées des noeuds
     def initialiser_coord(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
         profondeur_max = trouver_profondeur(root)
@@ -183,66 +171,6 @@ def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
 
     return root_pondere
 
-def interface() -> None:
-    def initialiser() -> None:
-        root = tk.Tk()
-        root.geometry("500x300")
-        root.title("Configuration des paramètres de génération de graphe")
-
-        labels = ["Nombre de noeuds", "Chance de connection", "Taux médianne", "Médianne Initiale", "Taux écart-type", "Écart-type initial"]
-        default_values: list[float] = [nb_noeuds_cible, connect_chance, taux_mean, initial_mean, taux_std_dev, initial_std_dev]
-        entry_vars: list[tk.StringVar] = []
-
-        for i, label in enumerate(labels):
-            tk.Label(root, text=label).grid(row=i, column=0, padx=10, pady=5)
-            
-            var = tk.StringVar(value=str(default_values[i]))
-            var.trace_add("write", lambda name, index, mode, i=i, v=var: modifier_valeur(i, v))
-
-            entry = tk.Entry(root, textvariable=var)
-            entry.grid(row=i, column=1, padx=10, pady=5)
-            
-            entry_vars.append(var)
-
-        tk.Button(root, text="Générer des graphes", command=afficher_graphes).grid(row=6, column=0, columnspan=2, pady=10)
-
-        root.mainloop()
-
-    def modifier_valeur(index: int, var: tk.StringVar):
-        global nb_noeuds_cible, connect_chance, taux_mean, initial_mean, taux_std_dev, initial_std_dev
-
-        try:
-            new_value = float(var.get())
-        except ValueError:
-            return
-
-        if index ==0:
-            nb_noeuds_cible = int(new_value)
-        elif index == 1:
-            connect_chance = new_value
-        elif index == 2:
-            taux_mean = new_value
-        elif index == 3:
-            initial_mean = new_value
-        elif index == 4:
-            taux_std_dev = new_value
-        elif index == 5:
-            initial_std_dev = new_value
-
-    def afficher_graphes() -> None:
-        graphes: list[pg.Graph] = []
-
-        for i in range(4):
-            graphes.append(generer_graphe())
-
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-        for i, graphe in enumerate(graphes):
-            graphe.afficher(ax = axes[i//2, i%2])
-
-        plt.show()
-    
-    initialiser()
-
 def bfs(start, action=None) -> None:
     queue = [start]
     visited = set()
@@ -275,13 +203,15 @@ def bfs(start, action=None) -> None:
             nb_restants = nb_next_niv
             nb_next_niv = 0
 
-def generer_graphe() -> pg.Graph:
+def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces) -> pg.Graph:
         def collecter_noeuds(root: pg.Noeud_Pondere, _) -> None:
             noeuds.append(root)
 
-        root = generer_arbre()
-        connecter_branches(root)
-        root = attribuer_poids(root)
+        nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev = infos_gen_arbre
+
+        root = generer_arbre(nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev)
+        connecter_branches(root, connect_chance)
+        root = attribuer_poids(root, nb_iter_forces)
 
         noeuds: list[pg.Noeud_Pondere] = []
         bfs(root, collecter_noeuds)
@@ -290,7 +220,3 @@ def generer_graphe() -> pg.Graph:
         graphe.add_noeuds(noeuds)
 
         return graphe
-
-
-if __name__ == "__main__":
-    interface()
