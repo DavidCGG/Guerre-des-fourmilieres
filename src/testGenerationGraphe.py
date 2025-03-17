@@ -6,6 +6,7 @@ import random
 from numpy.random import normal
 
 #Variables globales
+nb_iter_forces: int = 0
 nb_noeuds_cible: int = 10
 connect_chance: float = 0.3
 taux_mean: float = -1
@@ -14,11 +15,15 @@ taux_std_dev: float = 1/3
 initial_std_dev: float = 1
 
 def generer_arbre() -> pg.Noeud_Generation:
-    #Créer les enfants d'un noeud
-    def generer_enfants(current: pg.Noeud_Generation, infos: int) -> None:
-        nonlocal nb_noeuds
+    def traverser_arbre(root: pg.Noeud_Generation, noeuds: list[pg.Noeud_Generation]) -> None:
+        i: int = 0
+        while i < len(noeuds):
+            generer_enfants(noeuds[i], noeuds, root.nb + 1)
+            i += 1
 
-        profondeur, _, __ = infos
+    #Créer les enfants d'un noeud
+    def generer_enfants(current: pg.Noeud_Generation, noeuds: list[pg.Noeud_Generation], profondeur: int) -> None:
+        nonlocal nb_noeuds
         
         if len(current.voisins) != 0: #Évite de générer des enfants inutilement lors d'une ennième itération
             return
@@ -32,6 +37,8 @@ def generer_arbre() -> pg.Noeud_Generation:
             nb_noeuds += 1
 
             current.add_voisin(enfant)
+
+            noeuds.append(enfant)
 
     #Helper de generer_enfants
     def nb_enfants(profondeur: int) -> int:
@@ -48,10 +55,11 @@ def generer_arbre() -> pg.Noeud_Generation:
         return int(nbAl)
     
     root = pg.Noeud_Generation(0)
+    noeuds: list[pg.Noeud_Generation] = [root]
     nb_noeuds = 1
 
     while nb_noeuds < nb_noeuds_cible:
-        bfs(root, generer_enfants)
+        traverser_arbre(root, noeuds)
     
     return root
 
@@ -170,7 +178,7 @@ def attribuer_poids(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
 
     root_pondere = initialiser_coord(root)
 
-    for _ in range(100):
+    for _ in range(nb_iter_forces):
         calculer_force(root_pondere)
 
     return root_pondere
