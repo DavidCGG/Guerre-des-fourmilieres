@@ -1,13 +1,20 @@
 import pygame
+from pygame import Vector2
+
 
 class Colonie:
-    def __init__(self, nom):
+    def __init__(self, nom, dt,screen,liste_fourmis):
         self.nom = nom
+        self.dt = dt
         self.salles = [Salle(100, 600, "Throne"),Salle(900, 500, "Banque"), ]
+        self.screen = screen
+        self.fourmis=[Fourmi("moyen",dt,self,self.screen,liste_fourmis)]
         # objets.append(self)
     def process(self):
         for salle in self.salles:
             salle.process()
+    def draw(self):
+        print("Colonie "+self.nom+" dessinee")
 
 class Salle:
     def __init__(self, x, y, sorte):
@@ -56,7 +63,7 @@ class Bouton():
         self.texte_render = police.render(self.texte, True, "black")
         self.deja_clicke = False
 
-    def process(self):
+    def draw(self):
         position_souris = pygame.mouse.get_pos()
         self.surface_self.fill(self.couleurs['normale'])
         clicke=False
@@ -78,41 +85,57 @@ class Bouton():
 
 
 class Fourmi():
-    def __init__(self, pos, type, dt, equipe,dans_colonie):
+    def __init__(self, type, dt, colonie_origine,screen,liste_fourmis):
         self.image = pygame.image.load('assets/fourmi_noire.png')
-        self.pos = pos
+        self.pos = Vector2(colonie_origine.salles[0].x,colonie_origine.salles[0].y)
         self.HP_max = 0
         self.poids_max = 0
         self.vitesse_base = 0
         self.dexterite = 0
         self.destination = None
         self.dt=dt
-        self.equipe=equipe
-        self.dans_colonie=equipe
-        if type=='lourd':
+        self.colonie_origine=colonie_origine
+        self.dans_colonie=colonie_origine
+        self.screen=screen
+        self.type=type
+        liste_fourmis.append(self)
+        if self.type=='lourd':
             self.HP_max=100
             self.poids_max=100
             self.vitesse_base=25
             self.dexterite=25
-        elif type=='moyen':
+        elif self.type=='moyen':
             self.HP_max=75
             self.poids_max=50
             self.vitesse_base=50
             self.dexterite=50
-        elif type=='leger':
+        elif self.type=='leger':
             self.HP_max=50
             self.poids_max=25
-            self.vitesse_max=100
+            self.vitesse_base=100
             self.dexterite=100
+        else:
+            raise Exception("Type fourmi invalide")
 
     def process(self):
+        print("dest:"+str(self.destination))
+        print("pos:"+str(self.pos))
+
         if(self.destination!=None):
-            if(self.pos==self.destination):
+            if(abs((self.pos-self.destination).magnitude()) < 10):
+                print("destination atteinte")
                 self.destination=None
             else:
-                self.pos=self.pos+(self.pos-self.destination).Normalize()*self.dt*self.vitesse_base
+                print("fourmi en movement: "+str((self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*5))
+                self.pos+=(self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*5
+        destination_selectionee=True
+        if pygame.mouse.get_pressed(num_buttons=3)[0]:
+            print("position set")
+            self.destination=Vector2(pygame.mouse.get_pos())
 
-
+    def draw(self):
+        self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
+        print("fourmi dessinée")
 
 class Partie():
     def __init__(self):

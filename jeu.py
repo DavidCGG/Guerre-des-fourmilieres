@@ -12,6 +12,9 @@ running = True
 dt=0
 objets = []
 colonies = []
+fourmis=[]
+hud=[]
+max_fps=1000
 
 police = pygame.font.SysFont("Comic Sans MS",42)
 
@@ -30,11 +33,16 @@ def nouvelle_partie():
     titre="test"
     with open("parties_sauvegardees/"+".txt", "w") as fichier:
         fichier.write("Created using write mode.")
-    colonie_joueur=Colonie("joueur")
+    dt_pointer=[dt]
+    screen_pointer=[screen]
+    colonie_joueur=Colonie("joueur",dt_pointer,screen_pointer,fourmis)
     colonies.append(colonie_joueur)
     entrer_colonie(colonie_joueur)
     #game = MapApp()
     #game.run()
+
+def entrer_monde():
+    print("monde entré")
 
 def entrer_colonie(colonie):
     objets.clear()
@@ -47,8 +55,13 @@ def entrer_colonie(colonie):
     for salle in colonies[0].salles:
         pygame.draw.ellipse(surface_colonie, Color(139, 69, 19), pygame.Rect(salle.x, salle.y, salle.largeur, salle.hauteur))
     screen.blit(surface_colonie,(0,0))
-    objets.append(colonie)
-    objets.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 20, screen.get_width()/3, screen.get_height()/15, "Carte du monde", nouvelle_partie,police))
+
+    for fourmi in colonie.fourmis:
+        image_fourmi=pygame.image.load("assets/fourmi_noire.png")
+        objets.append(fourmi)
+
+
+    objets.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 20, screen.get_width()/3, screen.get_height()/15, "Carte du monde", entrer_monde,police))
 
 def menu_options():
     print('menu options')
@@ -83,6 +96,8 @@ while running:
             running = False
 
     #screen.fill(pygame.Color(100,50,0))
+    #input manager
+
 
     """
     if dt != 0:
@@ -90,12 +105,15 @@ while running:
     """
     for colonie in colonies:
         colonie.process()
+    for fourmi in fourmis:
+        fourmi.process()
     for object in objets:
-        object.process()
+        object.draw()
 
     pygame.display.flip()
 
-    dt = clock.tick() / 1000
+    dt = clock.tick(max_fps) / 1000
+    print(dt)
 
 pygame.quit()
 #sys.exit()
