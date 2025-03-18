@@ -217,10 +217,14 @@ class Carte:
                 if (tile_x, tile_y) == self.tuile_debut:
                     self.menu_colonie = not self.menu_colonie
 
-            elif event.button == 4:  # Scroll up
-                self.camera.zoom_camera(*event.pos, "in")
-            elif event.button == 5:  # Scroll down
-                self.camera.zoom_camera(*event.pos, "out")
+            elif event.button == 4:
+                if not self.colonie_joeur.scrolling: # Scroll up
+                    self.camera.zoom_camera(*event.pos, "in")
+                self.colonie_joeur.handle_scroll("up", event.pos)
+            elif event.button == 5:
+                if not self.colonie_joeur.scrolling: # Scroll down
+                    self.camera.zoom_camera(*event.pos, "out")
+                self.colonie_joeur.handle_scroll("down", event.pos)
 
 
         elif event.type == pygame.MOUSEBUTTONUP:
@@ -269,6 +273,9 @@ class Carte:
 
                 if self.menu_colonie:
                     self.colonie_joeur.menu_colonie(self.screen)
+
+                if self.colonie_joeur.menu_fourmis_ouvert and self.menu_colonie:
+                    self.colonie_joeur.menu_fourmis(self.screen)
 
                 for obj in self.objets:
                     obj.process()
