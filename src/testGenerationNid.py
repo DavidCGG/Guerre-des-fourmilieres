@@ -20,12 +20,14 @@ def init() -> pygame.Surface:
 
 def draw(screen, graphe, hauteur_sol = 100) -> None:
     screen.fill((255, 255, 255))
+
+    pygame.draw.rect(screen, (90, 160, 250), (0, 0, SCREEN_WIDTH, hauteur_sol))
+    pygame.draw.rect(screen, (140, 90, 40), (0, hauteur_sol, SCREEN_WIDTH, SCREEN_HEIGHT - hauteur_sol))
+
     for noeud in graphe.noeuds:
         pygame.draw.circle(screen, (0, 0, 0), noeud.coord, 10)
         for voisin in noeud.voisins:
             pygame.draw.line(screen, (0, 0, 0), noeud.coord, voisin.coord)
-
-    pygame.draw.rect(screen, (50, 100, 200), (0, 0, SCREEN_WIDTH, hauteur_sol))
     
     pygame.display.flip()
 
