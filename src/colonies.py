@@ -31,9 +31,13 @@ class Colonie:
         self.scroll_speed = 10
         self.curr_tab = "Ouvrières"
         self.last_tab = self.curr_tab
+        self.menu_fourmis_texte_rects = {}
+        self.menu_fourmis_pos = None
         self.boutons = []
 
-        self.menu_surface = None
+        self.menu_colonie_surface = None
+        self.menu_fourmis_surface = None
+        self.menu_a_updater = True
         self.menu_fourmis_rect = None
         self.update_menu()
         self.update_menu_fourmis()
@@ -50,29 +54,69 @@ class Colonie:
             self.objets.append(self)
             self.dans_objets = True
 
+    def menu_fourmis_updater(self):
+        self.menu_a_updater = True
+
     def nombre_ouvrieres(self):
         return len([f for f in self.fourmis if isinstance(f, Ouvriere)])
 
     def nombre_soldats(self):
         return len([f for f in self.fourmis if isinstance(f, Soldat)])
 
+    def deplacer_fourmi(self):
+        pass
+
+    def update_menu(self):
+        font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
+        self.menu_colonie_surface = pygame.Surface((250, 375))
+        self.menu_colonie_surface.fill(BLACK)
+
+        y_offset = 40
+        info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
+        info_sold = f"Soldats ({self.nombre_soldats()})"
+        info_vie = f"Vie: {self.vie * 100}%"
+        info_nourr = f"Nourriture: {self.nourriture}"
+
+        menu_x = 1280 - self.menu_colonie_surface.get_width()
+        menu_y = 720 / 2 - self.menu_colonie_surface.get_height() / 2
+
+        liste_textes = [info_ouvr, info_sold, info_vie, info_nourr]
+
+        for texte in liste_textes:
+            couleur = AQUA if texte.split()[0] == self.hover_texte else WHITE
+            _texte = font.render(texte, True, couleur)
+            _texte_rect = _texte.get_rect(
+                center=(self.menu_colonie_surface.get_width() / 2, y_offset + _texte.get_height() / 2))
+            self.menu_colonie_surface.blit(_texte, (
+            self.menu_colonie_surface.get_width() / 2 - _texte.get_width() / 2, y_offset))
+            if texte.startswith("Ouvrières") or texte.startswith("Soldats"):
+                self.texte_rects[texte.split()[0]] = _texte_rect.move(menu_x, menu_y)
+            y_offset += 40
+
     def update_menu_fourmis(self):
+        if not self.menu_a_updater:
+            return
 
         font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
-        self.menu_surface = pygame.Surface((250, 375))
-        self.menu_surface.fill(BLACK)
-        self.menu_fourmis_rect = pygame.Rect(0, 720 / 2 - self.menu_surface.get_height() / 2, 250, 375)
+        self.menu_fourmis_surface = pygame.Surface((250, 375))
+        self.menu_fourmis_surface.fill(BLACK)
+        self.menu_fourmis_rect = pygame.Rect(0, 720 / 2 - self.menu_fourmis_surface.get_height() / 2, 250, 375)
         y_offset = 40
 
-        # Create a surface for the list of ants
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        rel_x = mouse_x - self.menu_fourmis_rect.x
+        rel_y = mouse_y - self.menu_fourmis_rect.y + self.scroll_offset
+
         list_surface = pygame.Surface((250, max(len(self.fourmis) * 50, 375)))
         list_surface.fill(BLACK)
 
-        # Display ants based on the current tab
+
         if self.curr_tab == "Ouvrières":
             fourmis = [f for f in self.fourmis if isinstance(f, Ouvriere)]
         else:
             fourmis = [f for f in self.fourmis if isinstance(f, Soldat)]
+
+
 
         for fourmi in fourmis:
             if isinstance(fourmi, Ouvriere):
@@ -81,51 +125,39 @@ class Colonie:
                 sprite_sheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
             fourmi.scale = 2
             sprite = FourmisSprite(fourmi, sprite_sheet, 16, 16, 4, 300).extract_frames()[0]
-            list_surface.blit(sprite, (10, y_offset-5))
+
+            list_surface.blit(sprite, (10, y_offset - 5))
             ant_info = f"HP: {fourmi.hp} Pos: ({fourmi.centre_x}, {fourmi.centre_y})"
             _texte = font.render(ant_info, True, WHITE)
             list_surface.blit(_texte, (50, y_offset))
+
+            rect = pygame.Rect(0, y_offset - 5, 250, 50)
+            if rect.collidepoint((rel_x,rel_y)):
+                pygame.draw.rect(list_surface, AQUA, rect, 2)
+
             y_offset += 50
 
-        self.menu_surface.blit(list_surface, (0, -self.scroll_offset))
-
-
-    def update_menu(self):
-        font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
-        self.menu_surface = pygame.Surface((250, 375))
-        self.menu_surface.fill(BLACK)
-
-
-        y_offset = 40
-        info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
-        info_sold = f"Soldats ({self.nombre_soldats()})"
-        info_vie = f"Vie: {self.vie * 100}%"
-        info_nourr = f"Nourriture: {self.nourriture}"
-
-        menu_x = 1280 - self.menu_surface.get_width()
-        menu_y = 720 / 2 - self.menu_surface.get_height() / 2
-
-        liste_textes = [info_ouvr, info_sold, info_vie, info_nourr]
-
-        for texte in liste_textes:
-            couleur = AQUA if texte.split()[0] == self.hover_texte else WHITE
-            _texte = font.render(texte, True, couleur)
-            _texte_rect = _texte.get_rect(center=(self.menu_surface.get_width() / 2, y_offset + _texte.get_height() / 2))
-            self.menu_surface.blit(_texte, (self.menu_surface.get_width() / 2 - _texte.get_width() / 2, y_offset))
-            if texte.startswith("Ouvrières") or texte.startswith("Soldats"):
-                self.texte_rects[texte.split()[0]] = _texte_rect.move(menu_x, menu_y)
-            y_offset += 40
-
-    def menu_fourmis(self, screen):
-        self.update_menu_fourmis()
-        if self.menu_surface is not None and self.menu_fourmis_ouvert:
-            screen.blit(self.menu_surface, (0, 720 / 2 - self.menu_surface.get_height() / 2))
+        self.menu_fourmis_surface.blit(list_surface, (0, -self.scroll_offset))
+        self.menu_a_updater = False
 
 
     def menu_colonie(self, screen):
-        self.update_menu()
-        if self.menu_surface is not None:
-            screen.blit(self.menu_surface, (1280 - self.menu_surface.get_width(), 720 / 2 - self.menu_surface.get_height() / 2))
+        if not self.menu_fourmis_ouvert:
+            self.update_menu()
+
+        if self.menu_colonie_surface is not None:
+            screen.blit(self.menu_colonie_surface, (1280 - self.menu_colonie_surface.get_width(), 720 / 2 - self.menu_colonie_surface.get_height() / 2))
+
+    def menu_fourmis(self, screen):
+        font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
+        self.update_menu_fourmis()
+
+        if self.menu_fourmis_surface is not None and self.menu_fourmis_ouvert:
+            screen.blit(self.menu_fourmis_surface, (0, 720 / 2 - self.menu_fourmis_surface.get_height() / 2))
+            bout = Bouton(self.menu_fourmis_surface.get_width() / 2, 720 / 2 + self.menu_fourmis_surface.get_height() / 2 + 25, 250, 50, "Déplacer", self.deplacer_fourmi, font, screen,
+                          self.objets)
+
+
 
     def handle_click(self, pos, tile_x, tile_y, screen):
         if tile_x == self.tuile_debut[0] and tile_y == self.tuile_debut[1]:
@@ -143,7 +175,12 @@ class Colonie:
                 self.couleur_texte = AQUA
                 # On ferme le menu si on re clique sur le meme tab
                 self.menu_fourmis_ouvert = not self.menu_fourmis_ouvert if key == self.last_tab else True
+                if not self.menu_fourmis_ouvert:
+                    self.objets.clear()
+                self.menu_fourmis_updater()
                 return
+
+
 
         for b in self.boutons:
             if b.rectangle.collidepoint(pos):
@@ -158,10 +195,16 @@ class Colonie:
                 return
         if self.menu_fourmis_rect.collidepoint(pos):
             self.scrolling = True
+            self.menu_fourmis_pos = pos
+            self.menu_a_updater = True
+
         else:
             self.scrolling = False
+            self.objets.clear()
+
 
         self.hover_texte = None
+
 
 
     def handle_scroll(self, dir, pos):
@@ -175,7 +218,7 @@ class Colonie:
                 self.scroll_offset = max(0, self.scroll_offset - self.scroll_speed)
             elif dir  == "down":
                 self.scroll_offset = min(max_offset, self.scroll_offset + self.scroll_speed)
-            self.update_menu_fourmis()
+            self.menu_fourmis_updater()
 
 class AIColony:
     def __init__(self, colony_id, position):

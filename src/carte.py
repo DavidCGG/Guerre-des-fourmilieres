@@ -44,6 +44,8 @@ class Carte:
         self.objets = []
         self.clock = pygame.time.Clock()
 
+
+
         self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
         self.last_cam_x = self.camera.x
         self.last_cam_y = self.camera.y
@@ -53,11 +55,12 @@ class Carte:
         self.noise_gen = RandomNoise(self.MAP_WIDTH, self.MAP_HEIGHT, 255, extra=65)
         self.noise_gen.randomize()
         self.transformer_tuiles()
-        self.tuiles_debut = []
 
+        self.tuiles_debut = []
         self.placer_colonies(region_size=15, min_dist=20)
-        self.tuile_debut  = self.tuiles_debut[self.rand_tuile_debut()]
+        self.tuile_debut = self.tuiles_debut[self.rand_tuile_debut()]
         self.colonie_joeur = Colonie(self.tuile_debut, self.objets)
+
         self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
 
