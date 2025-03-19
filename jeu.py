@@ -7,14 +7,17 @@ from pygame.locals import *
 
 pygame.init()
 screen = pygame.display.set_mode((1280,720), pygame.SCALED)
+screen_pointer = [screen]
 clock = pygame.time.Clock()
 running = True
 dt=0
+dt_pointer=[dt]
 objets = []
 colonies = []
 fourmis=[]
 hud=[]
-max_fps=1000
+max_fps=30
+colonie_presente=None
 
 police = pygame.font.SysFont("Comic Sans MS",42)
 
@@ -25,6 +28,8 @@ pygame.display.set_caption("Guerre des fourmilières")
 image_icone=pygame.image.load('assets/fourmi_noire.png')
 pygame.display.set_icon(image_icone)
 
+carte=Carte(screen_pointer)
+
 def nouvelle_partie():
     objets.clear()
     partie = Partie()
@@ -33,35 +38,25 @@ def nouvelle_partie():
     titre="test"
     with open("parties_sauvegardees/"+".txt", "w") as fichier:
         fichier.write("Created using write mode.")
-    dt_pointer=[dt]
-    screen_pointer=[screen]
+
     colonie_joueur=Colonie("joueur",dt_pointer,screen_pointer,fourmis)
     colonies.append(colonie_joueur)
     entrer_colonie(colonie_joueur)
     #game = MapApp()
     #game.run()
 
-def entrer_monde():
-    print("monde entré")
+def entrer_carte():
+    objets.clear()
+    objets.append(carte)
+    colonie_presente=None
+    print("carte entré")
 
 def entrer_colonie(colonie):
     objets.clear()
-    print("Colonie "+colonie.nom+" entrée")
-
-    surface_colonie = pygame.Surface((screen.get_width(), screen.get_height()))
-    surface_colonie.fill("cyan")
-    pygame.draw.rect(surface_colonie, 'green', pygame.Rect(0, 25, screen.get_width(), 25))
-    pygame.draw.rect(surface_colonie, Color(205, 133, 63),pygame.Rect(0, 50, screen.get_width(), screen.get_height() - 50))
-    for salle in colonies[0].salles:
-        pygame.draw.ellipse(surface_colonie, Color(139, 69, 19), pygame.Rect(salle.x, salle.y, salle.largeur, salle.hauteur))
-    screen.blit(surface_colonie,(0,0))
-
-    for fourmi in colonie.fourmis:
-        image_fourmi=pygame.image.load("assets/fourmi_noire.png")
-        objets.append(fourmi)
-
-
-    objets.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 20, screen.get_width()/3, screen.get_height()/15, "Carte du monde", entrer_monde,police))
+    objets.append(colonie)
+    colonie_presente = colonie
+    print("Colonie " + colonie.nom + " entrée")
+    objets.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 20, screen.get_width()/3, screen.get_height()/15, "Carte du monde", entrer_carte,police))
 
 def menu_options():
     print('menu options')
@@ -107,13 +102,24 @@ while running:
         colonie.process()
     for fourmi in fourmis:
         fourmi.process()
+        if fourmi.dans_colonie==None:
+            fourmi.carte_input_process()
+        elif colonie_presente!=None:
+            print('a')
+            if (fourmi.dans_colonie.nom==colonie_presente.nom):
+                fourmi.colonie_input_process()
     for object in objets:
         object.draw()
+    for fourmi in fourmis:
+        if fourmi.dans_colonie.nom==colonie_presente:
+            fourmi.draw()
 
     pygame.display.flip()
 
     dt = clock.tick(max_fps) / 1000
-    print(dt)
+    dt_pointer = [dt]
+    screen_pointer = [screen]
+    #print(dt)
 
 pygame.quit()
 #sys.exit()
