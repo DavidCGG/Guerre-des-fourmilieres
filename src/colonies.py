@@ -220,82 +220,87 @@ class Colonie:
                 self.scroll_offset = min(max_offset, self.scroll_offset + self.scroll_speed)
             self.menu_fourmis_updater()
 
-class AIColony:
+class PrototypeIA:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Prototype IA")
+
+        self.colonie_ia = ColonieIA(0, (0, 0))
+
+        # Creation de frames pour joueur et IA
+        self.player_frame = tk.Frame(root)
+        self.player_frame.pack(side="left", padx=10, pady=10)
+
+        self.ai_frame = tk.Frame(root)
+        self.ai_frame.pack(side="right", padx=10, pady=10)
+
+        # Labels pour joueur et IA
+        player_label = tk.Label(self.player_frame, text="Joueur", font=("Arial", 14))
+        player_label.pack(pady=5)
+
+        ai_label = tk.Label(self.ai_frame, text="IA", font=("Arial", 14))
+        ai_label.pack(pady=5)
+
+        # Inputs pour joueur
+        self.player_inputs = {}
+        self.create_input("Ouvrières:", "player_ouvr", self.player_inputs, self.player_frame)
+        self.create_input("Soldats:", "player_sold", self.player_inputs, self.player_frame)
+        self.create_input("Nourriture:", "player_nourr", self.player_inputs, self.player_frame)
+
+        # Bouton pour mettre à jour l'IA
+        self.update_button = tk.Button(root, text="Update IA", command=self.update_ai)
+        self.update_button.pack(side="bottom", pady=10)
+
+        # Label pour l'état de l'IA
+        self.ai_state_label = tk.Label(root, text=f"État: {self.colonie_ia.state}", font=("Arial", 12))
+        self.ai_state_label.pack(side="bottom", pady=10)
+
+        # Meme input pour l'IA
+        self.ai_inputs = {}
+        self.create_input("Ouvrières:", "ai_ouvr", self.ai_inputs, self.ai_frame)
+        self.create_input("Soldats:", "ai_sold", self.ai_inputs, self.ai_frame)
+        self.create_input("Nourriture:", "ai_nourr", self.ai_inputs, self.ai_frame)
+
+
+
+    def create_input(self, label_text, key, input_dict, frame):
+        sub_frame = tk.Frame(frame)
+        sub_frame.pack(pady=5)
+        label = tk.Label(sub_frame, text=label_text)
+        label.pack(side="left")
+        entry = tk.Entry(sub_frame)
+        entry.pack(side="right")
+        input_dict[key] = entry
+
+    def update_ai(self):
+        player_data = {key: entry.get() or "0" for key, entry in self.player_inputs.items()}
+        ia_data = {key: entry.get() or "0" for key, entry in self.ai_inputs.items()}
+
+        self.colonie_ia.check_state_transition(player_data, ia_data)
+        self.ai_state_label.config(text=f"État: {self.colonie_ia.state}")
+
+class ColonieIA:
     def __init__(self, colony_id, position):
         self.colony_id = colony_id
         self.position = position
-        self.state = "EXPANDING"
-        self.food = 0
-        self.worker_ants = 5
-        self.soldier_ants = 2
+        self.state = "EXPLORATION"
 
-    def check_state_transition(self, player_data):
-        """Decide when to change state based on player input."""
-        if self.food < 50:
-            self.state = "GATHERING"
-        elif int(player_data["soldiers"]) > self.soldier_ants:
-            self.state = "DEFENDING"
-        elif self.should_attack(player_data):
-            self.state = "ATTACKING"
+    def check_state_transition(self, player_data, ia_data):
+        if int(ia_data["ai_nourr"]) < int(ia_data["ai_ouvr"]) / 2:
+            self.state = "COLLECTE"
+
+        elif int(player_data["player_sold"]) > (int(ia_data["ai_sold"]) * 1.5):
+            self.state = "DÉFENCE"
+
+        elif int(player_data["player_nourr"]) != 0:
+            if  int(player_data["player_ouvr"]) / int(player_data["player_nourr"]) < 5 or 1.25 < int(ia_data["ai_sold"]) / int(player_data["player_sold"]):
+                self.state = "ATTAQUE"
+
         else:
-            self.state = "EXPANDING"
-
-    def should_attack(self, player_data):
-        """Decide to attack if the player is weak."""
-        return int(player_data["soldiers"]) < self.soldier_ants
+            self.state = "EXPLORATION"
 
 
-class AIPrototypeApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("AI Colony Prototype")
 
-        # Create three AI colonies
-        self.ai_colonies = [
-            AIColony(colony_id=1, position=(0, 0)),
-            AIColony(colony_id=2, position=(5, 5)),
-            AIColony(colony_id=3, position=(10, 10))
-        ]
-
-        # Input fields for player colony data
-        self.inputs = {}
-        self.create_input("Workers:", "workers")
-        self.create_input("Soldiers:", "soldiers")
-        self.create_input("Owned Tiles:", "tiles")
-        self.create_input("Ant Gen (per 10s):", "ant_gen")
-        self.create_input("Food Gen (per 5s):", "food_gen")
-
-        # Button to update AI state
-        self.update_button = tk.Button(root, text="Update AI", command=self.update_ai)
-        self.update_button.pack()
-
-        # AI State Displays
-        self.ai_state_labels = []
-        for i in range(3):
-            label = tk.Label(root, text=f"AI Colony {i + 1} State: {self.ai_colonies[i].state}", font=("Arial", 12))
-            label.pack()
-            self.ai_state_labels.append(label)
-
-    def create_input(self, label_text, key):
-        """Creates a labeled input field."""
-        frame = tk.Frame(self.root)
-        frame.pack()
-        label = tk.Label(frame, text=label_text)
-        label.pack(side="left")
-        entry = tk.Entry(frame)
-        entry.pack(side="right")
-        self.inputs[key] = entry  # Store reference to input field
-
-    def update_ai(self):
-        """Update AI states based on player inputs and display new states."""
-        player_data = {key: entry.get() or "0" for key, entry in self.inputs.items()}
-
-        for i, ai_colony in enumerate(self.ai_colonies):
-            ai_colony.check_state_transition(player_data)
-            self.ai_state_labels[i].config(text=f"AI Colony {i + 1} State: {ai_colony.state}")
-
-
-# Run the Tkinter app
-# root = tk.Tk()
-# app = AIPrototypeApp(root)
-# root.mainloop()
+root = tk.Tk()
+app = PrototypeIA(root)
+root.mainloop()
