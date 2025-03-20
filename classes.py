@@ -3,12 +3,13 @@ from pygame import Vector2, Color
 
 
 class Colonie:
-    def __init__(self, nom, dt,screen,liste_fourmis, x, y):
+    def __init__(self, nom, dt_pointer, screen_pointer, liste_fourmis, x, y, liste_items):
         self.nom = nom
-        self.dt = dt
-        self.salles = [Salle(100, 600, "Throne"),Salle(900, 500, "Banque"), ]
-        self.screen = screen
-        self.fourmis=[Fourmi("moyen",dt,self,self.screen,liste_fourmis)]
+        self.dt = dt_pointer
+        self.screen_pointer = screen_pointer
+        self.liste_items = liste_items
+        self.salles = [Salle(20, 500, "Throne", screen_pointer, self, liste_fourmis, dt_pointer, self.screen_pointer), Salle(900, 500, "Banque", screen_pointer, self, liste_fourmis, dt_pointer,self.screen_pointer)]
+        self.fourmis=[Fourmi("moyen", dt_pointer, self, self.screen_pointer, liste_fourmis, self.liste_items)]
         self.liste_fourmis=liste_fourmis
         self.pos=Vector2(x,y)
         # objets.append(self)
@@ -18,45 +19,93 @@ class Colonie:
     def draw(self):
         #print("Colonie "+self.nom+" dessinee")
 
-        surface_colonie = pygame.Surface((self.screen[0].get_width(), self.screen[0].get_height()))
+        surface_colonie = pygame.Surface((self.screen_pointer[0].get_width(), self.screen_pointer[0].get_height()))
         surface_colonie.fill("cyan")
-        pygame.draw.rect(surface_colonie, 'green', pygame.Rect(0, 25, self.screen[0].get_width(), 25))
-        pygame.draw.rect(surface_colonie, Color(205, 133, 63),pygame.Rect(0, 50, self.screen[0].get_width(), self.screen[0].get_height() - 50))
+        pygame.draw.rect(surface_colonie, 'green', pygame.Rect(0, 25, self.screen_pointer[0].get_width(), 25))
+        pygame.draw.rect(surface_colonie, Color(205, 133, 63), pygame.Rect(0, 50, self.screen_pointer[0].get_width(), self.screen_pointer[0].get_height() - 50))
+        self.screen_pointer[0].blit(surface_colonie, (0, 0))
+
         for salle in self.salles:
-            pygame.draw.ellipse(surface_colonie, Color(139, 69, 19),pygame.Rect(salle.x, salle.y, salle.largeur, salle.hauteur))
-        self.screen[0].blit(surface_colonie, (0, 0))
+            salle.draw()
 
         for fourmi in self.liste_fourmis:
             if fourmi.dans_colonie is not None:
                 if fourmi.dans_colonie.nom==self.nom:
                     fourmi.draw()
 
-class Salle:
-    def __init__(self, x, y, sorte):
-        self.x = x
-        self.y = y
-        self.sorte = sorte
+        """for item in self.liste_items:
+            if item.dans_colonie is not None:
+                if item.dans_colonie.nom==self.nom:
+                    item.draw()"""
 
+class Salle:
+    def __init__(self, x, y, sorte,screen,colonie,liste_fourmis,dt_pointer,screen_pointer):
+        self.pos = Vector2(x,y)
+        self.sorte = sorte
+        self.screen=screen
+        self.colonie=colonie
+        self.liste_fourmis=liste_fourmis
+        self.dt_pointer=dt_pointer
+        self.screen_pointer=screen_pointer
         # self.rectanlge = pygame.Rect()
         if (self.sorte == "Throne"):
             self.reine_hp = 1000
-            self.largeur = 400
-            self.hauteur = 400
+            self.largeur = 128
+            self.hauteur = 128
         elif (self.sorte == "Banque"):
             self.ressources_max = 1000
             self.ressources = 0
-            self.largeur = 300
-            self.hauteur = 150
+            self.largeur = 256
+            self.hauteur = 128
         # objets.append(self)
 
     def process(self):
         if (self.sorte == "Throne"):
-            self.reine_hp += 1
-            police = pygame.font.SysFont("Comic Sans MS", 42)
+            for fourmi in self.liste_fourmis:
+                if fourmi.dans_colonie is not None:
+                    if fourmi.dans_colonie.nom==self.colonie.nom and fourmi.colonie_origine.nom!=self.colonie.nom and self.pos.x < fourmi.pos.x < self.pos.x+self.largeur and self.pos.y < fourmi.pos.y < self.pos.y+self.hauteur:
+                        self.reine_hp-=fourmi.attaque*self.dt_pointer[0]
         elif (self.sorte == "Banque"):
-            self.ressources += 2
-            if(self.ressources>self.ressources_max):
-                self.ressources=self.ressources_max
+
+            for fourmi in self.liste_fourmis:
+                deja_sur_banque=False
+                if fourmi.dans_colonie is not None:
+                    if fourmi.dans_colonie.nom == self.colonie.nom and fourmi.colonie_origine.nom == self.colonie.nom and self.pos.x < fourmi.pos.x < self.pos.x + self.largeur and self.pos.y < fourmi.pos.y < self.pos.y + self.hauteur:
+                        nouveau_inventaire=[]
+                        nb_metal=0
+                        for item in fourmi.liste_items:
+                            if item.sorte!="metal":
+                                nouveau_inventaire.append(item)
+                            else:
+                                nb_metal+=1
+                        self.ressources=nb_metal
+                        if nb_metal==0 and self.ressources>0:
+                            nouveau_inventaire.append(Item(fourmi.pox.x,fourmi.pos.y,None,"metal",self.screen_pointer))
+                            self.ressources-=1
+                        fourmi.inventaire=nouveau_inventaire
+                        deja_sur_banque=True
+
+
+
+    def draw(self):
+        #surface_self=pygame.Surface((self.largeur,self.hauteur))
+        #surface_self.fill(Color(205, 133, 63))
+        #pygame.draw.ellipse(surface_self, Color(139, 69, 19),pygame.Rect(0, 0, self.largeur, self.hauteur))
+        image=None
+        police = pygame.font.Font("assets/Minecraft.ttf", 25)
+        surface_texte=pygame.surface.Surface((self.largeur+64,64))
+        surface_texte.fill(Color(205, 133, 63))
+        if self.sorte == "Throne":
+            image = pygame.image.load('assets/throne_fourmi_'+self.colonie.nom+'.png')
+            texte_render = police.render("Reine : " + str(self.reine_hp) + " hp", False, "Black")
+        elif self.sorte == "Banque":
+            image = pygame.image.load('assets/banque.png')
+            texte_render = police.render("Banque : " + str(self.ressources) + " ressources", False, "Black")
+        else:
+            raise Exception("Sorte salle invalide")
+        surface_texte.blit(texte_render, (0, 0))
+        self.screen[0].blit(image, (self.pos.x, self.pos.y))
+        self.screen[0].blit(surface_texte, (self.pos.x, self.pos.y+self.hauteur))
 
 
 class Bouton():
@@ -75,45 +124,48 @@ class Bouton():
                          'survol': '#666666',
                          'clické': '#333333'}
         self.rectangle = pygame.Rect(self.x, self.y, self.largeur, self.hauteur)
-        self.texte_render = police.render(self.texte, True, "black")
-        self.deja_clicke = False
+        self.texte_render = police.render(self.texte, False, "black")
+        self.deja_clicke = True
 
     def draw(self):
         position_souris = pygame.mouse.get_pos()
         self.surface_self.fill(self.couleurs['normale'])
-        clicke=False
+        cursor_sur_bouton=False
         if self.rectangle.collidepoint(position_souris):
             # survol:
             self.surface_self.fill(self.couleurs['survol'])
-
+            cursor_sur_bouton=True
             if pygame.mouse.get_pressed(num_buttons=3)[0]:
                 # sur click tenu :
                 self.surface_self.fill(self.couleurs['clické'])
+                if not self.deja_clicke:
+                    self.fonction_sur_click()
                 self.deja_clicke = True
-                clicke=True
+            else:
+                self.deja_clicke = False
 
-        self.surface_self.blit(self.texte_render, [self.rectangle.width / 2 - self.texte_render.get_rect().width / 2,self.rectangle.height / 2 - self.texte_render.get_rect().height / 2 - 3])
+        self.surface_self.blit(self.texte_render, [self.rectangle.width / 2 - self.texte_render.get_rect().width / 2,self.rectangle.height / 2 - self.texte_render.get_rect().height / 2])
         pygame.draw.rect(self.surface_self, pygame.Color("black"), self.surface_self.get_rect(), 3)
         self.screen.blit(self.surface_self, (self.x, self.y))
-        if(clicke):
-            self.fonction_sur_click()
+        return cursor_sur_bouton
 
 
 class Fourmi():
-    def __init__(self, type, dt, colonie_origine,screen,liste_fourmis):
-        self.image = pygame.image.load('assets/fourmi_noire.png')
-        self.pos = Vector2(colonie_origine.salles[0].x,colonie_origine.salles[0].y)
+    def __init__(self, type, dt_pointer, colonie_origine, screen, liste_fourmis,liste_items):
+        self.pos = Vector2(colonie_origine.salles[0].pos.x,colonie_origine.salles[0].pos.y)
         self.HP_max = 0
         self.poids_max = 0
         self.vitesse_base = 0
         self.dexterite = 0
         self.destination = None
-        self.dt=dt
+        self.dt=dt_pointer
         self.colonie_origine=colonie_origine
         self.dans_colonie=colonie_origine
         self.screen=screen
         self.type=type
+        self.liste_items=liste_items
         self.inventaire=[]
+        self.image = pygame.image.load('assets/fourmi_' + self.colonie_origine.nom + '.png')
         liste_fourmis.append(self)
         if self.type=='lourd':
             self.HP_max=100
@@ -132,27 +184,42 @@ class Fourmi():
             self.dexterite=100
         else:
             raise Exception("Type fourmi invalide")
+        self.attaque=self.dexterite
 
     def process(self):
         #print("dest:"+str(self.destination)+" pos:"+str(self.pos)+" ",end='')
 
         if(self.destination!=None):
-            if(abs((self.pos-self.destination).magnitude()) < 10):
+            if (self.pos-self.destination).magnitude() < 10:
                 #print("destination atteinte",end='')
                 self.destination=None
             else:
                 #print("fourmi en movement: "+str((self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*5),end='')
                 #print("dt: "+str(self.dt[0]))
-                self.pos+=(self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*5
+                self.pos+=(self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*10
         destination_selectionee=True
         #print()
         if(self.pos.y<25 and self.dans_colonie is not None):
             print("fourmi sortie")
-            self.pos=self.dans_colonie.pos+Vector2(10,-10)
+            for item in self.inventaire:
+                item.dans_colonie=None
+            self.destination=None
+            self.pos=self.dans_colonie.pos+((Vector2(self.screen[0].get_width()/2,self.screen[0].get_height()/2)-self.dans_colonie.pos).normalize()*15)
             self.dans_colonie=None
-
-
-
+        for item in self.liste_items:
+                if item.dans_colonie is not None and self.dans_colonie is not None:
+                    if not item.dans_inventaire and item.dans_colonie.nom==self.dans_colonie.nom and (item.pos-self.pos).magnitude()<10:
+                        print(item.sorte+" rammassé")
+                        item.dans_inventaire=True
+                        self.inventaire.append(item)
+                elif not item.dans_inventaire and item.dans_colonie is None and self.dans_colonie is None and (item.pos-self.pos).magnitude()<10:
+                    print(item.sorte + " rammassé")
+                    item.dans_inventaire = True
+                    self.inventaire.append(item)
+        for item in self.inventaire:
+            item.pos=self.pos
+            #print(item.sorte,end="")
+        #print()
 
     def colonie_input_process(self):
         #print("colonie input processed")
@@ -168,7 +235,11 @@ class Fourmi():
 
     def draw(self):
         self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
-        print("fourmi dessinée")
+        for item in self.inventaire:
+            item.draw()
+            #print(item.sorte,end="")
+        #print()
+        #print("fourmi dessinée")
 
 class Partie():
     def __init__(self):
@@ -179,18 +250,23 @@ class Partie():
         self.tick += 1
 
 class Carte:
-    def __init__(self,screen,colonies,fourmis):
+    def __init__(self, screen, colonies, liste_fourmis,liste_items):
         self.screen=screen
         self.colonies=colonies
-        self.fourmis=fourmis
+        self.liste_fourmis=liste_fourmis
+        self.liste_items=liste_items
     #def process(self):
     def process(self):
         #print(len(self.fourmis))
         for colonie in self.colonies:
-            for fourmi in self.fourmis:
-                if(abs((fourmi.pos-colonie.pos).magnitude()) < 10):
+            for fourmi in self.liste_fourmis:
+                if((fourmi.pos-colonie.pos).magnitude() < 10):
                     fourmi.dans_colonie=colonie
                     fourmi.pos=Vector2(self.screen[0].get_width()/2,26)
+                    fourmi.destination=None
+                    for item in fourmi.inventaire:
+                        item.dans_colonie=colonie
+
     def draw(self):
         #print("carte dessinee")
 
@@ -203,6 +279,23 @@ class Carte:
         for colonie in self.colonies:
             pygame.draw.ellipse(surface_carte, Color(139, 69, 19),pygame.Rect(colonie.pos.x, colonie.pos.y, 20, 20))
         self.screen[0].blit(surface_carte, (0, 0))
-        for fourmi in self.fourmis:
+        for fourmi in self.liste_fourmis:
             if fourmi.dans_colonie is None:
                 fourmi.draw()
+        #print("item start carte draw")
+        for item in self.liste_items:
+            #print(item.sorte)
+            if item.dans_colonie is None:
+                item.draw()
+
+class Item:
+    def __init__(self,x,y,dans_colonie,sorte,screen):
+        self.pos=Vector2(x,y)
+        self.dans_colonie=dans_colonie
+        self.sorte=sorte
+        self.image = pygame.image.load('assets/' + self.sorte + '.png')
+        self.dans_inventaire=False
+        self.screen=screen
+    def draw(self):
+        #print("item drawn")
+        self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
