@@ -17,7 +17,7 @@ colonies = []
 fourmis=[]
 hud=[]
 max_fps=30
-colonie_presente=None
+colonie_presente=[]
 
 police = pygame.font.SysFont("Comic Sans MS",42)
 
@@ -28,34 +28,38 @@ pygame.display.set_caption("Guerre des fourmilières")
 image_icone=pygame.image.load('assets/fourmi_noire.png')
 pygame.display.set_icon(image_icone)
 
-carte=Carte(screen_pointer)
+carte=[]
 
 def nouvelle_partie():
     objets.clear()
     partie = Partie()
+
 
     print('Nouvelle parite')
     titre="test"
     with open("parties_sauvegardees/"+".txt", "w") as fichier:
         fichier.write("Created using write mode.")
 
-    colonie_joueur=Colonie("joueur",dt_pointer,screen_pointer,fourmis)
+    colonie_joueur=Colonie("joueur",dt_pointer,screen_pointer,fourmis,600,500)
     colonies.append(colonie_joueur)
     entrer_colonie(colonie_joueur)
+
+    carte.append(Carte(screen_pointer, colonies,fourmis))
     #game = MapApp()
     #game.run()
 
 def entrer_carte():
     objets.clear()
-    objets.append(carte)
-    colonie_presente=None
+    objets.append(carte[0])
+    colonie_presente.clear()
     print("carte entré")
 
-def entrer_colonie(colonie):
+def entrer_colonie(colonie_entree):
     objets.clear()
-    objets.append(colonie)
-    colonie_presente = colonie
-    print("Colonie " + colonie.nom + " entrée")
+    objets.append(colonie_entree)
+    print(colonie_entree.nom)
+    colonie_presente.append(colonie_entree)
+    print("Colonie " + colonie_entree.nom + " entrée")
     objets.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 20, screen.get_width()/3, screen.get_height()/15, "Carte du monde", entrer_carte,police))
 
 def menu_options():
@@ -100,19 +104,31 @@ while running:
     """
     for colonie in colonies:
         colonie.process()
+    if len(carte)==1:
+        carte[0].process()
     for fourmi in fourmis:
         fourmi.process()
-        if fourmi.dans_colonie==None:
+        if fourmi.dans_colonie is None:
             fourmi.carte_input_process()
-        elif colonie_presente!=None:
-            print('a')
-            if (fourmi.dans_colonie.nom==colonie_presente.nom):
+        elif len(colonie_presente)!=0:
+            if (fourmi.dans_colonie.nom==colonie_presente[0].nom):
                 fourmi.colonie_input_process()
-    for object in objets:
-        object.draw()
-    for fourmi in fourmis:
-        if fourmi.dans_colonie.nom==colonie_presente:
-            fourmi.draw()
+    for objet_a_dessine in objets:
+        objet_a_dessine.draw()
+
+    #draw fourmi here instead of carte and colonie
+    """for fourmi in fourmis:
+        if len(colonie_presente)!=0:
+            #print("A")
+            if fourmi.dans_colonie is not None:
+                #print("C")
+                if fourmi.dans_colonie.nom==colonie_presente[0].nom:
+                    #print("D")
+                    fourmi.draw()
+        else:
+            #print("B")
+            if fourmi.dans_colonie is None:
+                fourmi.draw()"""
 
     pygame.display.flip()
 

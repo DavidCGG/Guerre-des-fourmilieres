@@ -3,12 +3,14 @@ from pygame import Vector2, Color
 
 
 class Colonie:
-    def __init__(self, nom, dt,screen,liste_fourmis):
+    def __init__(self, nom, dt,screen,liste_fourmis, x, y):
         self.nom = nom
         self.dt = dt
         self.salles = [Salle(100, 600, "Throne"),Salle(900, 500, "Banque"), ]
         self.screen = screen
         self.fourmis=[Fourmi("moyen",dt,self,self.screen,liste_fourmis)]
+        self.liste_fourmis=liste_fourmis
+        self.pos=Vector2(x,y)
         # objets.append(self)
     def process(self):
         for salle in self.salles:
@@ -24,9 +26,10 @@ class Colonie:
             pygame.draw.ellipse(surface_colonie, Color(139, 69, 19),pygame.Rect(salle.x, salle.y, salle.largeur, salle.hauteur))
         self.screen[0].blit(surface_colonie, (0, 0))
 
-        for fourmi in self.fourmis:
-            image_fourmi = pygame.image.load("assets/fourmi_noire.png")
-            fourmi.draw()
+        for fourmi in self.liste_fourmis:
+            if fourmi.dans_colonie is not None:
+                if fourmi.dans_colonie.nom==self.nom:
+                    fourmi.draw()
 
 class Salle:
     def __init__(self, x, y, sorte):
@@ -110,6 +113,7 @@ class Fourmi():
         self.dans_colonie=colonie_origine
         self.screen=screen
         self.type=type
+        self.inventaire=[]
         liste_fourmis.append(self)
         if self.type=='lourd':
             self.HP_max=100
@@ -130,34 +134,41 @@ class Fourmi():
             raise Exception("Type fourmi invalide")
 
     def process(self):
-        print("dest:"+str(self.destination)+" pos:"+str(self.pos)+" ",end='')
+        #print("dest:"+str(self.destination)+" pos:"+str(self.pos)+" ",end='')
 
         if(self.destination!=None):
             if(abs((self.pos-self.destination).magnitude()) < 10):
-                print("destination atteinte",end='')
+                #print("destination atteinte",end='')
                 self.destination=None
             else:
-                print("fourmi en movement: "+str((self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*5),end='')
+                #print("fourmi en movement: "+str((self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*5),end='')
                 #print("dt: "+str(self.dt[0]))
                 self.pos+=(self.destination-self.pos).normalize()*self.dt[0]*self.vitesse_base*5
         destination_selectionee=True
-        print()
+        #print()
+        if(self.pos.y<25 and self.dans_colonie is not None):
+            print("fourmi sortie")
+            self.pos=self.dans_colonie.pos+Vector2(10,-10)
+            self.dans_colonie=None
+
+
+
 
     def colonie_input_process(self):
-        print("colonie input processed")
+        #print("colonie input processed")
         if pygame.mouse.get_pressed(num_buttons=3)[0]:
-            print("position set")
+            #print("position set")
             self.destination=Vector2(pygame.mouse.get_pos())
 
     def carte_input_process(self):
-        print("carte input processed")
+        #print("carte input processed")
         if pygame.mouse.get_pressed(num_buttons=3)[0]:
-            print("position set")
+            #print("position set")
             self.destination = Vector2(pygame.mouse.get_pos())
 
     def draw(self):
         self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
-        #print("fourmi dessinée")
+        print("fourmi dessinée")
 
 class Partie():
     def __init__(self):
@@ -168,12 +179,20 @@ class Partie():
         self.tick += 1
 
 class Carte:
-    def __init__(self,screen):
+    def __init__(self,screen,colonies,fourmis):
         self.screen=screen
+        self.colonies=colonies
+        self.fourmis=fourmis
     #def process(self):
-
+    def process(self):
+        #print(len(self.fourmis))
+        for colonie in self.colonies:
+            for fourmi in self.fourmis:
+                if(abs((fourmi.pos-colonie.pos).magnitude()) < 10):
+                    fourmi.dans_colonie=colonie
+                    fourmi.pos=Vector2(self.screen[0].get_width()/2,26)
     def draw(self):
-        print("carte dessinee")
+        #print("carte dessinee")
 
         surface_carte = pygame.Surface((self.screen[0].get_width(), self.screen[0].get_height()))
         surface_carte.fill("green")
@@ -181,4 +200,9 @@ class Carte:
         #pygame.draw.rect(surface_colonie, Color(205, 133, 63),pygame.Rect(0, 50, self.screen[0].get_width(), self.screen[0].get_height() - 50))
         #for salle in self.salles:
         #    pygame.draw.ellipse(surface_colonie, Color(139, 69, 19),pygame.Rect(salle.x, salle.y, salle.largeur, salle.hauteur))
+        for colonie in self.colonies:
+            pygame.draw.ellipse(surface_carte, Color(139, 69, 19),pygame.Rect(colonie.pos.x, colonie.pos.y, 20, 20))
         self.screen[0].blit(surface_carte, (0, 0))
+        for fourmi in self.fourmis:
+            if fourmi.dans_colonie is None:
+                fourmi.draw()
