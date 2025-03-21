@@ -8,8 +8,13 @@ class Colonie:
         self.dt = dt_pointer
         self.screen_pointer = screen_pointer
         self.liste_items = liste_items
-        self.salles = [Salle(20, 500, "Throne", screen_pointer, self, liste_fourmis, dt_pointer, self.screen_pointer), Salle(900, 500, "Banque", screen_pointer, self, liste_fourmis, dt_pointer,self.screen_pointer)]
-        self.fourmis=[Fourmi("moyen", dt_pointer, self, self.screen_pointer, liste_fourmis, self.liste_items)]
+        self.salles = [Salle(20, 500, "throne", screen_pointer, self, liste_fourmis, dt_pointer, self.screen_pointer),
+                       Salle(900, 500, "banque", screen_pointer, self, liste_fourmis, dt_pointer,self.screen_pointer),
+                       Salle(800, 300, "meule", screen_pointer, self, liste_fourmis, dt_pointer,self.screen_pointer),
+                       Salle(100, 250, "enclume", screen_pointer, self, liste_fourmis, dt_pointer,self.screen_pointer)]
+        self.fourmis=[]
+        if self.nom=="noire":
+            self.fourmis.append(Fourmi("moyen", dt_pointer, self, self.screen_pointer, liste_fourmis, self.liste_items))
         self.liste_fourmis=liste_fourmis
         self.pos=Vector2(x,y)
         # objets.append(self)
@@ -32,6 +37,10 @@ class Colonie:
             if fourmi.dans_colonie is not None:
                 if fourmi.dans_colonie.nom==self.nom:
                     fourmi.draw()
+        for item in self.liste_items:
+            if item.dans_colonie is not None and not item.dans_inventaire:
+                if item.dans_colonie.nom==self.nom:
+                    item.draw()
 
         """for item in self.liste_items:
             if item.dans_colonie is not None:
@@ -47,64 +56,90 @@ class Salle:
         self.liste_fourmis=liste_fourmis
         self.dt_pointer=dt_pointer
         self.screen_pointer=screen_pointer
+        self.deja_depose=False
         # self.rectanlge = pygame.Rect()
-        if (self.sorte == "Throne"):
+        if (self.sorte == "throne"):
             self.reine_hp = 1000
             self.largeur = 128
             self.hauteur = 128
-        elif (self.sorte == "Banque"):
+            self.image = pygame.image.load('assets/throne_fourmi_'+self.colonie.nom+'.png')
+        elif (self.sorte == "banque"):
             self.ressources_max = 1000
             self.ressources = 0
             self.largeur = 256
             self.hauteur = 128
+            self.image = pygame.image.load('assets/' + self.sorte + '.png')
+        elif (self.sorte == "meule"):
+            self.ressources = 0
+            self.largeur = 128
+            self.hauteur = 128
+            self.image = pygame.image.load('assets/' + self.sorte + '.png')
+        elif (self.sorte == "enclume"):
+            self.ressources = 0
+            self.largeur = 128
+            self.hauteur = 128
+            self.image = pygame.image.load('assets/' + self.sorte + '.png')
         # objets.append(self)
 
     def process(self):
-        if (self.sorte == "Throne"):
+        if (self.sorte == "throne"):
             for fourmi in self.liste_fourmis:
                 if fourmi.dans_colonie is not None:
                     if fourmi.dans_colonie.nom==self.colonie.nom and fourmi.colonie_origine.nom!=self.colonie.nom and self.pos.x < fourmi.pos.x < self.pos.x+self.largeur and self.pos.y < fourmi.pos.y < self.pos.y+self.hauteur:
                         self.reine_hp-=fourmi.attaque*self.dt_pointer[0]
-        elif (self.sorte == "Banque"):
-
+        elif (self.sorte == "banque"):
             for fourmi in self.liste_fourmis:
-                deja_sur_banque=False
                 if fourmi.dans_colonie is not None:
                     if fourmi.dans_colonie.nom == self.colonie.nom and fourmi.colonie_origine.nom == self.colonie.nom and self.pos.x < fourmi.pos.x < self.pos.x + self.largeur and self.pos.y < fourmi.pos.y < self.pos.y + self.hauteur:
-                        nouveau_inventaire=[]
-                        nb_metal=0
-                        for item in fourmi.liste_items:
-                            if item.sorte!="metal":
-                                nouveau_inventaire.append(item)
-                            else:
-                                nb_metal+=1
-                        self.ressources=nb_metal
-                        if nb_metal==0 and self.ressources>0:
-                            nouveau_inventaire.append(Item(fourmi.pox.x,fourmi.pos.y,None,"metal",self.screen_pointer))
-                            self.ressources-=1
-                        fourmi.inventaire=nouveau_inventaire
-                        deja_sur_banque=True
-
-
+                        if not self.deja_depose:
+                            nouveau_inventaire=[]
+                            nb_metal=0
+                            for item in fourmi.inventaire:
+                                if item.sorte!="metal":
+                                    nouveau_inventaire.append(item)
+                                else:
+                                    nb_metal+=1
+                            self.ressources+=nb_metal
+                            fourmi.inventaire = nouveau_inventaire
+                            if nb_metal!=0:
+                                self.deja_depose = True
+                                print(str(nb_metal)+" métal déposé")
+                            if nb_metal==0 and self.ressources>0 and not self.deja_depose:
+                                nouveau_inventaire.append(Item(fourmi.pos.x,fourmi.pos.y,None,"metal",self.screen_pointer))
+                                self.ressources-=1
+                                self.deja_depose=True
+                                print("1 metal retiré")
+                    elif fourmi.dans_colonie.nom == self.colonie.nom:
+                            self.deja_depose=False
+        elif (self.sorte == "meule"):
+            for fourmi in self.liste_fourmis:
+                if fourmi.dans_colonie is not None:
+                    if fourmi.dans_colonie.nom == self.colonie.nom and fourmi.colonie_origine.nom == self.colonie.nom and self.pos.x < fourmi.pos.x < self.pos.x + self.largeur and self.pos.y < fourmi.pos.y < self.pos.y + self.hauteur:
+                        print("krrrrrrrr")
+        elif (self.sorte == "enclume"):
+            for fourmi in self.liste_fourmis:
+                if fourmi.dans_colonie is not None:
+                    if fourmi.dans_colonie.nom == self.colonie.nom and fourmi.colonie_origine.nom == self.colonie.nom and self.pos.x < fourmi.pos.x < self.pos.x + self.largeur and self.pos.y < fourmi.pos.y < self.pos.y + self.hauteur:
+                        print("clink")
+            #print(self.deja_depose)
 
     def draw(self):
         #surface_self=pygame.Surface((self.largeur,self.hauteur))
         #surface_self.fill(Color(205, 133, 63))
         #pygame.draw.ellipse(surface_self, Color(139, 69, 19),pygame.Rect(0, 0, self.largeur, self.hauteur))
-        image=None
         police = pygame.font.Font("assets/Minecraft.ttf", 25)
         surface_texte=pygame.surface.Surface((self.largeur+64,64))
         surface_texte.fill(Color(205, 133, 63))
-        if self.sorte == "Throne":
-            image = pygame.image.load('assets/throne_fourmi_'+self.colonie.nom+'.png')
+        texte_render=None
+        if self.sorte == "throne":
             texte_render = police.render("Reine : " + str(self.reine_hp) + " hp", False, "Black")
-        elif self.sorte == "Banque":
-            image = pygame.image.load('assets/banque.png')
+        elif self.sorte == "banque":
             texte_render = police.render("Banque : " + str(self.ressources) + " ressources", False, "Black")
-        else:
-            raise Exception("Sorte salle invalide")
-        surface_texte.blit(texte_render, (0, 0))
-        self.screen[0].blit(image, (self.pos.x, self.pos.y))
+        #else:
+            #raise Exception("Sorte salle invalide")
+        if texte_render is not None:
+            surface_texte.blit(texte_render, (0, 0))
+        self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
         self.screen[0].blit(surface_texte, (self.pos.x, self.pos.y+self.hauteur))
 
 
@@ -218,7 +253,6 @@ class Fourmi():
                     self.inventaire.append(item)
         for item in self.inventaire:
             item.pos=self.pos
-            #print(item.sorte,end="")
         #print()
 
     def colonie_input_process(self):
@@ -235,8 +269,8 @@ class Fourmi():
 
     def draw(self):
         self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
-        for item in self.inventaire:
-            item.draw()
+        #for item in self.inventaire:
+            #item.draw()
             #print(item.sorte,end="")
         #print()
         #print("fourmi dessinée")
@@ -260,7 +294,8 @@ class Carte:
         #print(len(self.fourmis))
         for colonie in self.colonies:
             for fourmi in self.liste_fourmis:
-                if((fourmi.pos-colonie.pos).magnitude() < 10):
+                if fourmi.dans_colonie is None and (fourmi.pos-colonie.pos).magnitude() < 10:
+                    print("fourmi entrée dans colonie "+colonie.nom)
                     fourmi.dans_colonie=colonie
                     fourmi.pos=Vector2(self.screen[0].get_width()/2,26)
                     fourmi.destination=None
@@ -285,7 +320,7 @@ class Carte:
         #print("item start carte draw")
         for item in self.liste_items:
             #print(item.sorte)
-            if item.dans_colonie is None:
+            if item.dans_colonie is None and not item.dans_inventaire:
                 item.draw()
 
 class Item:

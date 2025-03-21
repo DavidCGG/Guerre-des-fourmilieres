@@ -41,16 +41,16 @@ def nouvelle_partie():
     with open("parties_sauvegardees/"+".txt", "w") as fichier:
         fichier.write("Created using write mode.")
 
-    liste_items.append(Item(500,100,None,"metal",screen_pointer))
-    liste_items.append(Item(600,100,None,"metal",screen_pointer))
-    liste_items.append(Item(200,400,None,"metal",screen_pointer))
-    liste_items.append(Item(100,700,None,"metal",screen_pointer))
-
-
     colonie_joueur=Colonie("noire",dt_pointer,screen_pointer,liste_fourmis,600,600,liste_items)
     colonie_ennemie=Colonie("rouge",dt_pointer,screen_pointer,liste_fourmis,1000,200,liste_items)
     colonies.append(colonie_joueur)
     colonies.append(colonie_ennemie)
+
+    liste_items.append(Item(500, 100, None, "metal", screen_pointer))
+    liste_items.append(Item(600, 100, None, "metal", screen_pointer))
+    liste_items.append(Item(200, 400, None, "metal", screen_pointer))
+    liste_items.append(Item(100, 700, None, "metal", screen_pointer))
+    liste_items.append(Item(600, 600,colonie_joueur, "metal", screen_pointer))
 
     # créer hud
     hud.append(None)
@@ -142,6 +142,10 @@ while running:
 
     for fourmi in liste_fourmis:
         fourmi.process()
+        #print(fourmi.colonie_origine.nom+" inventaire :",end="")
+        #for item in fourmi.inventaire:
+            #print(item.sorte+", ",end="")
+        #print()
         if not cursor_sur_bouton and fourmi.colonie_origine.nom==couleur_joueur:
             if fourmi.dans_colonie is None and len(colonie_presente)==0:
                 #print("fourmi dans aucune colonie")
