@@ -3,8 +3,12 @@ import matplotlib.pyplot as plt
 
 class Noeud_Generation:
     def __init__(self, nb = -1, voisins = None):
-        self.nb = nb #Numéro du noeud
-        self.voisins = voisins if voisins is not None else set() #Set contenant les voisins
+        self.nb = nb #numéro du noeud
+        #Set contenant les voisins
+        self.voisins = voisins if voisins is not None else set()
+
+    def __str__(self):
+        return f"{self.nb}"
 
     def add_voisin(self, voisin) -> None:
         self.voisins.add(voisin)       
@@ -15,7 +19,8 @@ class Noeud_Generation:
 class Noeud_Pondere:
     def __init__(self, coord = (-1,-1), voisins = None):
         self.coord = coord
-        self.voisins = voisins if voisins is not None else dict() #Dictionnaire contenant les voisins {voisin: poid}
+        #Dictionnaire contenant les voisins {voisin: poid}
+        self.voisins = voisins if voisins is not None else dict()
 
     def add_voisin(self, voisin, poid = -1) -> None:
         self.voisins[voisin] = poid        
@@ -23,61 +28,66 @@ class Noeud_Pondere:
     def remove_voisin(self, voisin) -> None:
         self.voisins.pop(voisin)
 
-class Salle:
-    def __init__(self, noeud, tunnels = None, taille = 0):
-        self.noeud = noeud
-        self.tunnels = set(tunnels) if tunnels is not None else set()
-        self.taille = taille
-    
-class Tunnel:
-    def __init__(self, depart = None, arrivee = None, largeur = 15):
-        self.depart = depart
-        self.arrivee = arrivee
-        self.largeur = largeur
+    def __str__(self):
+        s_voisins = ""
+        for v, p in self.voisins.items():
+            s_voisins += f"({v.coord[0]:.2f}, {v.coord[1]:.2f}); "
+
+        return f"Coord: ({self.coord[0]:.2f}, {self.coord[1]:.2f}), Voisins: {s_voisins}"
         
 class Graph:
-    def __init__(self, salles = None, tunnels = None):
-        self.salles = salles if salles is not None else set()
-        self.tunnels = tunnels if tunnels is not None else set()
+    def __init__(self, noeuds = None):
+        self.noeuds = noeuds if noeuds is not None else set()
 
-    def initialiser_graphe(self, noeuds: list[Noeud_Pondere]) -> None:
-        def connecter_noeuds(self, noeuds) -> None:
-            for noeud in noeuds:
-                for voisin in noeud.voisins:
-                    distance = ((noeud.coord[0] - voisin.coord[0]) ** 2 + (noeud.coord[1] - voisin.coord[1]) ** 2) ** 0.5
-                    noeud.voisins[voisin] = distance
-                    voisin.voisins[noeud] = distance
+    def add_noeud(self, noeud) -> None:
+        if noeud not in self.noeuds:
+            self.noeuds.add(noeud)
+            for v in noeud.voisins:
+                v.voisins.add(noeud)
 
-        def initialiser_salles(self, noeuds) -> None:
-            for noeud in noeuds:
-                salle = Salle(noeud)
+    def add_noeuds(self, noeuds) -> None:
+        for n in noeuds:
+            if n not in self.noeuds:
+                self.noeuds.add(n)
+                for v in n.voisins:
+                    v.voisins[n] = n.voisins[v]
 
-                for tunnel in self.tunnels:
-                    if tunnel.depart == noeud:
-                        salle.tunnels.add(tunnel)
+    def remove_noeud(self, noeud) -> None:
+        if noeud in self.noeuds:
+            self.noeuds.remove(noeud)
+            for v in noeud.voisins:
+                v.voisins.pop(noeud)
 
-                if len(salle.tunnels) == 1: #Salle
-                    salle.taille = 25
-                else: #Intersection
-                    salle.taille = 10
+    def connect_noeuds(self, noeud1, noeud2, poid = -1) -> None:
+        if noeud2 not in noeud1.voisins:
+            noeud1.voisins[noeud2] = poid
+        if noeud1 not in noeud2.voisins:
+            noeud2.voisins[noeud1] = poid
 
-                self.salles.add(salle)
-        
-        def initialiser_tunnels(self, noeuds) -> None:
-            for noeud in noeuds:
-                for voisin in noeud.voisins:
-                    self.tunnels.add(Tunnel(noeud, voisin))
+    def disconnect_noeuds(self, noeud1, noeud2) -> None:
+        if noeud2 in noeud1.voisins:
+            noeud1.voisins.pop(noeud2)
+        if noeud1 in noeud2.voisins:
+            noeud2.voisins.pop(noeud1)
 
-        def initialiser_distances(self, noeuds) -> None:
-            for noeud in noeuds:
-                for voisin in noeud.voisins:
-                    distance = ((noeud.coord[0] - voisin.coord[0]) ** 2 + (noeud.coord[1] - voisin.coord[1]) ** 2) ** 0.5
-                    noeud.voisins[voisin] = distance
+    def afficher(self, ax=None) -> None:
+        G = nx.Graph()
+        positions = dict()
+        num_noeud = dict()
 
-        connecter_noeuds(self, noeuds)
-        initialiser_tunnels(self, noeuds)
-        initialiser_distances(self, noeuds)
-        initialiser_salles(self, noeuds)
+        for n, noeud in enumerate(self.noeuds):
+            positions[n] = noeud.coord
+            num_noeud[noeud] = n
+            G.add_node(n)
+
+        for noeud in self.noeuds:
+            for v in noeud.voisins:
+                G.add_edge(num_noeud[noeud] , num_noeud[v])
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        nx.draw(G, pos=positions, with_labels=True, node_color='lightblue', edge_color='gray', node_size=800, font_size=10, ax=ax)
 
     def dijkstra(self, depart, arrivee) -> list[Noeud_Pondere]:
         def sort_queue(arr) -> list[Noeud_Pondere]:
@@ -149,3 +159,13 @@ class Graph:
 
         chemin.reverse()
         return chemin
+
+    def __str__(self):
+        s = ""
+        for n in self.noeuds:
+            s_voisins = ""
+            for v, p in n.voisins.items():
+                s_voisins += f"({v.coord[0]:.2f}, {v.coord[1]:.2f}); "
+
+            s += f"Coord: ({n.coord[0]:.2f}, {n.coord[1]:.2f}), Voisins: {s_voisins}\n"
+        return s

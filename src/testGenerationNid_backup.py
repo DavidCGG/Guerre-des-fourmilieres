@@ -9,7 +9,7 @@ SCREEN_HEIGHT: int = 600
 
 #Variables de génération
 nb_noeuds_cible: int = 10
-nb_iter_forces: int = 100
+nb_iter_forces: int = 0
 connect_chance: float = 0.3
 taux_mean: float = -1
 initial_mean: float = 3
@@ -28,11 +28,10 @@ def draw(screen, graphe, hauteur_sol = 100) -> None:
     pygame.draw.rect(screen, (90, 160, 250), (0, 0, SCREEN_WIDTH, hauteur_sol))
     pygame.draw.rect(screen, (140, 90, 40), (0, hauteur_sol, SCREEN_WIDTH, SCREEN_HEIGHT - hauteur_sol))
 
-    for tunnel in graphe.tunnels:
-        pygame.draw.line(screen, (0, 0, 0), tunnel.depart.coord, tunnel.arrivee.coord, tunnel.largeur)
-
-    for salle in graphe.salles:
-        pygame.draw.circle(screen, (0, 0, 0), salle.noeud.coord, salle.taille)
+    for noeud in graphe.noeuds:
+        pygame.draw.circle(screen, (0, 0, 0), noeud.coord, 10)
+        for voisin in noeud.voisins:
+            pygame.draw.line(screen, (0, 0, 0), noeud.coord, voisin.coord)
     
     pygame.display.flip()
 
@@ -94,8 +93,8 @@ def interface() -> None:
 
         screen = init()
         graphe: pg.Graph = generer_graphe((nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev), connect_chance, nb_iter_forces)
-        for salle in graphe.salles:
-            salle.noeud.coord = convertir_coord(salle.noeud.coord)
+        for noeud in graphe.noeuds:
+            noeud.coord = convertir_coord(noeud.coord)
 
         while running:
             for event in pygame.event.get():

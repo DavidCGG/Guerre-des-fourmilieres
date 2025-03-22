@@ -217,6 +217,6 @@ def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces) -> pg.Graph:
         bfs(root, collecter_noeuds)
 
         graphe = pg.Graph()
-        graphe.add_noeuds(noeuds)
+        graphe.initialiser_graphe(noeuds)
 
         return graphe
