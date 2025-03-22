@@ -1,5 +1,4 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+from enum import Enum
 
 class Noeud_Generation:
     def __init__(self, nb = -1, voisins = None):
@@ -23,11 +22,16 @@ class Noeud_Pondere:
     def remove_voisin(self, voisin) -> None:
         self.voisins.pop(voisin)
 
+class TypeSalle(Enum):
+    #Les chiffres représentent la taille de la salle
+    INTERSECTION = 10
+    SALLE = 25
+
 class Salle:
-    def __init__(self, noeud, tunnels = None, taille = 0):
+    def __init__(self, noeud, tunnels = None, type = None):
         self.noeud = noeud
         self.tunnels = set(tunnels) if tunnels is not None else set()
-        self.taille = taille
+        self.type = type
     
 class Tunnel:
     def __init__(self, depart = None, arrivee = None, largeur = 15):
@@ -57,9 +61,9 @@ class Graph:
                         salle.tunnels.add(tunnel)
 
                 if len(salle.tunnels) == 1: #Salle
-                    salle.taille = 25
+                    salle.type = TypeSalle.SALLE
                 else: #Intersection
-                    salle.taille = 10
+                    salle.type = TypeSalle.INTERSECTION
 
                 self.salles.add(salle)
         

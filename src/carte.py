@@ -44,6 +44,8 @@ class Carte:
         self.objets = []
         self.clock = pygame.time.Clock()
 
+
+
         self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
         self.last_cam_x = self.camera.x
         self.last_cam_y = self.camera.y
@@ -53,11 +55,12 @@ class Carte:
         self.noise_gen = RandomNoise(self.MAP_WIDTH, self.MAP_HEIGHT, 255, extra=65)
         self.noise_gen.randomize()
         self.transformer_tuiles()
-        self.tuiles_debut = []
 
+        self.tuiles_debut = []
         self.placer_colonies(region_size=15, min_dist=20)
-        self.tuile_debut  = self.tuiles_debut[self.rand_tuile_debut()]
+        self.tuile_debut = self.tuiles_debut[self.rand_tuile_debut()]
         self.colonie_joeur = Colonie(self.tuile_debut, self.objets)
+
         self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
 
@@ -217,10 +220,14 @@ class Carte:
                 if (tile_x, tile_y) == self.tuile_debut:
                     self.menu_colonie = not self.menu_colonie
 
-            elif event.button == 4:  # Scroll up
-                self.camera.zoom_camera(*event.pos, "in")
-            elif event.button == 5:  # Scroll down
-                self.camera.zoom_camera(*event.pos, "out")
+            elif event.button == 4:
+                if not self.colonie_joeur.scrolling: # Scroll up
+                    self.camera.zoom_camera(*event.pos, "in")
+                self.colonie_joeur.handle_scroll("up", event.pos)
+            elif event.button == 5:
+                if not self.colonie_joeur.scrolling: # Scroll down
+                    self.camera.zoom_camera(*event.pos, "out")
+                self.colonie_joeur.handle_scroll("down", event.pos)
 
 
         elif event.type == pygame.MOUSEBUTTONUP:
@@ -269,6 +276,9 @@ class Carte:
 
                 if self.menu_colonie:
                     self.colonie_joeur.menu_colonie(self.screen)
+
+                if self.colonie_joeur.menu_fourmis_ouvert and self.menu_colonie:
+                    self.colonie_joeur.menu_fourmis(self.screen)
 
                 for obj in self.objets:
                     obj.process()

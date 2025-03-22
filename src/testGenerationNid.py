@@ -32,7 +32,7 @@ def draw(screen, graphe, hauteur_sol = 100) -> None:
         pygame.draw.line(screen, (0, 0, 0), tunnel.depart.coord, tunnel.arrivee.coord, tunnel.largeur)
 
     for salle in graphe.salles:
-        pygame.draw.circle(screen, (0, 0, 0), salle.noeud.coord, salle.taille)
+        pygame.draw.circle(screen, (0, 0, 0), salle.noeud.coord, salle.type.value)
     
     pygame.display.flip()
 
