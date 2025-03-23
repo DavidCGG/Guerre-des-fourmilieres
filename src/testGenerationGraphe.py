@@ -112,7 +112,7 @@ def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_
             profondeur, nb_niv_actuel, nb_niv_precedents = infos
 
             current_pondere = lien_graphe[current]
-            current_pondere.coord = (current.nb - nb_niv_precedents - int(nb_niv_actuel/2), profondeur_max - profondeur)
+            current_pondere.coord = [current.nb - nb_niv_precedents - int(nb_niv_actuel/2), profondeur_max - profondeur]
 
         bfs(root, initialiser_lien_graphe)
         bfs(root, initialiser_graphe_pondere)
@@ -151,7 +151,7 @@ def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_
             dist = (dx ** 2 + dy ** 2) ** 0.5
 
             force_x, force_y = 0.01 * dx / (dist ** 2), 0.01 * dy / (dist ** 2)
-            noeud.coord = (noeud.coord[0] + force_x, noeud.coord[1] + force_y)
+            noeud.coord = [noeud.coord[0] + force_x, noeud.coord[1] + force_y]
 
         bfs(root_pondere, calculer_repulsion_helper)
 
@@ -162,7 +162,7 @@ def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_
             dy = v.coord[1] - noeud.coord[1]
             force_x, force_y = 0.01 * dx, 0.01 * dy
 
-            noeud.coord = (noeud.coord[0] + force_x, noeud.coord[1] + force_y)
+            noeud.coord = [noeud.coord[0] + force_x, noeud.coord[1] + force_y]
 
     root_pondere = initialiser_coord(root)
 

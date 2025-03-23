@@ -1,11 +1,13 @@
 import pygame
 import tkinter as tk
+import random
 import prototypeGraphe as pg
 from testGenerationGraphe import generer_graphe
 
 #Variables globales
 SCREEN_WIDTH: int = 800
 SCREEN_HEIGHT: int = 600
+HAUTEUR_SOL = 100
 
 #Variables de génération
 nb_noeuds_cible: int = 10
@@ -22,11 +24,11 @@ def init() -> pygame.Surface:
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     return screen
 
-def draw(screen, graphe, hauteur_sol = 100) -> None:
+def draw(screen, graphe) -> None:
     screen.fill((255, 255, 255))
 
-    pygame.draw.rect(screen, (90, 160, 250), (0, 0, SCREEN_WIDTH, hauteur_sol))
-    pygame.draw.rect(screen, (140, 90, 40), (0, hauteur_sol, SCREEN_WIDTH, SCREEN_HEIGHT - hauteur_sol))
+    pygame.draw.rect(screen, (90, 160, 250), (0, 0, SCREEN_WIDTH, HAUTEUR_SOL))
+    pygame.draw.rect(screen, (140, 90, 40), (0, HAUTEUR_SOL, SCREEN_WIDTH, SCREEN_HEIGHT - HAUTEUR_SOL))
 
     for tunnel in graphe.tunnels:
         pygame.draw.line(screen, (0, 0, 0), tunnel.depart.coord, tunnel.arrivee.coord, tunnel.largeur)
@@ -36,11 +38,35 @@ def draw(screen, graphe, hauteur_sol = 100) -> None:
     
     pygame.display.flip()
 
-def convertir_coord(coord, scale = 50) -> tuple:
-    x = (SCREEN_WIDTH/2) + scale * coord[0]
-    y = (SCREEN_HEIGHT/2) + scale * coord[1]
-    return (int(x), int(y))
+def convertir_coord(graphe: pg.Graph, scale = 50) -> None:
+    noeud_min: pg.Salle = None #Salle la plus haute
+    salle_min: pg.Salle = None #Salle la plus haute qui n'est pas une intersection
 
+    for salle in graphe.salles:
+        if noeud_min is None or salle.noeud.coord[1] < noeud_min.noeud.coord[1]:
+            noeud_min = salle
+            
+            if salle.type == pg.TypeSalle.SALLE:
+                salle_min = salle
+
+    if salle_min != noeud_min:
+        nouveau_x = noeud_min.noeud.coord[0] + 2 * random.random() - 1
+        nouveau_y = noeud_min.noeud.coord[1]
+
+        salle_min = pg.Salle(noeud = pg.Noeud_Pondere([nouveau_x, nouveau_y]), type = pg.TypeSalle.SORTIE)
+        graphe.add_salle(salle_min, [noeud_min])
+    else:
+        salle_min.type = pg.TypeSalle.SORTIE
+    
+    dy: float = scale * salle_min.noeud.coord[1] - HAUTEUR_SOL
+
+    for salle in graphe.salles:
+        salle.noeud.coord = [(SCREEN_WIDTH/2) + salle.noeud.coord[0] * scale,
+                            salle.noeud.coord[1] * scale - dy]
+        
+        if salle != salle_min:
+                salle.noeud.coord[1] += 75
+        
 def interface() -> None:
     def initialiser() -> None:
         root = tk.Tk()
@@ -94,8 +120,7 @@ def interface() -> None:
 
         screen = init()
         graphe: pg.Graph = generer_graphe((nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev), connect_chance, nb_iter_forces)
-        for salle in graphe.salles:
-            salle.noeud.coord = convertir_coord(salle.noeud.coord)
+        convertir_coord(graphe)
 
         while running:
             for event in pygame.event.get():

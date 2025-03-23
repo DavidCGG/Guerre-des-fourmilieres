@@ -12,20 +12,21 @@ class Noeud_Generation:
         self.voisins.pop(voisin)
 
 class Noeud_Pondere:
-    def __init__(self, coord = (-1,-1), voisins = None):
+    def __init__(self, coord = [-1,-1], voisins = None):
         self.coord = coord
         self.voisins = voisins if voisins is not None else dict() #Dictionnaire contenant les voisins {voisin: poid}
 
     def add_voisin(self, voisin, poid = -1) -> None:
-        self.voisins[voisin] = poid        
+        self.voisins[voisin] = poid   
     
     def remove_voisin(self, voisin) -> None:
         self.voisins.pop(voisin)
 
 class TypeSalle(Enum):
-    #Les chiffres représentent la taille de la salle
+    #Les valeurs représentent la taille de la salle
     INTERSECTION = 10
     SALLE = 25
+    SORTIE = 10
 
 class Salle:
     def __init__(self, noeud, tunnels = None, type = None):
@@ -45,7 +46,7 @@ class Graph:
         self.tunnels = tunnels if tunnels is not None else set()
 
     def initialiser_graphe(self, noeuds: list[Noeud_Pondere]) -> None:
-        def connecter_noeuds(self, noeuds) -> None:
+        def connecter_noeuds(noeuds) -> None:
             for noeud in noeuds:
                 for voisin in noeud.voisins:
                     distance = ((noeud.coord[0] - voisin.coord[0]) ** 2 + (noeud.coord[1] - voisin.coord[1]) ** 2) ** 0.5
@@ -78,10 +79,23 @@ class Graph:
                     distance = ((noeud.coord[0] - voisin.coord[0]) ** 2 + (noeud.coord[1] - voisin.coord[1]) ** 2) ** 0.5
                     noeud.voisins[voisin] = distance
 
-        connecter_noeuds(self, noeuds)
+        connecter_noeuds(noeuds)
         initialiser_tunnels(self, noeuds)
         initialiser_distances(self, noeuds)
         initialiser_salles(self, noeuds)
+
+    def add_salle(self, salle: Salle, voisins:list[Salle]) -> None:
+        self.salles.add(salle)
+
+        for voisin in voisins:
+            distance = ((salle.noeud.coord[0] - voisin.noeud.coord[0]) ** 2 + (salle.noeud.coord[1] - voisin.noeud.coord[1]) ** 2) ** 0.5
+            salle.noeud.voisins[voisin.noeud] = distance
+            voisin.noeud.voisins[salle.noeud] = distance
+
+            tunnel = Tunnel(salle.noeud, voisin.noeud)
+            salle.tunnels.add(tunnel)
+            voisin.tunnels.add(tunnel)
+            self.tunnels.add(tunnel)
 
     def dijkstra(self, depart, arrivee) -> list[Noeud_Pondere]:
         def sort_queue(arr) -> list[Noeud_Pondere]:
