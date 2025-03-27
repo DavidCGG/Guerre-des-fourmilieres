@@ -137,6 +137,7 @@ def menu_principal():
 
 menu_principal()
 while running:
+    #print("Jeu is running")
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
