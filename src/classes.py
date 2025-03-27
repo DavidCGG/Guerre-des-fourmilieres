@@ -67,24 +67,24 @@ class Salle:
             self.reine_PV = 200
             self.largeur = 128
             self.hauteur = 128
-            self.image = pygame.image.load('assets/throne_fourmi_'+self.colonie.nom+'.png')
+            self.image = pygame.image.load('../assets/images/throne_fourmi_'+self.colonie.nom+'.png')
         elif (self.sorte == "banque"):
             self.ressources_max = 10
             self.ressources = 0
             self.largeur = 256
             self.hauteur = 128
-            self.image = pygame.image.load('assets/' + self.sorte + '.png')
+            self.image = pygame.image.load('../assets/images/' + self.sorte + '.png')
             self.reserve=[]
         elif (self.sorte == "meule"):
             self.ressources = 0
             self.largeur = 128
             self.hauteur = 128
-            self.image = pygame.image.load('assets/' + self.sorte + '.png')
+            self.image = pygame.image.load('../assets/images/' + self.sorte + '.png')
         elif (self.sorte == "enclume"):
             self.ressources = 0
             self.largeur = 128
             self.hauteur = 128
-            self.image = pygame.image.load('assets/' + self.sorte + '.png')
+            self.image = pygame.image.load('../assets/images/' + self.sorte + '.png')
         # objets.append(self)
 
     def process(self,liste_items):
@@ -168,13 +168,13 @@ class Salle:
         #surface_self=pygame.Surface((self.largeur,self.hauteur))
         #surface_self.fill(Color(205, 133, 63))
         #pygame.draw.ellipse(surface_self, Color(139, 69, 19),pygame.Rect(0, 0, self.largeur, self.hauteur))
-        police = pygame.font.Font("assets/Minecraft.ttf", 25)
+        police = pygame.font.Font("../assets/fonts/Minecraft.ttf", 25)
         surface_texte=pygame.surface.Surface((self.largeur+64,64))
         surface_texte.fill(Color(205, 133, 63))
         texte_render=None
         if self.sorte == "throne":
             if self.detruit:
-                self.image=pygame.image.load('assets/salle_vide.png')
+                self.image=pygame.image.load('../assets/images/salle_vide.png')
             texte_render = police.render("Reine : " + str(self.reine_PV) + " PV", False, "Black")
         elif self.sorte == "banque":
             texte_render = police.render("Banque : " + str(self.ressources) + " ressources", False, "Black")
@@ -244,7 +244,7 @@ class Fourmi():
         self.type=type
         self.liste_items_pointeur=liste_items_pointeur
         self.inventaire=[]
-        self.image = pygame.image.load('assets/fourmi_' + self.colonie_origine.nom + '.png')
+        self.image = pygame.image.load('../assets/images/fourmi_' + self.colonie_origine.nom + '.png')
         liste_fourmis_pointeur[0].append(self)
         self.liste_fourmis_pointeur=liste_fourmis_pointeur
         self.vivant=True
@@ -363,7 +363,7 @@ class Fourmi():
 
     def draw(self):
         if not self.vivant:
-            self.image=pygame.image.load('assets/fourmi_morte.png')
+            self.image=pygame.image.load('../assets/images/fourmi_morte.png')
         self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
         #for item in self.inventaire:
             #item.draw()
@@ -428,7 +428,7 @@ class Item:
         self.pos=Vector2(x,y)
         self.dans_colonie=dans_colonie
         self.sorte=sorte
-        self.image = pygame.image.load('assets/' + self.sorte + '.png')
+        self.image = pygame.image.load('../assets/images/' + self.sorte + '.png')
         self.dans_inventaire=dans_inventaire
         self.screen=screen
         self.id = str(Item.conteur_classe)
