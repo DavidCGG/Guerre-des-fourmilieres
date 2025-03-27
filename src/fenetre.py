@@ -1,36 +1,88 @@
-import os.path
+import pygame
+import sys
+import os
+from Fourmis import FourmisSprite, Ouvriere, Soldat
+from config import WIDTH, HEIGHT
 
-import arcade
+# Initialize Pygame
+pygame.init()
 
-fenetre_largeur=1000
-fenetre_hauteur=500
-fenetre_titre="Titre"
+# Set up the display
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Menu Principal")
+
+# Define colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Menu options
+menu_options = ["Start Game", "Options", "Quit"]
+
+def draw_text(text, font, color, surface, x, y):
+    textobj = font.render(text, True, color)
+    textrect = textobj.get_rect()
+    textrect.topleft = (x, y)
+    surface.blit(textobj, textrect)
+
 
 def trouver_img(nom: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "..", "assets", nom)
+    return os.path.join(os.path.dirname(__file__), "..", "assets", "images", nom)
 
-class VueJeu(arcade.Window):
-    def __init__(self):
-        super().__init__(fenetre_largeur,fenetre_hauteur,fenetre_titre)
-        self.background_color=arcade.csscolor.CORNFLOWER_BLUE
-        self.player_texture=arcade.load_texture(trouver_img("Fourmi.png"))
-        self.player_sprite=arcade.Sprite(self.player_texture)
-        self.player_sprite.center_x=16
-        self.player_sprite.center_y=14
+def trouver_font(nom: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "..", "assets", "fonts", nom)
 
-    def setup(self):
-        #Set up le jeu ici. Call pour redemarrer le jeu.
-        pass
+pygame.display.set_icon(pygame.image.load(trouver_img("Fourmi.png")))
+font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74)
+small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
 
-    def on_draw(self):
-        self.clear()
-        #code pour draw ici
-        arcade.draw_sprite(self.player_sprite)
+spritesheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
+fourmis = Ouvriere(600, 300, 8.5, "random")
+fourmis_sprite = FourmisSprite(fourmis, spritesheet, 16, 16, 4, 300)
 
-def main():
-    fenetre=VueJeu()
-    fenetre.setup()
-    arcade.run()
+sprites = pygame.sprite.Group()
+sprites.add(fourmis_sprite)
+
+
+def main_menu():
+    selected_option = 0
+    clock = pygame.time.Clock()
+
+    while True:
+        dt = clock.tick(60)
+        screen.fill(pygame.Color("black"))
+
+        # Draw menu options
+        for i, option in enumerate(menu_options):
+            if i == selected_option:
+                draw_text(option, font, WHITE, screen, 100, 100 + i * 100)
+            else:
+                draw_text(option, small_font, WHITE, screen, 100, 100 + i * 100)
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    selected_option = (selected_option - 1) % len(menu_options)
+                elif event.key == pygame.K_DOWN:
+                    selected_option = (selected_option + 1) % len(menu_options)
+                elif event.key == pygame.K_RETURN:
+                    if selected_option == 0:
+                        # Start Game
+                        print("Start Game selected")
+                    elif selected_option == 1:
+                        # Options
+                        print("Options selected")
+                    elif selected_option == 2:
+                        # Quit
+                        pygame.quit()
+                        sys.exit()
+
+        sprites.update(dt)
+        sprites.draw(screen)
+        pygame.display.update()
 
 if __name__ == "__main__":
-    main()
+    main_menu()

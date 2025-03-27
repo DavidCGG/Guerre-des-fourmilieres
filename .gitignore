@@ -1,1 +1,3 @@
-.idea/
+venv/
+src/testGenerationNid_backup.py
+src/prototypeGraphe_backup.py
