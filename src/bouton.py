@@ -1,7 +1,7 @@
 import pygame
 
 class Bouton:
-    def __init__(self,x,y,largeur,hauteur,texte,fonction_sur_click, police, screen, objets):
+    def __init__(self,x,y,largeur,hauteur,texte,fonction_sur_click, police, screen):
         self.x=x-largeur/2
         self.y=y-hauteur/2
         self.largeur = largeur
@@ -20,9 +20,6 @@ class Bouton:
 
         self.screen = screen
         self.screen = screen
-        self.objets = objets
-        self.dans_objets = False
-        self.ajouter()
 
         self.avec_bordure = False
         self.couleur_bordure = None
@@ -52,10 +49,6 @@ class Bouton:
             self.screen.blit(self.surface,self.rectangle)
             if self.avec_bordure:
                 pygame.draw.rect(self.screen,self.couleur_bordure,self.rectangle,3)
-    def ajouter(self):
-        if not any(isinstance(obj, Bouton) and obj.texte == self.texte for obj in self.objets):
-            self.objets.append(self)
-            self.dans_objets = True
 
     def add_bordure(self, col):
         self.avec_bordure = True

@@ -6,7 +6,7 @@ from config import WIDTH, HEIGHT
 
 
 class Fourmis(ABC):
-    def __init__(self, hp: int, atk: int, scale,  x0, y0, mouvement=None):
+    def __init__(self, hp: int, atk: int, scale,  x0, y0):
         super().__init__()
         self.centre_y = y0
         self.centre_x = x0
@@ -15,7 +15,7 @@ class Fourmis(ABC):
         self.target_y = y0
         self.base_speed = 2
         self.speed = self.base_speed * self.scale
-        self.type_mouvement = mouvement
+        self.path = None
         self.facing = 0 # 0 : droite, 1 : gauche
         self.hp = hp
         self.atk = atk
@@ -27,17 +27,14 @@ class Fourmis(ABC):
     def attack(self, other):
         pass
 
-    def update(self, dt):
+    def process(self, dt, tile_size):
         if self.pause_timer > 0:
             self.pause_timer -= dt
             return
 
-        if self.type_mouvement == "random":
-            self.random_mouvement(dt)
-        elif self.type_mouvement == "pathfind":
-            self.pathfind_mouvement(dt)
-        elif self.type_mouvement is None:
-            pass
+        if self.target_x != self.centre_x and self.target_y != self.centre_y:
+            self.goto_target(dt, tile_size)
+
 
     def random_mouvement(self, dt):
         if self.centre_x == self.target_x and self.centre_y == self.target_y:
@@ -47,7 +44,6 @@ class Fourmis(ABC):
         self.goto_target(dt)
 
     def set_nouv_target(self):
-
         angle = random.uniform(0, 2*math.pi)
         distance = random.uniform(40, 150)
 
@@ -59,24 +55,56 @@ class Fourmis(ABC):
         self.target_x = max(0+self.width//2, min(WIDTH-self.width//2, self.target_x))
         self.target_y = max(0+self.height//2, min(HEIGHT-self.height//2, self.target_y))
 
+    def set_target(self, target_x, target_y):
+        self.target_x = target_x
+        self.target_y = target_y
 
-    def goto_target(self, dt):
-        dx = self.target_x - self.centre_x
-        dy = self.target_y - self.centre_y
-        distance = math.sqrt(dx**2 + dy**2)
+    def goto_target(self, dt, tile_size):
+        print(self.centre_x, self.centre_y)
+        if not hasattr(self, "path") or not self.path:
+            # Calculate path if not already calculated
+            self.path = self.calculate_path(tile_size)
 
-        if distance > 0.5:
-            self.centre_x += self.speed * dx/distance * (dt/1000)
-            self.centre_y += self.speed * dy/distance * (dt/1000)
+        if self.path:
+            next_tile = self.path[0]
+            target_x = next_tile[0] * tile_size + tile_size // 2
+            target_y = next_tile[1] * tile_size + tile_size // 2
 
-        else:
-            self.centre_x = self.target_x
-            self.centre_y = self.target_y
+            dx = target_x - self.centre_x
+            dy = target_y - self.centre_y
+            distance = math.sqrt(dx ** 2 + dy ** 2)
 
-        if dx > 0:
-            self.facing = 0
-        else:
-            self.facing = 1
+            if distance > 0.5:
+                self.centre_x += self.speed * dx / distance * (dt / 1000)
+                self.centre_y += self.speed * dy / distance * (dt / 1000)
+            else:
+                # Reached the next tile
+                self.centre_x = target_x
+                self.centre_y = target_y
+                self.path.pop(0)  # Remove the reached tile
+
+            # Update facing direction
+            self.facing = 0 if dx > 0 else 1
+
+    def calculate_path(self, tile_size):
+        start_tile = self.get_tuile(tile_size)
+        target_tile = (self.target_x // tile_size, self.target_y // tile_size)
+
+        # Example: Simple straight-line path (replace with A* for complex maps)
+        path = []
+        x, y = start_tile
+        while (x, y) != target_tile:
+            if x < target_tile[0]:
+                x += 1
+            elif x > target_tile[0]:
+                x -= 1
+            elif y < target_tile[1]:
+                y += 1
+            elif y > target_tile[1]:
+                y -= 1
+            path.append((x, y))
+
+        return path
 
     def get_tuile(self, tile_size):
         return int(self.centre_x // tile_size), int(self.centre_y // tile_size)
@@ -86,27 +114,25 @@ class Fourmis(ABC):
 
 
 class Ouvriere(Fourmis):
-    def __init__(self, x0, y0, scale=1.0, mouvement=None):
-        super().__init__(hp=10, atk=2, scale=scale, x0=x0, y0=y0, mouvement=mouvement)
+    def __init__(self, x0, y0, scale=1.0):
+        super().__init__(hp=10, atk=2, scale=scale, x0=x0, y0=y0)
         self.base_speed = 3
         self.speed = self.base_speed * self.scale
         self.size = 1
 
 
-    def process(self):
-        pass
+
 
     def attack(self, other):
         other.hp -= self.atk
 
 class Soldat(Fourmis):
-    def __init__(self, x0, y0, scale=1.0, mouvement="random"):
-        super().__init__(hp=25, atk=5, scale=scale, x0=x0, y0=y0, mouvement=mouvement)
+    def __init__(self, x0, y0, scale=1.0):
+        super().__init__(hp=25, atk=5, scale=scale, x0=x0, y0=y0)
         self.base_speed = 1.5
         self.speed = self.base_speed * self.scale
         self.size = 2 # prend 2 places dans le groupe
-    def process(self):
-        pass
+
     def attack(self, other):
         other.hp -= self.atk
 
@@ -141,7 +167,7 @@ class FourmisSprite(pygame.sprite.Sprite):
         return frames
 
     def update(self, dt):
-        self.fourmis.update(dt)
+        self.fourmis.process(dt)
         if self.fourmis.pause_timer > 0:
             return
 

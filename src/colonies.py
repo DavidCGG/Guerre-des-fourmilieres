@@ -5,13 +5,16 @@ import pygame
 from pygame.examples.scroll import scroll_view
 
 from Fourmis import Ouvriere, Soldat
-from config import BLACK, trouver_font, WHITE, AQUA, trouver_img
+from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN
 from Fourmis import FourmisSprite
-from bouton import Bouton
+from classes import Bouton
 
 
 class Colonie:
     def __init__(self, tuile_debut, objets):
+        self.sprite_sheet_ouvr = pygame.image.load(trouver_img("ouvriere_sheet.png")).convert_alpha()
+        self.sprite_sheet_sold = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
+
         self.tuile_debut = tuile_debut
         self.vie = 1 # 1 = 100% (vie de la reine)
         self.nourriture = 0
@@ -19,6 +22,9 @@ class Colonie:
         self.objets = objets
         self.dans_objets = False
         self.ajouter()
+
+        self.fourmis_selection = None
+        self.last_fourmis_selection = None
 
         self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(9)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(2)]
         self.texte_rects = {}
@@ -32,30 +38,29 @@ class Colonie:
         self.curr_tab = "Ouvrières"
         self.last_tab = self.curr_tab
         self.menu_fourmis_texte_rects = {}
-        self.menu_fourmis_pos = None
+
         self.boutons = []
 
-        self.menu_colonie_surface = None
-        self.menu_fourmis_surface = None
+        self.menu_colonie_surface = pygame.Surface((250, 375))
+        self.menu_fourmis_surface = pygame.Surface((250, 375))
         self.menu_a_updater = True
-        self.menu_fourmis_rect = None
+        self.menu_f_a_updater = True
+        self.menu_fourmis_rect = pygame.Rect(0, 720 / 2 - self.menu_fourmis_surface.get_height() / 2, 250, 375)
         self.update_menu()
         self.update_menu_fourmis()
+
 
         self.sprites = pygame.sprite.Group()
 
 
-    def process(self):
+    def process(self,dt,tile_size):
         for f in self.fourmis:
-            f.process()
+            f.process(dt, tile_size)
 
     def ajouter(self):
         if not any(isinstance(obj, Colonie) and obj.tuile_debut == self.tuile_debut for obj in self.objets):
             self.objets.append(self)
             self.dans_objets = True
-
-    def menu_fourmis_updater(self):
-        self.menu_a_updater = True
 
     def nombre_ouvrieres(self):
         return len([f for f in self.fourmis if isinstance(f, Ouvriere)])
@@ -67,8 +72,10 @@ class Colonie:
         pass
 
     def update_menu(self):
+        if not self.menu_a_updater:
+            return
+
         font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
-        self.menu_colonie_surface = pygame.Surface((250, 375))
         self.menu_colonie_surface.fill(BLACK)
 
         y_offset = 40
@@ -92,15 +99,14 @@ class Colonie:
             if texte.startswith("Ouvrières") or texte.startswith("Soldats"):
                 self.texte_rects[texte.split()[0]] = _texte_rect.move(menu_x, menu_y)
             y_offset += 40
-
+        self.menu_a_updater = False
     def update_menu_fourmis(self):
-        if not self.menu_a_updater:
+        if not self.menu_f_a_updater:
             return
 
         font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
-        self.menu_fourmis_surface = pygame.Surface((250, 375))
         self.menu_fourmis_surface.fill(BLACK)
-        self.menu_fourmis_rect = pygame.Rect(0, 720 / 2 - self.menu_fourmis_surface.get_height() / 2, 250, 375)
+
         y_offset = 40
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -108,6 +114,7 @@ class Colonie:
         rel_y = mouse_y - self.menu_fourmis_rect.y + self.scroll_offset
 
         list_surface = pygame.Surface((250, max(len(self.fourmis) * 50, 375)))
+
         list_surface.fill(BLACK)
 
 
@@ -120,9 +127,9 @@ class Colonie:
 
         for fourmi in fourmis:
             if isinstance(fourmi, Ouvriere):
-                sprite_sheet = pygame.image.load(trouver_img("ouvriere_sheet.png")).convert_alpha()
+                sprite_sheet = self.sprite_sheet_ouvr
             elif isinstance(fourmi, Soldat):
-                sprite_sheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
+                sprite_sheet = self.sprite_sheet_sold
             fourmi.scale = 2
             sprite = FourmisSprite(fourmi, sprite_sheet, 16, 16, 4, 300).extract_frames()[0]
 
@@ -132,13 +139,16 @@ class Colonie:
             list_surface.blit(_texte, (50, y_offset))
 
             rect = pygame.Rect(0, y_offset - 5, 250, 50)
-            if rect.collidepoint((rel_x,rel_y)):
-                pygame.draw.rect(list_surface, AQUA, rect, 2)
+            if self.fourmis_selection == fourmi:
+                pygame.draw.rect(list_surface, GREEN, rect, 2)
+
+            # elif rect.collidepoint((rel_x, rel_y)):
+            #     pygame.draw.rect(list_surface, AQUA, rect, 2)
 
             y_offset += 50
 
         self.menu_fourmis_surface.blit(list_surface, (0, -self.scroll_offset))
-        self.menu_a_updater = False
+        self.menu_f_a_updater = False
 
 
     def menu_colonie(self, screen):
@@ -149,13 +159,11 @@ class Colonie:
             screen.blit(self.menu_colonie_surface, (1280 - self.menu_colonie_surface.get_width(), 720 / 2 - self.menu_colonie_surface.get_height() / 2))
 
     def menu_fourmis(self, screen):
-        font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
         self.update_menu_fourmis()
 
         if self.menu_fourmis_surface is not None and self.menu_fourmis_ouvert:
             screen.blit(self.menu_fourmis_surface, (0, 720 / 2 - self.menu_fourmis_surface.get_height() / 2))
-            bout = Bouton(self.menu_fourmis_surface.get_width() / 2, 720 / 2 + self.menu_fourmis_surface.get_height() / 2 + 25, 250, 50, "Déplacer", self.deplacer_fourmi, font, screen,
-                          self.objets)
+
 
 
 
@@ -177,26 +185,45 @@ class Colonie:
                 self.menu_fourmis_ouvert = not self.menu_fourmis_ouvert if key == self.last_tab else True
                 if not self.menu_fourmis_ouvert:
                     self.objets.clear()
-                self.menu_fourmis_updater()
+                self.menu_a_updater = True
+                self.menu_f_a_updater = True
                 return
 
+        if self.menu_fourmis_ouvert and self.menu_fourmis_rect.collidepoint(pos):
+            rel_x = pos[0] - self.menu_fourmis_rect.x
+            rel_y = pos[1] - self.menu_fourmis_rect.y + self.scroll_offset
+
+            y_offset = 40
+            for fourmi in self.fourmis:
+                rect = pygame.Rect(0, y_offset - 5, 250, 50)
+
+                if rect.collidepoint((rel_x, rel_y)):
+                    if self.fourmis_selection == fourmi:
+                        self.fourmis_selection = None
+
+                    else:
+                        self.fourmis_selection = fourmi
+
+                    self.menu_f_a_updater = True
+                    print(self.fourmis_selection)
+                    return
+
+                y_offset += 50
 
 
-        for b in self.boutons:
-            if b.rectangle.collidepoint(pos):
-                b.fonction_sur_click()
-                return
 
     def handle_hover(self, pos):
         for key, rect in self.texte_rects.items():
             if rect.collidepoint(pos):
                 self.hover_texte = key
-                self.update_menu()
+                self.menu_a_updater = True
                 return
+
         if self.menu_fourmis_rect.collidepoint(pos):
+
             self.scrolling = True
-            self.menu_fourmis_pos = pos
-            self.menu_a_updater = True
+            self.menu_f_a_updater = True
+
 
         else:
             self.scrolling = False
@@ -204,7 +231,6 @@ class Colonie:
 
 
         self.hover_texte = None
-
 
 
     def handle_scroll(self, dir, pos):
@@ -218,7 +244,9 @@ class Colonie:
                 self.scroll_offset = max(0, self.scroll_offset - self.scroll_speed)
             elif dir  == "down":
                 self.scroll_offset = min(max_offset, self.scroll_offset + self.scroll_speed)
-            self.menu_fourmis_updater()
+
+            self.menu_f_a_updater = True
+            self.update_menu_fourmis()
 
 class PrototypeIA:
     def __init__(self, root):
@@ -300,7 +328,7 @@ class ColonieIA:
             self.state = "EXPLORATION"
 
 
-
-root = tk.Tk()
-app = PrototypeIA(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PrototypeIA(root)
+    root.mainloop()

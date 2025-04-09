@@ -1,11 +1,11 @@
 import random
 import pygame
 import venv_setup
-from memory_profiler import profile
 import gc
 from colonies import Colonie
+from memory_profiler import profile
 
-from bouton import Bouton
+from classes import Bouton
 from camera import Camera
 from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE
 from config import trouver_font
@@ -41,9 +41,9 @@ class Carte:
         self.MAP_HEIGHT = 100
         self.gen_map = GenerationMap(self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
         self.map_data = self.gen_map.liste_tuiles()
-        self.objets = []
+        self.liste_boutons = []
         self.clock = pygame.time.Clock()
-
+        self.objets = []
 
 
         self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
@@ -57,12 +57,16 @@ class Carte:
         self.transformer_tuiles()
 
         self.tuiles_debut = []
+        self.tuile_selection = None
         self.placer_colonies(region_size=15, min_dist=20)
         self.tuile_debut = self.tuiles_debut[self.rand_tuile_debut()]
         self.colonie_joeur = Colonie(self.tuile_debut, self.objets)
 
         self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
+        self.police1 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
+        self.police2 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
+        self.police_grids = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 26)
 
     def rand_tuile_debut(self):
         return random.randint(0,3)
@@ -135,14 +139,17 @@ class Carte:
                         self.map_data[y][x].toggle_color()
 
     def draw_top_bar(self):
-        bouton = Bouton(self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police, self.screen,self.objets)
-        bouton.add_bordure(pygame.Color(192, 192, 192))
+        if not any(isinstance(bout, Bouton) and bout.texte == "Options" for bout in self.liste_boutons):
+
+            bouton = Bouton(self.screen, self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police)
+            self.liste_boutons.append(bouton)
         pygame.draw.rect(self.screen, BLACK, (0, 0, self.size[0], 50))
         font = pygame.font.Font(None, 24)
         fps_info = font.render(f'FPS: {self.clock.get_fps():.2f}', True, YELLOW)
         zoom_info = font.render(f'Zoom: {self.camera.get_zoom() * 100:.2f}%', True, YELLOW)
         self.screen.blit(fps_info, (10, 10))
         self.screen.blit(zoom_info, (10, 30))
+
 
 
     def draw_tiles(self, start_x, start_y, end_x, end_y, tile_size):
@@ -155,53 +162,53 @@ class Carte:
     def menu_options(self):
         if self.in_menu:
             self.retour()
+            return
 
-        else:
-            self.objets.clear()
-            surface = pygame.Surface((300, 500))
-            surface.fill(BLACK)
-            police1 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
-            texte_render = police1.render("Options", True, WHITE)
-            police2 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
-            police_grids = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 26)
-            self.in_menu = True
+        surface = pygame.Surface((300, 500))
+        surface.fill(BLACK)
+
+        texte_render = self.police1.render("Options", True, WHITE)
+
+        self.in_menu = True
 
 
-            grid_mode_str = "ON" if self.grid_mode else "OFF"
-            surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
-            self.screen.blit(surface, (self.size[0] / 2 - 150, self.size[1] / 2 - 250))
-            bouton_retour = Bouton(self.size[0] / 2, self.size[1] / 2 + 200, self.size[0] / 8, self.size[1] / 15,
-                                   'Retour', self.retour, police2, self.screen, self.objets)
-            bouton_grid_mode = Bouton(self.size[0] / 2, self.size[1] / 2 + 100, self.size[0] / 8, self.size[1] / 15,
-                                      f'Grids: {grid_mode_str}', self.toggle_grid, police_grids, self.screen, self.objets)
-            bouton_quitter = Bouton(self.size[0] / 2, self.size[1] / 2, self.size[0] / 8, self.size[1] / 15,
-                                    'Quitter', self.quitter, police2, self.screen, self.objets)
+        grid_mode_str = "ON" if self.grid_mode else "OFF"
+        surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
+        self.screen.blit(surface, (self.size[0] / 2 - 150, self.size[1] / 2 - 250))
+        self.liste_boutons.append(Bouton(self.screen,self.size[0] / 2, self.size[1] / 2 + 200, self.size[0] / 8, self.size[1] / 15,
+                               'Retour', self.retour, self.police2))
+        self.liste_boutons.append(Bouton(self.screen,self.size[0] / 2, self.size[1] / 2 + 100, self.size[0] / 8, self.size[1] / 15,
+                                  f'Grids: {grid_mode_str}', self.toggle_grid, self.police_grids))
+        self.liste_boutons.append(Bouton(self.screen, self.size[0] / 2, self.size[1] / 2, self.size[0] / 8, self.size[1] / 15,
+                                'Quitter', self.quitter, self.police2))
+
+
 
     def toggle_grid(self):
         self.grid_mode = not self.grid_mode
-        for obj in self.objets:
-            if isinstance(obj, Bouton) and 'Grids' in obj.texte:
+        for bout in self.liste_boutons:
+            if isinstance(bout, Bouton) and 'Grids' in bout.texte:
                 grid_mode_str = "ON" if self.grid_mode else "OFF"
-                obj.texte = f'Grids: {grid_mode_str}'
+                bout.texte = f'Grids: {grid_mode_str}'
 
     def menu_principal(self):
-        self.objets.clear()
+        self.liste_boutons.clear()
         self.screen.fill('cyan')
-        bouton_options = Bouton(self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police, self.screen,
-                                self.objets)
+        bouton_options = Bouton(self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police, self.screen)
+
     def retour(self):
-        self.objets.clear()
+        self.liste_boutons.clear()
         self.in_menu = False
         self.moving = True
 
     def quitter(self):
         self.running = False
-        self.objets.clear()
+        self.liste_boutons.clear()
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:
             self.running = False
-            self.objets.clear()
+            self.liste_boutons.clear()
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -219,7 +226,10 @@ class Carte:
                 self.colonie_joeur.handle_click(event.pos, tile_x, tile_y, self.screen)
                 if (tile_x, tile_y) == self.tuile_debut:
                     self.menu_colonie = not self.menu_colonie
-
+            if event.button == 3:  # Right click
+                if self.colonie_joeur.fourmis_selection:
+                    self.colonie_joeur.fourmis_selection.set_target(tile_x, tile_y)
+                    self.colonie_joeur.fourmis_selection = None
             elif event.button == 4:
                 if not self.colonie_joeur.scrolling: # Scroll up
                     self.camera.zoom_camera(*event.pos, "in")
@@ -251,9 +261,8 @@ class Carte:
 
         return start_x, start_y, end_x, end_y
 
-    @profile
-    def run(self):
 
+    def run(self):
         try:
             tile_size = int(self.TILE_SIZE * self.camera.zoom)
             start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
@@ -280,9 +289,12 @@ class Carte:
                 if self.colonie_joeur.menu_fourmis_ouvert and self.menu_colonie:
                     self.colonie_joeur.menu_fourmis(self.screen)
 
-                for obj in self.objets:
-                    obj.process()
 
+                for bout in self.liste_boutons:
+                    if bout.draw():
+                        continue
+
+                self.colonie_joeur.process(self.clock.get_time(), tile_size)
                 pygame.display.update()
                 self.clock.tick(60)
 
