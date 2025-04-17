@@ -1,7 +1,5 @@
 import random
 import pygame
-import venv_setup
-import gc
 from colonies import Colonie
 from memory_profiler import profile
 
@@ -143,6 +141,7 @@ class Carte:
 
             bouton = Bouton(self.screen, self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police)
             self.liste_boutons.append(bouton)
+            
         pygame.draw.rect(self.screen, BLACK, (0, 0, self.size[0], 50))
         font = pygame.font.Font(None, 24)
         fps_info = font.render(f'FPS: {self.clock.get_fps():.2f}', True, YELLOW)
@@ -255,7 +254,7 @@ class Carte:
         start_x = max(0, int(self.camera.x // tile_size))
         start_y = max(0, int(self.camera.y // tile_size))
 
-        # On s'assure que la tuile de retrouve dans les limites de la carte
+        # On s'assure que la tuile se retrouve dans les limites de la carte
         end_x = min(int((self.camera.x + self.size[0]) // tile_size + 1), self.MAP_WIDTH)
         end_y = min(int((self.camera.y + self.size[1]) // tile_size + 1), self.MAP_HEIGHT)
 
