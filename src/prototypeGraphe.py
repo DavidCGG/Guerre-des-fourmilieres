@@ -1,9 +1,10 @@
 from enum import Enum
+from pygame import Vector2
 
 class Noeud_Generation:
     def __init__(self, nb = -1, voisins = None):
-        self.nb = nb #Numéro du noeud
-        self.voisins = voisins if voisins is not None else set() #Set contenant les voisins
+        self.nb: int = nb #Numéro du noeud
+        self.voisins: set[Noeud_Generation] = voisins if voisins is not None else set() #Set contenant les voisins
 
     def add_voisin(self, voisin) -> None:
         self.voisins.add(voisin)       
@@ -13,8 +14,8 @@ class Noeud_Generation:
 
 class Noeud_Pondere:
     def __init__(self, coord = [-1,-1], voisins = None):
-        self.coord = coord
-        self.voisins = voisins if voisins is not None else dict() #Dictionnaire contenant les voisins {voisin: poid}
+        self.coord: list[float, float] = coord
+        self.voisins: dict[Noeud_Pondere: float] = voisins if voisins is not None else dict() #Dictionnaire contenant les voisins {voisin: poid}
 
     def add_voisin(self, voisin, poid = -1) -> None:
         self.voisins[voisin] = poid   
@@ -30,20 +31,65 @@ class TypeSalle(Enum):
 
 class Salle:
     def __init__(self, noeud, tunnels = None, type = None):
-        self.noeud = noeud
-        self.tunnels = set(tunnels) if tunnels is not None else set()
-        self.type = type
+        self.noeud: Noeud_Pondere = noeud
+        self.tunnels: set[Tunnel] = set(tunnels) if tunnels is not None else set()
+        self.type: TypeSalle = type
+
+    def intersecte(self, autre) -> bool:
+        coord1 = self.noeud.coord
+        coord2 = autre.noeud.coord
+
+        distance = ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
+        distance_min = self.type.value + autre.type.value
+
+        return distance < distance_min
     
 class Tunnel:
     def __init__(self, depart = None, arrivee = None, largeur = 15):
-        self.depart = depart
-        self.arrivee = arrivee
-        self.largeur = largeur
+        self.depart: Noeud_Pondere = depart
+        self.arrivee: Noeud_Pondere= arrivee
+        self.largeur: int = largeur
+    
+    def intersecte(self, autre) -> bool:
+        def get_rectangle(tunnel) -> tuple[int, int, int, int]:
+            scale_largeur: float = 2 #Sert à bien espacer les tunnels
+
+            direction: Vector2 = Vector2(tunnel.arrivee.coord[0] - tunnel.depart.coord[0],
+                                         tunnel.arrivee.coord[1] - tunnel.depart.coord[1]).normalize()
+            normal: Vector2 = Vector2(-direction.y, direction.x)
+            offset: Vector2 = normal * (scale_largeur * self.largeur / 2)
+
+            p1 = Vector2(tunnel.depart.coord) + offset
+            p2 = Vector2(tunnel.arrivee.coord) + offset
+            p3 = Vector2(tunnel.arrivee.coord) - offset
+            p4 = Vector2(tunnel.depart.coord) - offset
+
+            return [p1, p2, p3, p4]
+        
+        def intersection_segments(a1, a2, b1, b2):
+            def ccw(p1, p2, p3):
+                return (p3.y - p1.y) * (p2.x - p1.x) > (p2.y - p1.y) * (p3.x - p1.x)
+            
+            return ccw(a1, b1, b2) != ccw(a2, b1, b2) and ccw(b1, a1, a2) != ccw(b2, a1, a2)
+        
+        rect1 = get_rectangle(self)
+        rect2 = get_rectangle(autre)
+
+        for i in range(len(rect1)):
+            a1 = rect1[i]
+            a2 = rect1[(i + 1) % len(rect1)]
+            for j in range(len(rect2)):
+                b1 = rect2[j]
+                b2 = rect2[(j + 1) % len(rect2)]
+                if intersection_segments(a1, a2, b1, b2):
+                    return True
+                
+        return False
         
 class Graph:
     def __init__(self, salles = None, tunnels = None):
-        self.salles = salles if salles is not None else set()
-        self.tunnels = tunnels if tunnels is not None else set()
+        self.salles: set[Salle] = salles if salles is not None else set()
+        self.tunnels: set[Tunnel] = tunnels if tunnels is not None else set()
 
     def initialiser_graphe(self, noeuds: list[Noeud_Pondere]) -> None:
         def connecter_noeuds(noeuds) -> None:
@@ -58,7 +104,7 @@ class Graph:
                 salle = Salle(noeud)
 
                 for tunnel in self.tunnels:
-                    if tunnel.depart == noeud:
+                    if tunnel.depart == noeud or tunnel.arrivee == noeud:
                         salle.tunnels.add(tunnel)
 
                 if len(salle.tunnels) == 1: #Salle
@@ -69,9 +115,14 @@ class Graph:
                 self.salles.add(salle)
         
         def initialiser_tunnels(self, noeuds) -> None:
+            visited = set()
+
             for noeud in noeuds:
                 for voisin in noeud.voisins:
+                    if voisin in visited:
+                        continue
                     self.tunnels.add(Tunnel(noeud, voisin))
+                visited.add(noeud)
 
         def initialiser_distances(self, noeuds) -> None:
             for noeud in noeuds:
@@ -83,6 +134,42 @@ class Graph:
         initialiser_tunnels(self, noeuds)
         initialiser_distances(self, noeuds)
         initialiser_salles(self, noeuds)
+
+    def verifier_graphe(self) -> bool:
+        def verifier_nombre_salles() -> bool:
+            nb_salles: int = 0
+
+            for salle in self.salles:
+                if salle.type == TypeSalle.INTERSECTION or salle.type == TypeSalle.SORTIE:
+                    continue
+                nb_salles += 1
+
+            return nb_salles >= 2 and nb_salles <= 5
+        
+        def verifier_superpositions() -> bool:
+            for salle1 in self.salles:
+                for salle2 in self.salles:
+                    if salle1 == salle2:
+                        continue
+
+                    if salle1.intersecte(salle2):
+                        return False
+                    
+
+            for tunnel1 in self.tunnels:
+                for tunnel2 in self.tunnels:
+                    if (tunnel1.depart == tunnel2.depart or
+                        tunnel1.depart == tunnel2.arrivee or
+                        tunnel1.arrivee == tunnel2.depart or
+                        tunnel1.arrivee == tunnel2.arrivee):
+                        continue
+
+                    if tunnel1.intersecte(tunnel2):
+                        return False
+                    
+            return True
+        
+        return verifier_nombre_salles() and verifier_superpositions()
 
     def add_salle(self, salle: Salle, voisins:list[Salle]) -> None:
         self.salles.add(salle)
