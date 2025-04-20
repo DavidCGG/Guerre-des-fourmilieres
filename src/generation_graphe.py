@@ -2,34 +2,74 @@ import classes_graphe as cg
 import random
 from numpy.random import normal
 
-def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, taux_std_dev: float, initial_std_dev: float) -> cg.Noeud_Generation:
-    def traverser_arbre(root: cg.Noeud_Generation, noeuds: list[cg.Noeud_Generation]) -> None:
+def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, taux_std_dev: float, initial_std_dev: float) -> cg.NoeudGeneration:
+    """
+    Génère un arbre de noeuds de type NoeudGeneration. Chaque noeud a un nombre d'enfants aléatoire basé sur une distribution normale qui dépend de la profondeur.
+    Args:
+        nb_noeuds_cible (int): Nombre total de noeuds à générer.
+        taux_mean (float): Taux de croissance de la médiane de la distribution normale.
+        initial_mean (float): Valeur de initiale de la médiane de la distribution normale.
+        taux_std_dev (float): Taux de croissance de l'écart type de la distribution normale.
+        initial_std_dev (float): Valeur de initiale de l'écart type de la distribution normale.
+    Returns:
+        cg.NoeudGeneration: Le noeud racine de l'arbre généré.
+    """
+    def traverser_arbre(noeuds: list[cg.NoeudGeneration]) -> None:
+        """
+        Traverse l'arbre de noeuds et génère des enfants pour chaque noeud.
+        Args:
+            noeuds (list[cg.NoeudGeneration]): Liste des noeuds à traverser.
+        Returns:
+            None
+        """
         i: int = 0
+        profondeur: int = 0
+        first_of_next_level: int = 1
+        not_set: bool = False
+
         while i < len(noeuds):
-            generer_enfants(noeuds[i], noeuds, root.nb + 1)
+            if noeuds[i].nb == first_of_next_level:
+                profondeur += 1
+                not_set = True
+
+            generer_enfants(noeuds[i], noeuds, profondeur)
+
+            if not_set and len(noeuds[i].voisins) != 0:
+                not_set = False
+                first_of_next_level = min(v.nb for v in noeuds[i].voisins)
+
             i += 1
 
-    #Créer les enfants d'un noeud
-    def generer_enfants(current: cg.Noeud_Generation, noeuds: list[cg.Noeud_Generation], profondeur: int) -> None:
-        nonlocal nb_noeuds
-        
+    def generer_enfants(current: cg.NoeudGeneration, noeuds: list[cg.NoeudGeneration], profondeur: int) -> None:
+        """
+        Génère des enfants pour un noeud donné en fonction de la profondeur.
+        Args:
+            current (cg.NoeudGeneration): Le noeud actuel.
+            noeuds (list[cg.NoeudGeneration]): Liste des noeuds générés jusqu'à présent.
+            profondeur (int): La profondeur actuelle dans l'arbre.
+        Returns:
+            None
+        """      
         if len(current.voisins) != 0: #Évite de générer des enfants inutilement lors d'une ennième itération
             return
 
         nb = nb_enfants(profondeur)
         for _ in range(nb):
-            if nb_noeuds >= nb_noeuds_cible:
+            if len(noeuds) >= nb_noeuds_cible:
                 return
 
-            enfant = cg.Noeud_Generation(nb_noeuds)
-            nb_noeuds += 1
-
+            enfant = cg.NoeudGeneration(len(noeuds))
             current.add_voisin(enfant)
-
             noeuds.append(enfant)
 
-    #Helper de generer_enfants
     def nb_enfants(profondeur: int) -> int:
+        """
+        Calcule le nombre d'enfants pour un noeud donné en fonction de la profondeur.
+        Args:
+            profondeur (int): La profondeur actuelle dans l'arbre.
+        Returns:
+            int: Le nombre d'enfants générés.
+        """
         mean : float = taux_mean * profondeur + initial_mean
         std_div: float = taux_std_dev * profondeur + initial_std_dev
 
@@ -42,33 +82,53 @@ def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, t
 
         return int(nbAl)
     
-    root = cg.Noeud_Generation(0)
-    noeuds: list[cg.Noeud_Generation] = [root]
-    nb_noeuds = 1
+    root = cg.NoeudGeneration(0)
+    noeuds: list[cg.NoeudGeneration] = [root]
 
-    while nb_noeuds < nb_noeuds_cible:
-        traverser_arbre(root, noeuds)
+    while len(noeuds) < nb_noeuds_cible:
+        traverser_arbre(noeuds)
     
     return root
 
-def connecter_branches(root: cg.Noeud_Generation, connect_chance: float) -> cg.Noeud_Generation:
-    #Connecte ou non le noeud à un noeud à droite
-    def connecter_noeud(noeud: cg.Noeud_Generation, _) -> None:
+def connecter_branches(root: cg.NoeudGeneration, connect_chance: float) -> cg.NoeudGeneration:
+    """
+    Connecte les branches de l'arbre généré.
+    Args:
+        root (cg.NoeudGeneration): Le noeud racine de l'arbre.
+        connect_chance (float): La probabilité de connexion entre les noeuds.
+    Returns:
+        cg.NoeudGeneration: Le noeud racine de l'arbre avec les connexions ajoutées.
+    """
+    def connecter_noeud(noeud: cg.NoeudGeneration, _) -> None:
+        """
+        Connecte un noeud à un voisin à droite avec une certaine probabilité.
+        Args:
+            noeud (cg.NoeudGeneration): Le noeud actuel.
+            _: Non utilisé.
+        Returns:
+            None
+        """
         if random.random() > connect_chance:
             return
         
-        voisin: cg.Noeud_Generation = trouver_voisin_droite(noeud, root)
+        voisin: cg.NoeudGeneration = trouver_voisin_droite(noeud, root)
 
         if voisin != None:
             noeud.add_voisin(voisin)
 
-    #Retourne le voisin de droite d'un noeud à un certain niveau ou None s'il n'existe pas
-    def trouver_voisin_droite(noeud: cg.Noeud_Generation, root: cg.Noeud_Generation) -> cg.Noeud_Generation:
+    def trouver_voisin_droite(noeud: cg.NoeudGeneration, root: cg.NoeudGeneration) -> cg.NoeudGeneration:
+        """
+        Trouve le voisin de droite d'un noeud en utilisant bfs et un helper.
+        Args:
+            noeud (cg.NoeudGeneration): Le noeud actuel.
+            root (cg.NoeudGeneration): Le noeud racine de l'arbre.
+        Returns:
+            cg.NoeudGeneration: Le voisin de droite du noeud ou None s'il n'existe pas."""
         profondeur_noeud: int = -1
         profondeur_cible: int = -1
         voisin = None
 
-        def trouver_voisin_droite_helper(current: cg.Noeud_Generation, infos: tuple) -> None:
+        def trouver_voisin_droite_helper(current: cg.NoeudGeneration, infos: tuple) -> None:
             nonlocal profondeur_noeud, profondeur_cible, voisin
 
             profondeur, _, __ = infos
@@ -85,30 +145,43 @@ def connecter_branches(root: cg.Noeud_Generation, connect_chance: float) -> cg.N
 
     bfs(root, connecter_noeud)
 
-#Utilise un algorithme de disposition par forces
-def attribuer_poids(root: cg.Noeud_Generation, nb_iter_forces: int) -> cg.Noeud_Pondere:
-    #Créer aléatoirment les coordonnées des noeuds
-    def initialiser_coord(root: cg.Noeud_Generation) -> cg.Noeud_Pondere:
+def attribuer_poids(root: cg.NoeudGeneration, nb_iter_forces: int) -> cg.NoeudPondere:
+    """
+    Attribue des coordonnées aux noeuds de l'arbre en utilisant un algorithme de disposition par forces.
+    Args:
+        root (cg.NoeudGeneration): Le noeud racine de l'arbre.
+        nb_iter_forces (int): Le nombre d'itérations pour appliquer les forces.
+    Returns:
+        cg.NoeudPondere: Le noeud racine de l'arbre avec les coordonnées attribuées.
+    """
+    def initialiser_coord(root: cg.NoeudGeneration) -> cg.NoeudPondere:
+        """
+        Initialise les coordonnées des noeuds avec des coordonnées prédifinies. Fait la transition entre NoeudGeneration et NoeudPondere.
+        Args:
+            root (cg.NoeudGeneration): Le noeud racine de l'arbre.
+        Returns:
+            cg.NoeudPondere: Le noeud racine de l'arbre avec les coordonnées attribuées.
+        """
         profondeur_max = trouver_profondeur(root)
         root_pondere = None
-        lien_graphe: dict[cg.Noeud_Generation, cg.Noeud_Pondere] = dict()
+        lien_graphe: dict[cg.NoeudGeneration, cg.NoeudPondere] = dict()
 
-        def initialiser_lien_graphe(current: cg.Noeud_Generation, _) -> None:
+        def initialiser_lien_graphe(current: cg.NoeudGeneration, _) -> None:
             nonlocal root_pondere, lien_graphe
 
-            current_pondere = cg.Noeud_Pondere()
+            current_pondere = cg.NoeudPondere()
             lien_graphe[current] = current_pondere
 
             if current == root:
                 root_pondere = current_pondere
 
-        def initialiser_graphe_pondere(current: cg.Noeud_Generation, _) -> None:
+        def initialiser_graphe_pondere(current: cg.NoeudGeneration, _) -> None:
             current_pondere = lien_graphe[current]
 
             for v in current.voisins:
                 current_pondere.add_voisin(lien_graphe[v])
 
-        def initialiser_coord_helper(current: cg.Noeud_Generation, infos: tuple) -> None:
+        def initialiser_coord_helper(current: cg.NoeudGeneration, infos: tuple) -> None:
             profondeur, nb_niv_actuel, nb_niv_precedents = infos
 
             current_pondere = lien_graphe[current]
@@ -119,10 +192,17 @@ def attribuer_poids(root: cg.Noeud_Generation, nb_iter_forces: int) -> cg.Noeud_
         bfs(root, initialiser_coord_helper)
         return root_pondere
 
-    def trouver_profondeur(root: cg.Noeud_Generation) -> int:
+    def trouver_profondeur(root: cg.NoeudGeneration) -> int:
+        """
+        Trouve la profondeur maximale de l'arbre en utilisant bfs et un helper.
+        Args:
+            root (cg.NoeudGeneration): Le noeud racine de l'arbre.
+        Returns:
+            int: La profondeur maximale de l'arbre.
+        """
         profondeur_max: int = 0
 
-        def trouver_profondeur_helper(current: cg.Noeud_Generation, infos: tuple)-> None:
+        def trouver_profondeur_helper(current: cg.NoeudGeneration, infos: tuple)-> None:
             nonlocal profondeur_max
 
             profondeur, _, __ = infos
@@ -133,16 +213,31 @@ def attribuer_poids(root: cg.Noeud_Generation, nb_iter_forces: int) -> cg.Noeud_
         return profondeur_max
 
     #Applique les forces sur tous les noeuds
-    def calculer_force(root_pondere: cg.Noeud_Pondere) -> None:
-        def calculer_force_helper(noeud: cg.Noeud_Pondere, _) -> None:
+    def calculer_force(root_pondere: cg.NoeudPondere) -> None:
+        """
+        Applique les forces de répulsion et d'attraction sur tous les noeuds de l'arbre en utilisant bfs et un helper.
+        Args:
+            root_pondere (cg.NoeudPondere): Le noeud racine de l'arbre avec les coordonnées attribuées.
+        Returns:
+            None
+        """
+        def calculer_force_helper(noeud: cg.NoeudPondere, _) -> None:
             calculer_repulsion(noeud, root_pondere)
             calculer_attraction(noeud)
         
         bfs(root_pondere, calculer_force_helper)
 
     #Applique une force de repulsion sur un noeud
-    def calculer_repulsion(noeud: cg.Noeud_Pondere, root_pondere: cg.Noeud_Pondere) -> None:
-        def calculer_repulsion_helper(autre: cg.Noeud_Pondere, _) -> None:
+    def calculer_repulsion(noeud: cg.NoeudPondere, root_pondere: cg.NoeudPondere) -> None:
+        """
+        Applique une force de répulsion sur un noeud en fonction de la distance entre les noeuds en utilisant bfs et un helper.
+        Args:
+            noeud (cg.NoeudPondere): Le noeud actuel.
+            root_pondere (cg.NoeudPondere): Le noeud racine de l'arbre avec les coordonnées attribuées.
+        Returns:
+            None
+        """
+        def calculer_repulsion_helper(autre: cg.NoeudPondere, _) -> None:
             if autre == noeud:
                 return
             
@@ -156,7 +251,14 @@ def attribuer_poids(root: cg.Noeud_Generation, nb_iter_forces: int) -> cg.Noeud_
         bfs(root_pondere, calculer_repulsion_helper)
 
     #Applique une force d'attraction sur un noeud
-    def calculer_attraction(noeud: cg.Noeud_Pondere) -> None:
+    def calculer_attraction(noeud: cg.NoeudPondere) -> None:
+        """
+        Applique une force d'attraction sur un noeud en fonction de la distance avec les noeuds voisins.
+        Args:
+            noeud (cg.NoeudPondere): Le noeud actuel.
+        Returns:
+            None
+        """
         for v in noeud.voisins:
             dx = v.coord[0] - noeud.coord[0]
             dy = v.coord[1] - noeud.coord[1]
@@ -172,6 +274,14 @@ def attribuer_poids(root: cg.Noeud_Generation, nb_iter_forces: int) -> cg.Noeud_
     return root_pondere
 
 def bfs(start, action=None) -> None:
+    """
+    Effectue une recherche en largeur (BFS) sur un graphe à partir d'un noeud de départ.
+    Args:
+        start (cg.Noeud): Le noeud de départ pour la recherche.
+        action (callable): Une fonction à appeler pour chaque noeud visité.
+    Returns:
+        None
+    """
     queue = [start]
     visited = set()
     visited.add(start)
@@ -204,54 +314,80 @@ def bfs(start, action=None) -> None:
             nb_next_niv = 0
 
 def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces, infos_convertion_coord) -> cg.Graphe:
-        def collecter_noeuds(root: cg.Noeud_Pondere, _) -> None:
-            noeuds.append(root)
+    """
+    Génère un graphe à partir d'un arbre de noeuds en utilisant des paramètres de génération.
+    Args:
+        infos_gen_arbre (tuple): Informations sur la distributin normale servant à determiner le nombre d'enfants à génération.
+        connect_chance (float): La probabilité de connexion entre les noeuds.
+        nb_iter_forces (int): Le nombre d'itérations pour appliquer les forces.
+        infos_convertion_coord (tuple): Informations sur les dimensions du nid.
+    Returns:
+        cg.Graphe: Le graphe généré.
+    """
+    def collecter_noeuds(root: cg.NoeudPondere, _) -> None:
+        """
+        Collecte les noeuds de l'arbre en utilisant bfs et un helper.
+        Args:
+            root (cg.NoeudPondere): Le noeud racine de l'arbre.
+            _: Non utilisé.
+        Returns:
+            None
+        """
+        noeuds.append(root)
 
-        def convertir_coord(Graphe: cg.Graphe, scale = 200) -> None:
-            noeud_min: cg.Salle = None #Salle la plus haute
-            salle_min: cg.Salle = None #Salle la plus haute qui n'est pas une intersection
+    def convertir_coord(graphe: cg.Graphe, scale = 200) -> None:
+        """
+        Convertit les coordonnées des noeuds du graphe en fonction de l'échelle et ajuste la position de la salle de sortie.
+        Args:
+            graphe (cg.Graphe): Le graphe à convertir.
+            scale (float): L'échelle de conversion.
+        Returns:
+            None
+        """
+        noeud_min: cg.Salle = None #Salle la plus haute
+        salle_min: cg.Salle = None #Salle la plus haute qui n'est pas une intersection
 
-            for salle in graphe.salles:
-                if noeud_min is None or salle.noeud.coord[1] < noeud_min.noeud.coord[1]:
-                    noeud_min = salle
-                    
-                    if salle.type == cg.TypeSalle.SALLE:
-                        salle_min = salle
-
-            if salle_min != noeud_min:
-                nouveau_x = noeud_min.noeud.coord[0] + 2 * random.random() - 1
-                nouveau_y = noeud_min.noeud.coord[1]
-
-                salle_min = cg.Salle(noeud = cg.Noeud_Pondere([nouveau_x, nouveau_y]), type = cg.TypeSalle.SORTIE)
-                graphe.add_salle(salle_min, [noeud_min])
-            else:
-                salle_min.type = cg.TypeSalle.SORTIE
-            
-            dy: float = scale * salle_min.noeud.coord[1] - HAUTEUR_SOL
-
-            for salle in graphe.salles:
-                salle.noeud.coord = [(MAP_LIMIT_X/2) + salle.noeud.coord[0] * scale,
-                                    salle.noeud.coord[1] * scale - dy]
+        for salle in graphe.salles:
+            if noeud_min is None or salle.noeud.coord[1] < noeud_min.noeud.coord[1]:
+                noeud_min = salle
                 
-                if salle != salle_min:
-                    salle.noeud.coord[1] += 75
+                if salle.type == cg.TypeSalle.SALLE:
+                    salle_min = salle
 
-        nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev = infos_gen_arbre
-        HAUTEUR_SOL, MAP_LIMIT_X = infos_convertion_coord
+        if salle_min != noeud_min:
+            nouveau_x = noeud_min.noeud.coord[0] + 2 * random.random() - 1
+            nouveau_y = noeud_min.noeud.coord[1]
 
-        valide: bool = False
-        while not valide:
-            root = generer_arbre(nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev)
-            connecter_branches(root, connect_chance)
-            root = attribuer_poids(root, nb_iter_forces)
+            salle_min = cg.Salle(noeud = cg.NoeudPondere([nouveau_x, nouveau_y]), type = cg.TypeSalle.SORTIE)
+            graphe.add_salle(salle_min, [noeud_min])
+        else:
+            salle_min.type = cg.TypeSalle.SORTIE
+        
+        dy: float = scale * salle_min.noeud.coord[1] - HAUTEUR_SOL
 
-            noeuds: list[cg.Noeud_Pondere] = []
-            bfs(root, collecter_noeuds)
-
-            graphe = cg.Graphe()
-            graphe.initialiser_graphe(noeuds)
-            convertir_coord(graphe)
+        for salle in graphe.salles:
+            salle.noeud.coord = [(MAP_LIMIT_X/2) + salle.noeud.coord[0] * scale,
+                                salle.noeud.coord[1] * scale - dy]
             
-            valide = graphe.verifier_graphe()
+            if salle != salle_min:
+                salle.noeud.coord[1] += 75
 
-        return graphe
+    nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev = infos_gen_arbre
+    HAUTEUR_SOL, MAP_LIMIT_X = infos_convertion_coord
+
+    valide: bool = False
+    while not valide:
+        root = generer_arbre(nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev)
+        connecter_branches(root, connect_chance)
+        root = attribuer_poids(root, nb_iter_forces)
+
+        noeuds: list[cg.NoeudPondere] = []
+        bfs(root, collecter_noeuds)
+
+        graphe = cg.Graphe()
+        graphe.initialiser_graphe(noeuds)
+        convertir_coord(graphe)
+        
+        valide = graphe.verifier_graphe()
+
+    return graphe

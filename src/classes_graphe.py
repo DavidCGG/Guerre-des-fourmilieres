@@ -1,47 +1,111 @@
 from enum import Enum
 from pygame import Vector2
 
-class Noeud_Generation:
+class NoeudGeneration:
+    """
+    Représente le noeud d'un graphe
+    Attributs :
+        nb (int) : Numéro du noeud.
+        voisins (set[NoeudGeneration]) : Ensemble des voisins du noeud.
+    """
+    
     def __init__(self, nb = -1, voisins = None):
-        self.nb: int = nb #Numéro du noeud
-        self.voisins: set[Noeud_Generation] = voisins if voisins is not None else set() #Set contenant les voisins
+        self.nb: int = nb
+        self.voisins: set[NoeudGeneration] = voisins if voisins is not None else set()
 
     def add_voisin(self, voisin) -> None:
+        """
+        Ajoute un voisin au noeud
+        Args:
+            voisin (NoeudGeneration): Voisin à ajouter
+        Returns:
+            None
+        """
         self.voisins.add(voisin)       
-    
-    def remove_voisin(self, voisin) -> None:
-        self.voisins.pop(voisin)
 
-class Noeud_Pondere:
+class NoeudPondere:
+    """
+    Représente un noeud dans un graphe pondéré 2D.
+    Attributs :
+        coord (list[float, float]) : Coordonnées [x, y] du noeud.
+        voisins (dict[NoeudPondere, float]) : Dictionnaire des voisins avec le poids (distance) de la connexion.
+    """
+
     def __init__(self, coord = [-1,-1], voisins = None):
         self.coord: list[float, float] = coord
-        self.voisins: dict[Noeud_Pondere: float] = voisins if voisins is not None else dict() #Dictionnaire contenant les voisins {voisin: poid}
+        self.voisins: dict[NoeudPondere: float] = voisins if voisins is not None else dict()
 
     def connecter_noeud(self, voisin) -> None:
-            distance = ((self.coord[0] - voisin.coord[0]) ** 2 + (self.coord[1] - voisin.coord[1]) ** 2) ** 0.5
-            self.voisins[voisin] = distance
-            voisin.voisins[self] = distance
+        """
+        Connecte le noeud à un voisin et l'inverse en initialisant la distance entre les deux noeuds
+        Args:
+            voisin (NoeudPondere): Voisin à connecter
+        Returns:
+            None
+        """
+        distance = ((self.coord[0] - voisin.coord[0]) ** 2 + (self.coord[1] - voisin.coord[1]) ** 2) ** 0.5
+        self.voisins[voisin] = distance
+        voisin.voisins[self] = distance
 
     def add_voisin(self, voisin, poid = -1) -> None:
+        """
+        Ajoute un voisin au noeud
+        Args:
+            voisin (NoeudPondere): Voisin à ajouter
+            poid (float): Poids de la connexion
+        Returns:
+            None
+        """
         self.voisins[voisin] = poid   
     
     def remove_voisin(self, voisin) -> None:
+        """
+        Supprime un voisin du noeud
+        Args:
+            voisin (NoeudPondere): Voisin à supprimer
+        Returns:
+            None
+        """
         self.voisins.pop(voisin)
 
 class TypeSalle(Enum):
-    #value = (rayon, nom)
+    """
+    Enumération des types de salles dans un nid de fourmis.
+    Chaque type est associé à un rayon (taille) et un nom.
+    Membres :
+        INDEFINI : Salle non définie.
+        INTERSECTION : Point de jonction entre tunnels.
+        SALLE : Salle ayant un rôle quelconque.
+        SORTIE : Sortie du nid.
+    """
+
     INDEFINI = (40, "indéfini")
     INTERSECTION = (40, "intersection")
     SALLE = (120, "salle")
     SORTIE = (60, "sortie")
 
 class Salle:
+    """
+    Représente une salle dans un graphe.
+    Attributs :
+        noeud (NoeudPondere) : Noeud associé à la salle.
+        tunnels (set[Tunnel]) : Ensemble des tunnels connectés à la salle.
+        type (TypeSalle) : Type de la salle (défini par l'énumération TypeSalle).
+    """
+
     def __init__(self, noeud, tunnels = None, type = None):
-        self.noeud: Noeud_Pondere = noeud
+        self.noeud: NoeudPondere = noeud
         self.tunnels: set[Tunnel] = set(tunnels) if tunnels is not None else set()
         self.type: TypeSalle = type
 
     def intersecte(self, autre) -> bool:
+        """
+        Vérifie si deux salles se superposent.
+        Args:
+            autre (Salle): Autre salle à vérifier.
+        Returns:
+            bool: True si les salles se superposent, False sinon.
+        """
         coord1 = self.noeud.coord
         coord2 = autre.noeud.coord
 
@@ -51,7 +115,21 @@ class Salle:
         return distance < distance_min
     
 class Tunnel:
+    """
+    Représente un tunnel entre deux salles dans un graphe.
+    Attributs :
+        depart (Salle) : Une première salle reliée au tunnel.
+        arrivee (Salle) : Une seconde salle reliée au tunnel.
+        largeur (int) : Largeur du tunnel.
+    """
     def __init__(self, depart = None, arrivee = None, largeur = 80):
+        """
+        Constructeur de la classe Tunnel. Ajoute le tunnel aux salles et connecte leurs noeuds.
+        Args:
+            depart (Salle): Salle de départ.
+            arrivee (Salle): Salle d'arrivée.
+            largeur (int): Largeur du tunnel.
+        """
         self.depart: Salle = depart
         self.arrivee: Salle = arrivee
         self.largeur: int = largeur
@@ -61,7 +139,21 @@ class Tunnel:
         depart.noeud.connecter_noeud(arrivee.noeud)
     
     def intersecte(self, autre) -> bool:
+        """
+        Vérifie si deux tunnels se superposent.
+        Args:
+            autre (Tunnel): Autre tunnel à vérifier.
+        Returns:
+            bool: True si les tunnels se superposent, False sinon.
+        """
         def get_rectangle(tunnel) -> tuple[int, int, int, int]:
+            """
+            Crée un rectangle représentant le tunnel.
+            Args:
+                tunnel (Tunnel): Tunnel à représenter.
+            Returns:
+                list[Vector2]: Liste de points représentant les coins du rectangle.
+            """
             scale_largeur: float = 2 #Sert à bien espacer les tunnels
 
             direction: Vector2 = Vector2(tunnel.arrivee.noeud.coord[0] - tunnel.depart.noeud.coord[0],
@@ -77,6 +169,16 @@ class Tunnel:
             return [p1, p2, p3, p4]
         
         def intersection_segments(a1, a2, b1, b2):
+            """
+            Vérifie si deux segments de droite se croisent. Utilise la fonction ccw pour déterminer l'orientation des points.
+            Args:
+                a1 (Vector2): Premier point du premier segment.
+                a2 (Vector2): Deuxième point du premier segment.
+                b1 (Vector2): Premier point du deuxième segment.
+                b2 (Vector2): Deuxième point du deuxième segment.
+            Returns:
+                bool: True si les segments se croisent, False sinon.
+            """
             def ccw(p1, p2, p3):
                 return (p3.y - p1.y) * (p2.x - p1.x) > (p2.y - p1.y) * (p3.x - p1.x)
             
@@ -97,17 +199,45 @@ class Tunnel:
         return False
         
 class Graphe:
+    """
+    Représente un graphe de salles et de tunnels.
+    Attributs :
+        salles (set[Salle]) : Ensemble des salles du graphe.
+        tunnels (set[Tunnel]) : Ensemble des tunnels du graphe.
+    """
     def __init__(self, salles = None, tunnels = None):
         self.salles: set[Salle] = salles if salles is not None else set()
         self.tunnels: set[Tunnel] = tunnels if tunnels is not None else set()
 
-    def initialiser_graphe(self, noeuds: list[Noeud_Pondere]) -> None:
+    def initialiser_graphe(self, noeuds: list[NoeudPondere]) -> None:
+        """
+        Initialise le graphe en connectant les noeuds et en créant les salles et tunnels.
+        Args:
+            noeuds (list[NoeudPondere]): Liste de noeuds à initialiser.
+        Returns:
+            None
+        """
         def connecter_noeuds(noeuds) -> None:
+            """
+            Connecte les noeuds entre eux en ajoutant des voisins.
+            Args:
+                noeuds (list[NoeudPondere]): Liste de noeuds à connecter.
+            Returns:
+                None
+            """
             for noeud in noeuds:
                 for voisin in noeud.voisins:
                     noeud.connecter_noeud(voisin)
 
         def initialiser_salles(self, noeuds, lien_noeud_salle) -> None:
+            """
+            Initialise les salles en fonction des noeuds.
+            Args:
+                noeuds (list[NoeudPondere]): Liste de noeuds à initialiser.
+                lien_noeud_salle (dict[NoeudPondere, Salle]): Dictionnaire liant les noeuds aux salles.
+            Returns:
+                None
+            """
             for noeud in noeuds:
                 salle = Salle(noeud)
 
@@ -120,6 +250,14 @@ class Graphe:
                 lien_noeud_salle[noeud] = salle
         
         def initialiser_tunnels(self, noeuds, lien_noeud_salle) -> None:
+            """
+            Initialise les tunnels en fonction des noeuds.
+            Args:
+                noeuds (list[NoeudPondere]): Liste de noeuds à initialiser.
+                lien_noeud_salle (dict[NoeudPondere, Salle]): Dictionnaire liant les noeuds aux salles.
+            Returns:
+                None
+            """
             visited = set()
 
             for noeud in noeuds:
@@ -136,7 +274,21 @@ class Graphe:
         initialiser_tunnels(self, noeuds, lien_noeud_salle)
 
     def verifier_graphe(self) -> bool:
+        """
+        Vérifie si le graphe respecte les contraintes de superposition et de nombre de salles.
+        Args:
+            None
+        Returns:
+            bool: True si le graphe est valide, False sinon.
+        """
         def verifier_nombre_salles() -> bool:
+            """
+            Vérifie si le nombre de salles autre que des intersections ou des sorties est compris entre 2 et 5.
+            Args:
+                None
+            Returns:
+                bool: True si le nombre de salles est valide, False sinon.
+            """
             nb_salles: int = 0
 
             for salle in self.salles:
@@ -147,6 +299,13 @@ class Graphe:
             return nb_salles >= 2 and nb_salles <= 5
         
         def verifier_superpositions() -> bool:
+            """
+            Vérifie si les salles et tunnels se superposent.
+            Args:
+                None
+            Returns:
+                bool: True si les salles et les tunnels ne se supperposent pas, False sinon.
+            """
             for salle1 in self.salles:
                 for salle2 in self.salles:
                     if salle1 == salle2:
@@ -171,17 +330,51 @@ class Graphe:
         return verifier_nombre_salles() and verifier_superpositions()
     
     def add_salle(self, salle: Salle, voisins:list[Salle]) -> None:
+        """
+        Ajoute une salle au graphe et creer les tunnels entre la salle et ses voisins.
+        Args:
+            salle (Salle): Salle à ajouter.
+            voisins (list[Salle]): Liste de salles voisines.
+        Returns:
+            None
+        """
         self.salles.add(salle)
         for voisin in voisins:
             tunnel = Tunnel(salle, voisin)
             self.tunnels.add(tunnel)
 
+    def creer_salle_depuis_intersection(self, salle: Salle, coord_arrivee: list[float, float]) -> None:
+        """
+        Crée une nouvelle salle à partir d'une intersection et d'une coordonnée d'arrivée.
+        Args:
+            salle (Salle): Salle d'intersection.
+            coord_arrivee (list[float, float]): Coordonnée de la nouvelle salle.
+        Returns:
+            None
+        """
+        #Initialisation de la nouvelle salle
+        noeud_salle = NoeudPondere(coord_arrivee)
+        salle_indefinie = Salle(noeud_salle, type = TypeSalle.INDEFINI)
+        self.salles.add(salle_indefinie)
+
+        #Création des nouveaux tunnels
+        self.tunnels.add(Tunnel(salle, salle_indefinie))
+
     def creer_salle_depuis_tunnel(self, tunnel: Tunnel, coord_depart: list[float, float], coord_arrivee) -> None:     
+        """
+        Crée une nouvelle salle à partir d'un tunnel, du point de départ dans le tunnel et des coordonnées de la nouvelle salle.
+        Args:
+            tunnel (Tunnel): Tunnel à partir duquel la salle est créée.
+            coord_depart (list[float, float]): Coordonnée de départ dans le tunnel.
+            coord_arrivee (list[float, float]): Coordonnée de la nouvelle salle.
+        Returns:
+            None
+        """
         #Initialisation des nouvelles salles
-        noeud_intersection = Noeud_Pondere(coord_depart)
+        noeud_intersection = NoeudPondere(coord_depart)
         salle_intersection = Salle(noeud_intersection, type = TypeSalle.INTERSECTION)
 
-        noeud_salle = Noeud_Pondere(coord_arrivee)
+        noeud_salle = NoeudPondere(coord_arrivee)
         salle_indefinie = Salle(noeud_salle, type = TypeSalle.INDEFINI)
 
         self.salles.add(salle_intersection)
@@ -204,8 +397,24 @@ class Graphe:
         self.tunnels.add(Tunnel(tunnel.arrivee, salle_intersection))
         self.tunnels.add(Tunnel(salle_intersection, salle_indefinie))
 
-    def dijkstra(self, depart, arrivee) -> list[Noeud_Pondere]:
-        def sort_queue(arr) -> list[Noeud_Pondere]:
+    def dijkstra(self, depart, arrivee) -> list[NoeudPondere]:
+        """
+        Implémente l'algorithme de Dijkstra pour trouver le chemin le plus court entre deux noeuds dans un graphe pondéré.
+        Args:
+            depart (NoeudPondere): Noeud de départ.
+            arrivee (NoeudPondere): Noeud d'arrivée.
+        Returns:
+            list[NoeudPondere]: Liste des noeuds représentant le chemin le plus court.
+        """
+        def sort_queue(arr, distance) -> list[NoeudPondere]:
+            """
+            Trie la liste de noeuds en fonction de leur distance avec un algorithme de merge sort.
+            Args:
+                arr (list[NoeudPondere]): Liste de noeuds à trier.
+                distance (dict[NoeudPondere, int]): Dictionnaire des distances.
+            Returns:
+                list[NoeudPondere]: Liste triée de noeuds.
+            """
             if len(arr) <= 1:
                 return arr
 
@@ -213,9 +422,18 @@ class Graphe:
             left_half = sort_queue(arr[:mid])
             right_half = sort_queue(arr[mid:])
 
-            return merge(left_half, right_half)
+            return merge(left_half, right_half, distance)
 
-        def merge(left, right) -> list[Noeud_Pondere]:
+        def merge(left, right, distance) -> list[NoeudPondere]:
+            """
+            Fusionne deux listes triées en une seule liste triée.
+            Args:
+                left (list[NoeudPondere]): Première liste triée.
+                right (list[NoeudPondere]): Deuxième liste triée.
+                distance (dict[NoeudPondere, int]): Dictionnaire des distances.
+            Returns:
+                list[NoeudPondere]: Liste fusionnée et triée.
+            """
             sorted_arr = []
             i, j = 0, 0
 
@@ -233,10 +451,10 @@ class Graphe:
             return sorted_arr
         
         #Initialisation
-        queue: list[Noeud_Pondere] = [] #queue qui permet de savoir quel noeud visiter
-        distance: dict[Noeud_Pondere, int] = dict() #distance du départ à une node
-        previous: dict[Noeud_Pondere, Noeud_Pondere] = dict() #noeud par lequel on est arrivé à ce noeud
-        visited: set[Noeud_Pondere] = set() #noeuds dont tous les voisins ont été visités
+        queue: list[NoeudPondere] = [] #queue qui permet de savoir quel noeud visiter
+        distance: dict[NoeudPondere, int] = dict() #distance du départ à une node
+        previous: dict[NoeudPondere, NoeudPondere] = dict() #noeud par lequel on est arrivé à ce noeud
+        visited: set[NoeudPondere] = set() #noeuds dont tous les voisins ont été visités
 
         queue.append(depart)
         distance[depart] = 0
@@ -245,7 +463,7 @@ class Graphe:
         #Naviguation
         while queue[0] != arrivee:
             sort_queue(queue)
-            current: Noeud_Pondere = queue[0]
+            current: NoeudPondere = queue[0]
 
             for v, p in current.voisins.items():
                 if v in visited:
@@ -265,8 +483,8 @@ class Graphe:
             queue.pop(0)
 
         #Reconstruction du chemin
-        chemin: list[Noeud_Pondere] = [] #le chemin pris pour arriver à la fin
-        current: Noeud_Pondere = arrivee
+        chemin: list[NoeudPondere] = [] #le chemin pris pour arriver à la fin
+        current: NoeudPondere = arrivee
 
         while current != None:
             chemin.append(current)
