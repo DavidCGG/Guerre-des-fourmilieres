@@ -219,7 +219,7 @@ class Carte:
             tile_size = (self.TILE_SIZE * self.camera.zoom)
             tile_x = int((self.camera.x + event.pos[0]) // tile_size)
             tile_y = int((self.camera.y + event.pos[1] - 50) // tile_size)
-            self.moving= True
+            self.moving = True
             if event.button == 1:  # Left click
                 self.camera.start_drag(*event.pos)
                 self.colonie_joeur.handle_click(event.pos, tile_x, tile_y, self.screen)

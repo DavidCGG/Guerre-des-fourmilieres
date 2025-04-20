@@ -1,9 +1,10 @@
 import pygame
 import classes_graphe as cg
-from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE
+from config import WHITE, BLACK, YELLOW
 from config import trouver_font
 from camera_nid import Camera
 from generation_graphe import generer_graphe
+from classes import Bouton
 
 #Variables globales
 SCREEN_WIDTH: int = 1280
@@ -12,29 +13,25 @@ MAP_LIMIT_X: int = 5000
 MAP_LIMIT_Y: int = 3000
 HAUTEUR_SOL: int = 200
 
+running: bool = True
+in_menu: bool = False
+
 rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
 rectangle_sol = pygame.Rect(0, HAUTEUR_SOL, MAP_LIMIT_X, MAP_LIMIT_Y - HAUTEUR_SOL)
 
-pygame.font.init()
-police = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22)
+screen: pygame.Surface = None
 clock = pygame.time.Clock()
+liste_boutons = []
 
-#Variables de génération
-nb_noeuds_cible: int = 10
-nb_iter_forces: int = 100
-connect_chance: float = 0.3
-taux_mean: float = -1
-initial_mean: float = 3
-taux_std_dev: float = 1/3
-initial_std_dev: float = 1
+def init() -> None:
+    global screen
 
-def init() -> pygame.Surface:
     pygame.init()
+    pygame.font.init()
     pygame.display.set_caption("Test de génération de nids")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    return screen
 
-def draw(screen, graphe, camera) -> None:
+def draw(graphe, camera) -> None:
     def draw_background() -> None:
         for i in range(2):
             rect = rectangle_ciel if i == 0 else rectangle_sol
@@ -45,7 +42,6 @@ def draw(screen, graphe, camera) -> None:
             pygame.draw.rect(screen, color, new_rect)
 
     def draw_tunnels() -> None:
-        #TODO ajouter un trouver_tuiles_visibles comme dans carte
         for tunnel in graphe.tunnels:
             depart = camera.apply(tunnel.depart.noeud.coord)
             arrivee = camera.apply(tunnel.arrivee.noeud.coord)
@@ -56,55 +52,93 @@ def draw(screen, graphe, camera) -> None:
             pos = camera.apply(salle.noeud.coord)
             pygame.draw.circle(screen, (0, 0, 0), pos, int(salle.type.value[0] * camera.get_zoom()))
 
-    def draw_top_bar():            
+    def draw_top_bar():
+        global liste_boutons
+
+        if  not any(isinstance(bouton, Bouton) and bouton.texte == "Options" for bouton in liste_boutons):
+            bouton = Bouton(screen, SCREEN_WIDTH - 100, 25, 100, 30, "Options", menu_options, pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22))
+            liste_boutons.append(bouton)
+
         pygame.draw.rect(screen, BLACK, (0, 0, SCREEN_WIDTH, 50))
+
         font = pygame.font.Font(None, 24)
         fps_info = font.render(f'FPS: {clock.get_fps():.2f}', True, YELLOW)
         zoom_info = font.render(f'Zoom: {camera.get_zoom() * 100:.2f}%', True, YELLOW)
+
         screen.blit(fps_info, (10, 10))
         screen.blit(zoom_info, (10, 30))
-        
-    draw_background()
-    draw_tunnels()
-    draw_salles()
+    
+    if not in_menu:
+        draw_background()
+        draw_tunnels()
+        draw_salles()
+
     draw_top_bar()
+    for bouton in liste_boutons:
+            bouton.draw()
     pygame.display.flip()
+
+def menu_options():
+    global liste_boutons
+    global in_menu
+
+    in_menu = True
+
+    surface = pygame.Surface((300, 400))
+    surface.fill(BLACK)
+
+    texte_render = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36).render("Options", True, WHITE)
+    police_boutons = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
+
+    surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
+    screen.blit(surface, (SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 - 250))
+
+    liste_boutons.append(Bouton(screen, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 15,
+                            'Retour', retour, police_boutons))
+    liste_boutons.append(Bouton(screen, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 15,
+                            'Quitter', quitter, police_boutons))
+    
+def retour():
+    global liste_boutons
+    global in_menu
+
+    liste_boutons.clear()
+    in_menu = False
+
+def quitter():
+    global running
+
+    running = False
+
+def handle_events(events, camera):
+    for event in events:
+        if event.type == pygame.QUIT:
+            quitter()
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Clic gauche
+                camera.start_drag(*event.pos)
+            elif event.button == 4:  # Molette haut
+                camera.zoom_camera(*event.pos, "in")
+            elif event.button == 5:  # Molette bas
+                camera.zoom_camera(*event.pos, "out")
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                camera.stop_drag()
+
+        elif event.type == pygame.MOUSEMOTION:
+            camera.drag(*event.pos)
         
 def run() -> None:
-    running = True
-
-    screen = init()
-    graphe: cg.Graphe = generer_graphe(
-        (nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev),
-        connect_chance,
-        nb_iter_forces,
-        (HAUTEUR_SOL, MAP_LIMIT_X)
-    )
+    init()
+    graphe: cg.Graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X)
 
     camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
 
     while running:
-        #TODO comparer à handle_event dans carte
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Clic gauche
-                    camera.start_drag(*event.pos)
-                elif event.button == 4:  # Molette haut
-                    camera.zoom_camera(*event.pos, "in")
-                elif event.button == 5:  # Molette bas
-                    camera.zoom_camera(*event.pos, "out")
-
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:
-                    camera.stop_drag()
-
-            elif event.type == pygame.MOUSEMOTION:
-                camera.drag(*event.pos)
-
-        draw(screen, graphe, camera)
+        handle_events(pygame.event.get(), camera)
+        draw(graphe, camera)
         clock.tick(60)
 
     pygame.quit()

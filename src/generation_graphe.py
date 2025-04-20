@@ -2,15 +2,20 @@ import classes_graphe as cg
 import random
 from numpy.random import normal
 
-def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, taux_std_dev: float, initial_std_dev: float) -> cg.NoeudGeneration:
+#Variables de génération
+nb_noeuds_cible: int = 10 #Nombre total de noeuds à générer
+nb_iter_forces: int = 100 #Nombre d'itérations pour appliquer les forces
+connect_chance: float = 0.3 #Chance de connexion entre les noeuds
+taux_mean: float = -1 #Taux de croissance de la médiane de la distribution normale
+initial_mean: float = 3 #Valeur de initiale de la médiane de la distribution normale
+taux_std_dev: float = 1/3 #Taux de croissance de l'écart type de la distribution normale
+initial_std_dev: float = 1 #Valeur de initiale de l'écart type de la distribution normale
+
+def generer_arbre() -> cg.NoeudGeneration:
     """
     Génère un arbre de noeuds de type NoeudGeneration. Chaque noeud a un nombre d'enfants aléatoire basé sur une distribution normale qui dépend de la profondeur.
     Args:
-        nb_noeuds_cible (int): Nombre total de noeuds à générer.
-        taux_mean (float): Taux de croissance de la médiane de la distribution normale.
-        initial_mean (float): Valeur de initiale de la médiane de la distribution normale.
-        taux_std_dev (float): Taux de croissance de l'écart type de la distribution normale.
-        initial_std_dev (float): Valeur de initiale de l'écart type de la distribution normale.
+        None
     Returns:
         cg.NoeudGeneration: Le noeud racine de l'arbre généré.
     """
@@ -90,12 +95,11 @@ def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, t
     
     return root
 
-def connecter_branches(root: cg.NoeudGeneration, connect_chance: float) -> cg.NoeudGeneration:
+def connecter_branches(root: cg.NoeudGeneration) -> cg.NoeudGeneration:
     """
     Connecte les branches de l'arbre généré.
     Args:
         root (cg.NoeudGeneration): Le noeud racine de l'arbre.
-        connect_chance (float): La probabilité de connexion entre les noeuds.
     Returns:
         cg.NoeudGeneration: Le noeud racine de l'arbre avec les connexions ajoutées.
     """
@@ -145,12 +149,11 @@ def connecter_branches(root: cg.NoeudGeneration, connect_chance: float) -> cg.No
 
     bfs(root, connecter_noeud)
 
-def attribuer_poids(root: cg.NoeudGeneration, nb_iter_forces: int) -> cg.NoeudPondere:
+def attribuer_poids(root: cg.NoeudGeneration) -> cg.NoeudPondere:
     """
     Attribue des coordonnées aux noeuds de l'arbre en utilisant un algorithme de disposition par forces.
     Args:
         root (cg.NoeudGeneration): Le noeud racine de l'arbre.
-        nb_iter_forces (int): Le nombre d'itérations pour appliquer les forces.
     Returns:
         cg.NoeudPondere: Le noeud racine de l'arbre avec les coordonnées attribuées.
     """
@@ -313,14 +316,12 @@ def bfs(start, action=None) -> None:
             nb_restants = nb_next_niv
             nb_next_niv = 0
 
-def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces, infos_convertion_coord) -> cg.Graphe:
+def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
     """
     Génère un graphe à partir d'un arbre de noeuds en utilisant des paramètres de génération.
     Args:
-        infos_gen_arbre (tuple): Informations sur la distributin normale servant à determiner le nombre d'enfants à génération.
-        connect_chance (float): La probabilité de connexion entre les noeuds.
-        nb_iter_forces (int): Le nombre d'itérations pour appliquer les forces.
-        infos_convertion_coord (tuple): Informations sur les dimensions du nid.
+        HAUTEUR_SOL (int): La hauteur du sol pour le nid.
+        MAP_LIMIT_X (int): La largeur maximale du nid.
     Returns:
         cg.Graphe: Le graphe généré.
     """
@@ -372,14 +373,11 @@ def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces, infos_conver
             if salle != salle_min:
                 salle.noeud.coord[1] += 75
 
-    nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev = infos_gen_arbre
-    HAUTEUR_SOL, MAP_LIMIT_X = infos_convertion_coord
-
     valide: bool = False
     while not valide:
-        root = generer_arbre(nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev)
-        connecter_branches(root, connect_chance)
-        root = attribuer_poids(root, nb_iter_forces)
+        root = generer_arbre()
+        connecter_branches(root)
+        root = attribuer_poids(root)
 
         noeuds: list[cg.NoeudPondere] = []
         bfs(root, collecter_noeuds)
