@@ -1,5 +1,4 @@
 import pygame
-import tkinter as tk
 import prototypeGraphe as pg
 from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE
 from config import trouver_font
@@ -9,8 +8,8 @@ from testGenerationGraphe import generer_graphe
 #Variables globales
 SCREEN_WIDTH: int = 1280
 SCREEN_HEIGHT: int = 720
-MAP_LIMIT_X: int = 4000
-MAP_LIMIT_Y: int = 2500
+MAP_LIMIT_X: int = 5000
+MAP_LIMIT_Y: int = 3000
 HAUTEUR_SOL: int = 200
 
 rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
@@ -48,8 +47,8 @@ def draw(screen, graphe, camera) -> None:
     def draw_tunnels() -> None:
         #TODO ajouter un trouver_tuiles_visibles comme dans carte
         for tunnel in graphe.tunnels:
-            depart = camera.apply(tunnel.depart.coord)
-            arrivee = camera.apply(tunnel.arrivee.coord)
+            depart = camera.apply(tunnel.depart.noeud.coord)
+            arrivee = camera.apply(tunnel.arrivee.noeud.coord)
             pygame.draw.line(screen, (0, 0, 0), depart, arrivee, int(tunnel.largeur * camera.get_zoom()))
 
     def draw_salles() -> None:

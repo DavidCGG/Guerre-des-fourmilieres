@@ -207,7 +207,7 @@ def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces, infos_conver
         def collecter_noeuds(root: pg.Noeud_Pondere, _) -> None:
             noeuds.append(root)
 
-        def convertir_coord(graphe: pg.Graph, scale = 50) -> None:
+        def convertir_coord(graphe: pg.Graph, scale = 200) -> None:
             noeud_min: pg.Salle = None #Salle la plus haute
             salle_min: pg.Salle = None #Salle la plus haute qui n'est pas une intersection
 

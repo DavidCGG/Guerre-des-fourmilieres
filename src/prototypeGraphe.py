@@ -17,6 +17,11 @@ class Noeud_Pondere:
         self.coord: list[float, float] = coord
         self.voisins: dict[Noeud_Pondere: float] = voisins if voisins is not None else dict() #Dictionnaire contenant les voisins {voisin: poid}
 
+    def connecter_noeud(self, voisin) -> None:
+            distance = ((self.coord[0] - voisin.coord[0]) ** 2 + (self.coord[1] - voisin.coord[1]) ** 2) ** 0.5
+            self.voisins[voisin] = distance
+            voisin.voisins[self] = distance
+
     def add_voisin(self, voisin, poid = -1) -> None:
         self.voisins[voisin] = poid   
     
@@ -24,10 +29,12 @@ class Noeud_Pondere:
         self.voisins.pop(voisin)
 
 class TypeSalle(Enum):
+    #TODO s'arranger pour mettre 40 au deux autres
     #Les valeurs représentent la taille de la salle
-    INTERSECTION = 10
-    SALLE = 25
-    SORTIE = 10
+    INDEFINI = 40
+    INTERSECTION = 50
+    SALLE = 120
+    SORTIE = 60
 
 class Salle:
     def __init__(self, noeud, tunnels = None, type = None):
@@ -45,24 +52,28 @@ class Salle:
         return distance < distance_min
     
 class Tunnel:
-    def __init__(self, depart = None, arrivee = None, largeur = 15):
-        self.depart: Noeud_Pondere = depart
-        self.arrivee: Noeud_Pondere= arrivee
+    def __init__(self, depart = None, arrivee = None, largeur = 80):
+        self.depart: Salle = depart
+        self.arrivee: Salle = arrivee
         self.largeur: int = largeur
+
+        depart.tunnels.add(self)
+        arrivee.tunnels.add(self)
+        depart.noeud.connecter_noeud(arrivee.noeud)
     
     def intersecte(self, autre) -> bool:
         def get_rectangle(tunnel) -> tuple[int, int, int, int]:
             scale_largeur: float = 2 #Sert à bien espacer les tunnels
 
-            direction: Vector2 = Vector2(tunnel.arrivee.coord[0] - tunnel.depart.coord[0],
-                                         tunnel.arrivee.coord[1] - tunnel.depart.coord[1]).normalize()
+            direction: Vector2 = Vector2(tunnel.arrivee.noeud.coord[0] - tunnel.depart.noeud.coord[0],
+                                         tunnel.arrivee.noeud.coord[1] - tunnel.depart.noeud.coord[1]).normalize()
             normal: Vector2 = Vector2(-direction.y, direction.x)
             offset: Vector2 = normal * (scale_largeur * self.largeur / 2)
 
-            p1 = Vector2(tunnel.depart.coord) + offset
-            p2 = Vector2(tunnel.arrivee.coord) + offset
-            p3 = Vector2(tunnel.arrivee.coord) - offset
-            p4 = Vector2(tunnel.depart.coord) - offset
+            p1 = Vector2(tunnel.depart.noeud.coord) + offset
+            p2 = Vector2(tunnel.arrivee.noeud.coord) + offset
+            p3 = Vector2(tunnel.arrivee.noeud.coord) - offset
+            p4 = Vector2(tunnel.depart.noeud.coord) - offset
 
             return [p1, p2, p3, p4]
         
@@ -95,45 +106,35 @@ class Graph:
         def connecter_noeuds(noeuds) -> None:
             for noeud in noeuds:
                 for voisin in noeud.voisins:
-                    distance = ((noeud.coord[0] - voisin.coord[0]) ** 2 + (noeud.coord[1] - voisin.coord[1]) ** 2) ** 0.5
-                    noeud.voisins[voisin] = distance
-                    voisin.voisins[noeud] = distance
+                    noeud.connecter_noeud(voisin)
 
-        def initialiser_salles(self, noeuds) -> None:
+        def initialiser_salles(self, noeuds, lien_noeud_salle) -> None:
             for noeud in noeuds:
                 salle = Salle(noeud)
 
-                for tunnel in self.tunnels:
-                    if tunnel.depart == noeud or tunnel.arrivee == noeud:
-                        salle.tunnels.add(tunnel)
-
-                if len(salle.tunnels) == 1: #Salle
+                if len(salle.noeud.voisins) == 1: #Salle
                     salle.type = TypeSalle.SALLE
                 else: #Intersection
                     salle.type = TypeSalle.INTERSECTION
 
                 self.salles.add(salle)
+                lien_noeud_salle[noeud] = salle
         
-        def initialiser_tunnels(self, noeuds) -> None:
+        def initialiser_tunnels(self, noeuds, lien_noeud_salle) -> None:
             visited = set()
 
             for noeud in noeuds:
                 for voisin in noeud.voisins:
                     if voisin in visited:
                         continue
-                    self.tunnels.add(Tunnel(noeud, voisin))
+
+                    self.tunnels.add(Tunnel(lien_noeud_salle[noeud], lien_noeud_salle[voisin]))
                 visited.add(noeud)
 
-        def initialiser_distances(self, noeuds) -> None:
-            for noeud in noeuds:
-                for voisin in noeud.voisins:
-                    distance = ((noeud.coord[0] - voisin.coord[0]) ** 2 + (noeud.coord[1] - voisin.coord[1]) ** 2) ** 0.5
-                    noeud.voisins[voisin] = distance
-
+        lien_noeud_salle = dict()
         connecter_noeuds(noeuds)
-        initialiser_tunnels(self, noeuds)
-        initialiser_distances(self, noeuds)
-        initialiser_salles(self, noeuds)
+        initialiser_salles(self, noeuds, lien_noeud_salle)
+        initialiser_tunnels(self, noeuds, lien_noeud_salle)
 
     def verifier_graphe(self) -> bool:
         def verifier_nombre_salles() -> bool:
@@ -153,8 +154,7 @@ class Graph:
                         continue
 
                     if salle1.intersecte(salle2):
-                        return False
-                    
+                        return False    
 
             for tunnel1 in self.tunnels:
                 for tunnel2 in self.tunnels:
@@ -168,21 +168,42 @@ class Graph:
                         return False
                     
             return True
-        
-        return verifier_nombre_salles() and verifier_superpositions()
 
+        return verifier_nombre_salles() and verifier_superpositions()
+    
     def add_salle(self, salle: Salle, voisins:list[Salle]) -> None:
         self.salles.add(salle)
-
         for voisin in voisins:
-            distance = ((salle.noeud.coord[0] - voisin.noeud.coord[0]) ** 2 + (salle.noeud.coord[1] - voisin.noeud.coord[1]) ** 2) ** 0.5
-            salle.noeud.voisins[voisin.noeud] = distance
-            voisin.noeud.voisins[salle.noeud] = distance
-
-            tunnel = Tunnel(salle.noeud, voisin.noeud)
-            salle.tunnels.add(tunnel)
-            voisin.tunnels.add(tunnel)
+            tunnel = Tunnel(salle, voisin)
             self.tunnels.add(tunnel)
+
+    def creer_salle_depuis_tunnel(self, tunnel: Tunnel, coord_depart: list[float, float], coord_arrivee) -> None:     
+        #Initialisation des nouvelles salles
+        noeud_intersection = Noeud_Pondere(coord_depart)
+        salle_intersection = Salle(noeud_intersection, type = TypeSalle.INTERSECTION)
+
+        noeud_salle = Noeud_Pondere(coord_arrivee)
+        salle_indefinie = Salle(noeud_salle, type = TypeSalle.INDEFINI)
+
+        self.salles.add(salle_intersection)
+        self.salles.add(salle_indefinie)
+
+        #Déconnexion des noeuds
+        tunnel.depart.noeud.remove_voisin(tunnel.arrivee.noeud)
+        tunnel.arrivee.noeud.remove_voisin(tunnel.depart.noeud)
+
+        #Suppression des tunnels
+        self.tunnels.remove(tunnel)
+        for s in self.salles:
+            for t in s.tunnels:
+                if t == tunnel:
+                    s.tunnels.remove(t)
+                    break
+        
+        #Création des nouveaux tunnels
+        self.tunnels.add(Tunnel(tunnel.depart, salle_intersection))
+        self.tunnels.add(Tunnel(tunnel.arrivee, salle_intersection))
+        self.tunnels.add(Tunnel(salle_intersection, salle_indefinie))
 
     def dijkstra(self, depart, arrivee) -> list[Noeud_Pondere]:
         def sort_queue(arr) -> list[Noeud_Pondere]:
