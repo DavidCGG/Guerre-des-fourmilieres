@@ -16,9 +16,6 @@ HAUTEUR_SOL: int = 200
 running: bool = True
 in_menu: bool = False
 
-rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
-rectangle_sol = pygame.Rect(0, HAUTEUR_SOL, MAP_LIMIT_X, MAP_LIMIT_Y - HAUTEUR_SOL)
-
 screen: pygame.Surface = None
 clock = pygame.time.Clock()
 liste_boutons = []
@@ -33,6 +30,9 @@ def init() -> None:
 
 def draw(graphe, camera) -> None:
     def draw_background() -> None:
+        rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
+        rectangle_sol = pygame.Rect(0, HAUTEUR_SOL, MAP_LIMIT_X, MAP_LIMIT_Y - HAUTEUR_SOL)
+
         for i in range(2):
             rect = rectangle_ciel if i == 0 else rectangle_sol
             color = (90, 160, 250) if i == 0 else (140, 90, 40)
@@ -131,10 +131,9 @@ def handle_events(events, camera):
             camera.drag(*event.pos)
         
 def run() -> None:
-    init()
     graphe: cg.Graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X)
-
     camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
+    init()
 
     while running:
         handle_events(pygame.event.get(), camera)

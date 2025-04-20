@@ -336,7 +336,7 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
         """
         noeuds.append(root)
 
-    def convertir_coord(graphe: cg.Graphe, scale = 200) -> None:
+    def convertir_coord(graphe: cg.Graphe, scale) -> None:
         """
         Convertit les coordonnées des noeuds du graphe en fonction de l'échelle et ajuste la position de la salle de sortie.
         Args:
@@ -374,6 +374,7 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
                 salle.noeud.coord[1] += 75
 
     valide: bool = False
+    scale = 200
     while not valide:
         root = generer_arbre()
         connecter_branches(root)
@@ -384,8 +385,8 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
 
         graphe = cg.Graphe()
         graphe.initialiser_graphe(noeuds)
-        convertir_coord(graphe)
+        convertir_coord(graphe, scale)
         
-        valide = graphe.verifier_graphe()
+        valide = graphe.verifier_graphe(scale, HAUTEUR_SOL)
 
     return graphe

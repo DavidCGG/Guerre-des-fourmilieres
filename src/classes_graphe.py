@@ -71,7 +71,7 @@ class NoeudPondere:
 class TypeSalle(Enum):
     """
     Enumération des types de salles dans un nid de fourmis.
-    Chaque type est associé à un rayon (taille) et un nom.
+    Chaque type est associé à un rayon et un nom.
     Membres :
         INDEFINI : Salle non définie.
         INTERSECTION : Point de jonction entre tunnels.
@@ -82,7 +82,7 @@ class TypeSalle(Enum):
     INDEFINI = (40, "indéfini")
     INTERSECTION = (40, "intersection")
     SALLE = (120, "salle")
-    SORTIE = (60, "sortie")
+    SORTIE = (40, "sortie")
 
 class Salle:
     """
@@ -98,7 +98,7 @@ class Salle:
         self.tunnels: set[Tunnel] = set(tunnels) if tunnels is not None else set()
         self.type: TypeSalle = type
 
-    def intersecte(self, autre) -> bool:
+    def intersecte_salle(self, autre) -> bool:
         """
         Vérifie si deux salles se superposent.
         Args:
@@ -113,7 +113,39 @@ class Salle:
         distance_min = self.type.value[0] + autre.type.value[0]
 
         return distance < distance_min
-    
+
+    def intersecte_tunnel(self, tunnel) -> bool:
+        """
+        Vérifie si une salle se superpose à un tunnel.
+        Args:
+            tunnel (Tunnel): Tunnel à vérifier.
+        Returns:
+            bool: True si la salle se superpose au tunnel, False sinon.
+        """
+        x1, y1 = tunnel.depart.noeud.coord
+        x2, y2 = tunnel.arrivee.noeud.coord
+        cx, cy = self.noeud.coord
+
+        #Vecteur directeur de la droite
+        droite = Vector2(x2 - x1, y2 - y1)
+
+        #Vecteur entre le centre de la salle et le point de départ du tunnel
+        droite_cercle = Vector2(cx - x1, cy - y1)
+
+        #Rapport entre le vecteur directeur et
+        #la projection du vecteur entre le centre de la salle et le point de départ du tunnel sur celui-ci
+        t = max(0, min(1, (droite.x * droite_cercle.x + droite.y * droite_cercle.y) / (droite.x ** 2 + droite.y ** 2)))
+
+        #Point le plus proche de la salle sur la droite
+        closest_x = x1 + t * droite.x
+        closest_y = y1 + t * droite.y
+
+        #Distance au centre
+        distance = ((closest_x - cx) ** 2 + (closest_y - cy) ** 2) ** 0.5
+        rayon = self.type.value[0] + tunnel.largeur / 2
+
+        return distance <= rayon
+   
 class Tunnel:
     """
     Représente un tunnel entre deux salles dans un graphe.
@@ -273,7 +305,7 @@ class Graphe:
         initialiser_salles(self, noeuds, lien_noeud_salle)
         initialiser_tunnels(self, noeuds, lien_noeud_salle)
 
-    def verifier_graphe(self) -> bool:
+    def verifier_graphe(self, scale, HAUTEUR_SOL) -> bool:
         """
         Vérifie si le graphe respecte les contraintes de superposition et de nombre de salles.
         Args:
@@ -298,6 +330,65 @@ class Graphe:
 
             return nb_salles >= 2 and nb_salles <= 5
         
+        def verifier_longueur_tunnels(scale) -> bool:
+            """
+            Vérifie si les tunnels sont suffisamment longs.
+            Args:
+                None
+            Returns:
+                bool: True si les tunnels sont suffisament long, False sinon.
+            """
+            for tunnel in self.tunnels:
+                longueur = ((tunnel.depart.noeud.coord[0] - tunnel.arrivee.noeud.coord[0]) ** 2 +
+                            (tunnel.depart.noeud.coord[1] - tunnel.arrivee.noeud.coord[1]) ** 2) ** 0.5
+                if longueur / scale < 1.5:
+                    return False
+            return True
+        
+        def verifier_angle_tunnels() -> bool:
+            """
+            Vérifie si les tunnels adjacents sont trop proches.
+            Args:
+                None
+            Returns:
+                bool: True si les tunnels adjacents ne sont pas trop proches, False sinon."""
+            for tunnel1 in self.tunnels:
+                for tunnel2 in self.tunnels:
+                    if tunnel1 == tunnel2:
+                        continue
+
+                    if not (tunnel1.depart in (tunnel2.depart, tunnel2.arrivee) or 
+                        tunnel1.arrivee in (tunnel2.depart, tunnel2.arrivee)):
+                        continue
+
+                    direction1: Vector2 = Vector2(tunnel1.arrivee.noeud.coord[0] - tunnel1.depart.noeud.coord[0],
+                                            tunnel1.arrivee.noeud.coord[1] - tunnel1.depart.noeud.coord[1]).normalize()
+                    direction2: Vector2 = Vector2(tunnel2.arrivee.noeud.coord[0] - tunnel2.depart.noeud.coord[0],
+                                            tunnel2.arrivee.noeud.coord[1] - tunnel2.depart.noeud.coord[1]).normalize()
+                    angle = direction1.angle_to(direction2)
+
+                    if abs(angle) < 25:
+                        return False
+                    
+            return True
+        
+        def verifier_sous_terre(HAUTEUR_SOL) -> bool:
+            """
+            Vérifie si les salles sont sous terre.
+            Args:
+                HAUTEUR_SOL (float): Hauteur du sol.
+            Returns:
+                bool: True si les salles sont sous terre, False sinon.
+            """
+            for salle in self.salles:
+                if salle.type == TypeSalle.SORTIE:
+                    continue
+
+                if salle.noeud.coord[1] - salle.type.value[0] < HAUTEUR_SOL + HAUTEUR_SOL / 10:
+                    return False
+                
+            return True
+        
         def verifier_superpositions() -> bool:
             """
             Vérifie si les salles et tunnels se superposent.
@@ -311,23 +402,35 @@ class Graphe:
                     if salle1 == salle2:
                         continue
 
-                    if salle1.intersecte(salle2):
+                    if salle1.intersecte_salle(salle2):
                         return False    
 
             for tunnel1 in self.tunnels:
                 for tunnel2 in self.tunnels:
-                    if (tunnel1.depart == tunnel2.depart or
-                        tunnel1.depart == tunnel2.arrivee or
-                        tunnel1.arrivee == tunnel2.depart or
-                        tunnel1.arrivee == tunnel2.arrivee):
+                    if (tunnel1.depart in (tunnel2.depart, tunnel2.arrivee) or 
+                        tunnel1.arrivee in (tunnel2.depart, tunnel2.arrivee)):
                         continue
 
                     if tunnel1.intersecte(tunnel2):
                         return False
                     
-            return True
+            for salle in self.salles:
+                for tunnel in self.tunnels:
+                    if tunnel in salle.tunnels:
+                        continue
 
-        return verifier_nombre_salles() and verifier_superpositions()
+                    if salle.intersecte_tunnel(tunnel):
+                        return False
+                    
+            return True
+        
+        valide: bool = True
+        valide = valide and verifier_nombre_salles()
+        valide = valide and verifier_longueur_tunnels(scale)
+        valide = valide and verifier_angle_tunnels()
+        valide = valide and verifier_sous_terre(HAUTEUR_SOL)
+        valide = valide and verifier_superpositions()
+        return valide
     
     def add_salle(self, salle: Salle, voisins:list[Salle]) -> None:
         """
