@@ -1,9 +1,9 @@
 import pygame
-import prototypeGraphe as pg
+import classes_graphe as cg
 from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE
 from config import trouver_font
 from camera_nid import Camera
-from testGenerationGraphe import generer_graphe
+from generation_graphe import generer_graphe
 
 #Variables globales
 SCREEN_WIDTH: int = 1280
@@ -54,7 +54,7 @@ def draw(screen, graphe, camera) -> None:
     def draw_salles() -> None:
         for salle in graphe.salles:
             pos = camera.apply(salle.noeud.coord)
-            pygame.draw.circle(screen, (0, 0, 0), pos, int(salle.type.value * camera.get_zoom()))
+            pygame.draw.circle(screen, (0, 0, 0), pos, int(salle.type.value[0] * camera.get_zoom()))
 
     def draw_top_bar():            
         pygame.draw.rect(screen, BLACK, (0, 0, SCREEN_WIDTH, 50))
@@ -74,7 +74,7 @@ def run() -> None:
     running = True
 
     screen = init()
-    graphe: pg.Graph = generer_graphe(
+    graphe: cg.Graphe = generer_graphe(
         (nb_noeuds_cible, taux_mean, initial_mean, taux_std_dev, initial_std_dev),
         connect_chance,
         nb_iter_forces,

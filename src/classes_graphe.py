@@ -29,12 +29,11 @@ class Noeud_Pondere:
         self.voisins.pop(voisin)
 
 class TypeSalle(Enum):
-    #TODO s'arranger pour mettre 40 au deux autres
-    #Les valeurs représentent la taille de la salle
-    INDEFINI = 40
-    INTERSECTION = 50
-    SALLE = 120
-    SORTIE = 60
+    #value = (rayon, nom)
+    INDEFINI = (40, "indéfini")
+    INTERSECTION = (40, "intersection")
+    SALLE = (120, "salle")
+    SORTIE = (60, "sortie")
 
 class Salle:
     def __init__(self, noeud, tunnels = None, type = None):
@@ -47,7 +46,7 @@ class Salle:
         coord2 = autre.noeud.coord
 
         distance = ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
-        distance_min = self.type.value + autre.type.value
+        distance_min = self.type.value[0] + autre.type.value[0]
 
         return distance < distance_min
     
@@ -97,7 +96,7 @@ class Tunnel:
                 
         return False
         
-class Graph:
+class Graphe:
     def __init__(self, salles = None, tunnels = None):
         self.salles: set[Salle] = salles if salles is not None else set()
         self.tunnels: set[Tunnel] = tunnels if tunnels is not None else set()

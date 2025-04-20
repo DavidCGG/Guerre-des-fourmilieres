@@ -1,16 +1,16 @@
-import prototypeGraphe as pg
+import classes_graphe as cg
 import random
 from numpy.random import normal
 
-def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, taux_std_dev: float, initial_std_dev: float) -> pg.Noeud_Generation:
-    def traverser_arbre(root: pg.Noeud_Generation, noeuds: list[pg.Noeud_Generation]) -> None:
+def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, taux_std_dev: float, initial_std_dev: float) -> cg.Noeud_Generation:
+    def traverser_arbre(root: cg.Noeud_Generation, noeuds: list[cg.Noeud_Generation]) -> None:
         i: int = 0
         while i < len(noeuds):
             generer_enfants(noeuds[i], noeuds, root.nb + 1)
             i += 1
 
     #Créer les enfants d'un noeud
-    def generer_enfants(current: pg.Noeud_Generation, noeuds: list[pg.Noeud_Generation], profondeur: int) -> None:
+    def generer_enfants(current: cg.Noeud_Generation, noeuds: list[cg.Noeud_Generation], profondeur: int) -> None:
         nonlocal nb_noeuds
         
         if len(current.voisins) != 0: #Évite de générer des enfants inutilement lors d'une ennième itération
@@ -21,7 +21,7 @@ def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, t
             if nb_noeuds >= nb_noeuds_cible:
                 return
 
-            enfant = pg.Noeud_Generation(nb_noeuds)
+            enfant = cg.Noeud_Generation(nb_noeuds)
             nb_noeuds += 1
 
             current.add_voisin(enfant)
@@ -42,8 +42,8 @@ def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, t
 
         return int(nbAl)
     
-    root = pg.Noeud_Generation(0)
-    noeuds: list[pg.Noeud_Generation] = [root]
+    root = cg.Noeud_Generation(0)
+    noeuds: list[cg.Noeud_Generation] = [root]
     nb_noeuds = 1
 
     while nb_noeuds < nb_noeuds_cible:
@@ -51,24 +51,24 @@ def generer_arbre(nb_noeuds_cible: int, taux_mean: float, initial_mean: float, t
     
     return root
 
-def connecter_branches(root: pg.Noeud_Generation, connect_chance: float) -> pg.Noeud_Generation:
+def connecter_branches(root: cg.Noeud_Generation, connect_chance: float) -> cg.Noeud_Generation:
     #Connecte ou non le noeud à un noeud à droite
-    def connecter_noeud(noeud: pg.Noeud_Generation, _) -> None:
+    def connecter_noeud(noeud: cg.Noeud_Generation, _) -> None:
         if random.random() > connect_chance:
             return
         
-        voisin: pg.Noeud_Generation = trouver_voisin_droite(noeud, root)
+        voisin: cg.Noeud_Generation = trouver_voisin_droite(noeud, root)
 
         if voisin != None:
             noeud.add_voisin(voisin)
 
     #Retourne le voisin de droite d'un noeud à un certain niveau ou None s'il n'existe pas
-    def trouver_voisin_droite(noeud: pg.Noeud_Generation, root: pg.Noeud_Generation) -> pg.Noeud_Generation:
+    def trouver_voisin_droite(noeud: cg.Noeud_Generation, root: cg.Noeud_Generation) -> cg.Noeud_Generation:
         profondeur_noeud: int = -1
         profondeur_cible: int = -1
         voisin = None
 
-        def trouver_voisin_droite_helper(current: pg.Noeud_Generation, infos: tuple) -> None:
+        def trouver_voisin_droite_helper(current: cg.Noeud_Generation, infos: tuple) -> None:
             nonlocal profondeur_noeud, profondeur_cible, voisin
 
             profondeur, _, __ = infos
@@ -86,29 +86,29 @@ def connecter_branches(root: pg.Noeud_Generation, connect_chance: float) -> pg.N
     bfs(root, connecter_noeud)
 
 #Utilise un algorithme de disposition par forces
-def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_Pondere:
+def attribuer_poids(root: cg.Noeud_Generation, nb_iter_forces: int) -> cg.Noeud_Pondere:
     #Créer aléatoirment les coordonnées des noeuds
-    def initialiser_coord(root: pg.Noeud_Generation) -> pg.Noeud_Pondere:
+    def initialiser_coord(root: cg.Noeud_Generation) -> cg.Noeud_Pondere:
         profondeur_max = trouver_profondeur(root)
         root_pondere = None
-        lien_graphe: dict[pg.Noeud_Generation, pg.Noeud_Pondere] = dict()
+        lien_graphe: dict[cg.Noeud_Generation, cg.Noeud_Pondere] = dict()
 
-        def initialiser_lien_graphe(current: pg.Noeud_Generation, _) -> None:
+        def initialiser_lien_graphe(current: cg.Noeud_Generation, _) -> None:
             nonlocal root_pondere, lien_graphe
 
-            current_pondere = pg.Noeud_Pondere()
+            current_pondere = cg.Noeud_Pondere()
             lien_graphe[current] = current_pondere
 
             if current == root:
                 root_pondere = current_pondere
 
-        def initialiser_graphe_pondere(current: pg.Noeud_Generation, _) -> None:
+        def initialiser_graphe_pondere(current: cg.Noeud_Generation, _) -> None:
             current_pondere = lien_graphe[current]
 
             for v in current.voisins:
                 current_pondere.add_voisin(lien_graphe[v])
 
-        def initialiser_coord_helper(current: pg.Noeud_Generation, infos: tuple) -> None:
+        def initialiser_coord_helper(current: cg.Noeud_Generation, infos: tuple) -> None:
             profondeur, nb_niv_actuel, nb_niv_precedents = infos
 
             current_pondere = lien_graphe[current]
@@ -119,10 +119,10 @@ def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_
         bfs(root, initialiser_coord_helper)
         return root_pondere
 
-    def trouver_profondeur(root: pg.Noeud_Generation) -> int:
+    def trouver_profondeur(root: cg.Noeud_Generation) -> int:
         profondeur_max: int = 0
 
-        def trouver_profondeur_helper(current: pg.Noeud_Generation, infos: tuple)-> None:
+        def trouver_profondeur_helper(current: cg.Noeud_Generation, infos: tuple)-> None:
             nonlocal profondeur_max
 
             profondeur, _, __ = infos
@@ -133,16 +133,16 @@ def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_
         return profondeur_max
 
     #Applique les forces sur tous les noeuds
-    def calculer_force(root_pondere: pg.Noeud_Pondere) -> None:
-        def calculer_force_helper(noeud: pg.Noeud_Pondere, _) -> None:
+    def calculer_force(root_pondere: cg.Noeud_Pondere) -> None:
+        def calculer_force_helper(noeud: cg.Noeud_Pondere, _) -> None:
             calculer_repulsion(noeud, root_pondere)
             calculer_attraction(noeud)
         
         bfs(root_pondere, calculer_force_helper)
 
     #Applique une force de repulsion sur un noeud
-    def calculer_repulsion(noeud: pg.Noeud_Pondere, root_pondere: pg.Noeud_Pondere) -> None:
-        def calculer_repulsion_helper(autre: pg.Noeud_Pondere, _) -> None:
+    def calculer_repulsion(noeud: cg.Noeud_Pondere, root_pondere: cg.Noeud_Pondere) -> None:
+        def calculer_repulsion_helper(autre: cg.Noeud_Pondere, _) -> None:
             if autre == noeud:
                 return
             
@@ -156,7 +156,7 @@ def attribuer_poids(root: pg.Noeud_Generation, nb_iter_forces: int) -> pg.Noeud_
         bfs(root_pondere, calculer_repulsion_helper)
 
     #Applique une force d'attraction sur un noeud
-    def calculer_attraction(noeud: pg.Noeud_Pondere) -> None:
+    def calculer_attraction(noeud: cg.Noeud_Pondere) -> None:
         for v in noeud.voisins:
             dx = v.coord[0] - noeud.coord[0]
             dy = v.coord[1] - noeud.coord[1]
@@ -203,29 +203,29 @@ def bfs(start, action=None) -> None:
             nb_restants = nb_next_niv
             nb_next_niv = 0
 
-def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces, infos_convertion_coord) -> pg.Graph:
-        def collecter_noeuds(root: pg.Noeud_Pondere, _) -> None:
+def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces, infos_convertion_coord) -> cg.Graphe:
+        def collecter_noeuds(root: cg.Noeud_Pondere, _) -> None:
             noeuds.append(root)
 
-        def convertir_coord(graphe: pg.Graph, scale = 200) -> None:
-            noeud_min: pg.Salle = None #Salle la plus haute
-            salle_min: pg.Salle = None #Salle la plus haute qui n'est pas une intersection
+        def convertir_coord(Graphe: cg.Graphe, scale = 200) -> None:
+            noeud_min: cg.Salle = None #Salle la plus haute
+            salle_min: cg.Salle = None #Salle la plus haute qui n'est pas une intersection
 
             for salle in graphe.salles:
                 if noeud_min is None or salle.noeud.coord[1] < noeud_min.noeud.coord[1]:
                     noeud_min = salle
                     
-                    if salle.type == pg.TypeSalle.SALLE:
+                    if salle.type == cg.TypeSalle.SALLE:
                         salle_min = salle
 
             if salle_min != noeud_min:
                 nouveau_x = noeud_min.noeud.coord[0] + 2 * random.random() - 1
                 nouveau_y = noeud_min.noeud.coord[1]
 
-                salle_min = pg.Salle(noeud = pg.Noeud_Pondere([nouveau_x, nouveau_y]), type = pg.TypeSalle.SORTIE)
+                salle_min = cg.Salle(noeud = cg.Noeud_Pondere([nouveau_x, nouveau_y]), type = cg.TypeSalle.SORTIE)
                 graphe.add_salle(salle_min, [noeud_min])
             else:
-                salle_min.type = pg.TypeSalle.SORTIE
+                salle_min.type = cg.TypeSalle.SORTIE
             
             dy: float = scale * salle_min.noeud.coord[1] - HAUTEUR_SOL
 
@@ -245,10 +245,10 @@ def generer_graphe(infos_gen_arbre, connect_chance, nb_iter_forces, infos_conver
             connecter_branches(root, connect_chance)
             root = attribuer_poids(root, nb_iter_forces)
 
-            noeuds: list[pg.Noeud_Pondere] = []
+            noeuds: list[cg.Noeud_Pondere] = []
             bfs(root, collecter_noeuds)
 
-            graphe = pg.Graph()
+            graphe = cg.Graphe()
             graphe.initialiser_graphe(noeuds)
             convertir_coord(graphe)
             
