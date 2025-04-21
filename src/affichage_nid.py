@@ -115,6 +115,9 @@ def handle_events(events, camera):
         if event.type == pygame.QUIT:
             quitter()
 
+        if in_menu:
+            continue
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Clic gauche
                 camera.start_drag(*event.pos)
@@ -131,9 +134,9 @@ def handle_events(events, camera):
             camera.drag(*event.pos)
         
 def run() -> None:
-    graphe: cg.Graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X)
+    graphes = chargement()
+    graphe = graphes[0]
     camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
-    init()
 
     while running:
         handle_events(pygame.event.get(), camera)
@@ -141,6 +144,38 @@ def run() -> None:
         clock.tick(60)
 
     pygame.quit()
+
+def chargement():
+    def afficher_chargement(n, total):    
+        screen.fill((30, 30, 30))
+
+        titre = font.render("Création des nids", True, (255, 255, 255))
+        progression = small_font.render(f"{n} sur {total}", True, (200, 200, 200))
+
+        screen.blit(titre, (SCREEN_WIDTH//2 - titre.get_width()//2, SCREEN_HEIGHT//2 - 100))
+        screen.blit(progression, (screen.get_width()//2 - progression.get_width()//2, SCREEN_HEIGHT//2))
+
+        pygame.display.flip()
+
+    graphes = []
+    total = 4
+
+    font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 48)
+    small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 32)
+
+    for i in range(total):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+        afficher_chargement(i+1, total)
+
+        graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X)
+        graphes.append(graphe)
+
+    return graphes
     
 if __name__ == "__main__":
+    init()
     run()
