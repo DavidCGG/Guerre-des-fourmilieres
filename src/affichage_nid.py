@@ -111,14 +111,17 @@ def quitter():
     running = False
 
 def handle_events(events, camera):
-    for event in events:
-        if event.type == pygame.QUIT:
-            quitter()
+    def handle_event_menu(event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                retour()
 
-        if in_menu:
-            continue
+    def handle_event_nid(event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                menu_options()
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Clic gauche
                 camera.start_drag(*event.pos)
             elif event.button == 4:  # Molette haut
@@ -132,6 +135,14 @@ def handle_events(events, camera):
 
         elif event.type == pygame.MOUSEMOTION:
             camera.drag(*event.pos)
+
+    for event in events:
+        if event.type == pygame.QUIT:
+            quitter()
+        if in_menu:
+            handle_event_menu(event)
+        else:
+            handle_event_nid(event)
         
 def run() -> None:
     graphes = chargement()
@@ -158,7 +169,7 @@ def chargement():
         pygame.display.flip()
 
     graphes = []
-    total = 4
+    total = 1
 
     font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 48)
     small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 32)
