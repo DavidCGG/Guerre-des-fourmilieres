@@ -2,7 +2,7 @@ import math
 import random
 from abc import ABC, abstractmethod
 import pygame
-from config import WIDTH, HEIGHT
+from config import WIDTH, HEIGHT, trouver_img
 
 
 class Fourmis(ABC):
@@ -16,6 +16,7 @@ class Fourmis(ABC):
         self.base_speed = 2
         self.speed = self.base_speed * self.scale
         self.path = None
+        self.moving = False
         self.facing = 0 # 0 : droite, 1 : gauche
         self.hp = hp
         self.atk = atk
@@ -27,14 +28,9 @@ class Fourmis(ABC):
     def attack(self, other):
         pass
 
-    def process(self, dt, tile_size):
-        if self.pause_timer > 0:
-            self.pause_timer -= dt
-            return
-
-        if self.target_x != self.centre_x and self.target_y != self.centre_y:
-            self.goto_target(dt, tile_size)
-
+    def process(self, dt):
+        if self.target_x != self.centre_x or self.target_y != self.centre_y:
+            self.goto_target(dt)
 
     def random_mouvement(self, dt):
         if self.centre_x == self.target_x and self.centre_y == self.target_y:
@@ -59,37 +55,44 @@ class Fourmis(ABC):
         self.target_x = target_x
         self.target_y = target_y
 
-    def goto_target(self, dt, tile_size):
-        print(self.centre_x, self.centre_y)
+    def goto_target(self, dt):
+
         if not hasattr(self, "path") or not self.path:
             # Calculate path if not already calculated
-            self.path = self.calculate_path(tile_size)
+            self.path = self.calculate_path()
 
         if self.path:
             next_tile = self.path[0]
-            target_x = next_tile[0] * tile_size + tile_size // 2
-            target_y = next_tile[1] * tile_size + tile_size // 2
+            target_x = next_tile[0]
+            target_y = next_tile[1]
 
             dx = target_x - self.centre_x
             dy = target_y - self.centre_y
             distance = math.sqrt(dx ** 2 + dy ** 2)
 
-            if distance > 0.5:
+            if distance > 0.1:
                 self.centre_x += self.speed * dx / distance * (dt / 1000)
                 self.centre_y += self.speed * dy / distance * (dt / 1000)
+                self.moving = True
+
+                self.facing = 0 if dx > 0 else 1
             else:
                 # Reached the next tile
                 self.centre_x = target_x
                 self.centre_y = target_y
                 self.path.pop(0)  # Remove the reached tile
-
+                self.moving = len(self.path) > 0
             # Update facing direction
-            self.facing = 0 if dx > 0 else 1
 
-    def calculate_path(self, tile_size):
-        start_tile = self.get_tuile(tile_size)
-        target_tile = (self.target_x // tile_size, self.target_y // tile_size)
 
+        else:
+            self.moving = False
+
+    def calculate_path(self):
+        start_tile = self.get_tuile()
+
+        target_tile = (self.target_x, self.target_y)
+        print(f"Calculating path from {start_tile} to {target_tile}")
         # Example: Simple straight-line path (replace with A* for complex maps)
         path = []
         x, y = start_tile
@@ -104,13 +107,11 @@ class Fourmis(ABC):
                 y -= 1
             path.append((x, y))
 
+        print(f"Path from {start_tile} to {target_tile}: {path}")
         return path
 
-    def get_tuile(self, tile_size):
-        return int(self.centre_x // tile_size), int(self.centre_y // tile_size)
-
-    def pathfind_mouvement(self):
-        pass
+    def get_tuile(self):
+        return int(self.centre_x), int(self.centre_y)
 
 
 class Ouvriere(Fourmis):
@@ -150,14 +151,14 @@ class FourmisSprite(pygame.sprite.Sprite):
         self.frames_LEFT = self.extract_frames()
         self.frames_RIGHT = self.extract_frames(flipped=True)
         self.image = self.frames_LEFT[self.current_frame]
-        self.rect = self.image.get_rect(center=(self.fourmis.centre_x, self.fourmis.centre_y))
+        self.rect = self.image.get_rect(center=(fourmis.centre_x, fourmis.centre_y))
 
     def extract_frames(self, flipped=False):
         frames = []
         frame = None
         for i in range(self.num_frames):
             frame = self.spritesheet.subsurface(pygame.Rect(i*self.frame_width, 0, self.frame_width, self.frame_height))
-            frame = pygame.transform.scale(frame, (int(self.frame_width*self.fourmis.scale), int(self.frame_height*self.fourmis.scale)))
+
             if flipped:
                 frame = pygame.transform.flip(frame, True, False)
             frames.append(frame)
@@ -166,26 +167,66 @@ class FourmisSprite(pygame.sprite.Sprite):
         self.fourmis.height = frame.get_height()
         return frames
 
-    def update(self, dt):
-        self.fourmis.process(dt)
-        if self.fourmis.pause_timer > 0:
-            return
 
-        self.timer += dt
+    def update(self, dt, camera, tile_size):
+        if self.fourmis.moving:
+            self.timer += dt
 
-        while self.timer > self.frame_duration:
-            self.timer -= self.frame_duration
-            self.current_frame = (self.current_frame + 1) % self.num_frames
+            while self.timer > self.frame_duration:
+                self.timer -= self.frame_duration
+                self.current_frame = (self.current_frame + 1) % self.num_frames
         if self.fourmis.facing == 0:
             self.image = self.frames_RIGHT[self.current_frame]
         else:
             self.image = self.frames_LEFT[self.current_frame]
-        self.rect.center = (self.fourmis.centre_x, self.fourmis.centre_y)
+
+        zoom = camera.zoom
+        scaled_width = int(self.image.get_width() * zoom * 2)
+        scaled_height = int(self.image.get_height() * zoom * 2)
+        self.image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
+
+        world_x = self.fourmis.centre_x * tile_size
+        world_y = self.fourmis.centre_y * tile_size
+
+        self.rect = self.image.get_rect(center=(world_x+scaled_width/2, world_y+scaled_height/2))
+        self.rect = camera.apply(self.rect)
 
 class Groupe:
-    def __init__(self):
+    def __init__(self, tile_x, tile_y, images):
         self.fourmis = []
         self.max_capacite = 5
+
+        self.images = images
+        self.image = self.images[0]
+
+        self.centre_x = tile_x
+        self.centre_y = tile_y
+        self.rect = self.image.get_rect(center=(self.centre_x, self.centre_y))
+
+
+
+    def update(self, camera, tile_size):
+        match self.get_nb_fourmis():
+            case 2:
+                self.image = self.images[0]
+            case 3:
+                self.image = self.images[1]
+            case 4:
+                self.image = self.images[2]
+            case 5:
+                self.image = self.images[3]
+
+        zoom = camera.zoom
+        scaled_width = int(self.image.get_width() * zoom * 2)
+        scaled_height = int(self.image.get_height() * zoom * 2)
+        self.image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
+
+        world_x = self.centre_x * tile_size
+        world_y = self.centre_y * tile_size
+
+        self.rect = self.image.get_rect(center=(world_x + scaled_width / 2, world_y + scaled_height / 2))
+        self.rect = camera.apply(self.rect)
+
 
     def ajouter_fourmis(self, fourmis):
         if self.get_size() + fourmis.size <= self.max_capacite:
@@ -197,3 +238,6 @@ class Groupe:
         for fourmi in self.fourmis:
             tot += fourmi.size
         return tot
+
+    def get_nb_fourmis(self):
+        return len(self.fourmis)

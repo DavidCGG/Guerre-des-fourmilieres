@@ -60,7 +60,7 @@ class Carte:
         self.tuile_selection = None
         self.placer_colonies(region_size=15, min_dist=20)
         self.tuile_debut = self.tuiles_debut[self.rand_tuile_debut()]
-        self.colonie_joeur = Colonie(self.tuile_debut, self.objets)
+        self.colonie_joeur = Colonie(self.tuile_debut, self.objets, self.map_data)
 
         self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
@@ -162,7 +162,7 @@ class Carte:
     def menu_options(self):
         if self.in_menu:
             self.retour()
-            return
+
 
         surface = pygame.Surface((300, 500))
         surface.fill(BLACK)
@@ -190,6 +190,8 @@ class Carte:
             if isinstance(bout, Bouton) and 'Grids' in bout.texte:
                 grid_mode_str = "ON" if self.grid_mode else "OFF"
                 bout.texte = f'Grids: {grid_mode_str}'
+
+
 
     def menu_principal(self):
         self.liste_boutons.clear()
@@ -222,6 +224,7 @@ class Carte:
             tile_y = int((self.camera.y + event.pos[1] - 50) // tile_size)
             self.moving= True
             if event.button == 1:  # Left click
+                print(tile_x, tile_y)
                 self.camera.start_drag(*event.pos)
                 self.colonie_joeur.handle_click(event.pos, tile_x, tile_y, self.screen)
                 if (tile_x, tile_y) == self.tuile_debut:
@@ -261,7 +264,7 @@ class Carte:
 
         return start_x, start_y, end_x, end_y
 
-
+    @profile
     def run(self):
         try:
             tile_size = int(self.TILE_SIZE * self.camera.zoom)
@@ -273,14 +276,14 @@ class Carte:
 
                 tile_size = int(self.TILE_SIZE * self.camera.zoom)
                 start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
-
-
-
+                self.colonie_joeur.process(self.clock.get_time())
                 if not self.in_menu:
                     self.screen.fill(BLACK)
                     self.draw_tiles(start_x, start_y, end_x, end_y, tile_size)
 
+
                 self.etoile_tuile_debut(start_x, start_y, end_x, end_y, tile_size)
+                self.colonie_joeur.render_ants(tile_size, self.screen, self.camera) if not self.in_menu else None
                 self.draw_top_bar()
 
                 if self.menu_colonie:
@@ -294,9 +297,11 @@ class Carte:
                     if bout.draw():
                         continue
 
-                self.colonie_joeur.process(self.clock.get_time(), tile_size)
-                pygame.display.update()
+
                 self.clock.tick(60)
+
+                pygame.display.update()
+
 
 
         finally:

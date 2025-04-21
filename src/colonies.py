@@ -4,17 +4,17 @@ import tkinter as tk
 import pygame
 from pygame.examples.scroll import scroll_view
 
-from Fourmis import Ouvriere, Soldat
+from Fourmis import Ouvriere, Soldat, Groupe
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN
 from Fourmis import FourmisSprite
 from classes import Bouton
 
 
 class Colonie:
-    def __init__(self, tuile_debut, objets):
+    def __init__(self, tuile_debut, objets, map_data):
         self.sprite_sheet_ouvr = pygame.image.load(trouver_img("ouvriere_sheet.png")).convert_alpha()
         self.sprite_sheet_sold = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
-
+        self.map_data = map_data
         self.tuile_debut = tuile_debut
         self.vie = 1 # 1 = 100% (vie de la reine)
         self.nourriture = 0
@@ -50,12 +50,17 @@ class Colonie:
         self.update_menu_fourmis()
 
 
-        self.sprites = pygame.sprite.Group()
+        self.sprites = []
+        self.load_sprites()
+        self.groupe_images = self.load_groupe_images()
 
 
-    def process(self,dt,tile_size):
+    def process(self,dt):
         for f in self.fourmis:
-            f.process(dt, tile_size)
+            f.process(dt)
+            self.map_data[f.centre_y][f.centre_x].fourmis.append(f)
+
+
 
     def ajouter(self):
         if not any(isinstance(obj, Colonie) and obj.tuile_debut == self.tuile_debut for obj in self.objets):
@@ -68,8 +73,6 @@ class Colonie:
     def nombre_soldats(self):
         return len([f for f in self.fourmis if isinstance(f, Soldat)])
 
-    def deplacer_fourmi(self):
-        pass
 
     def update_menu(self):
         if not self.menu_a_updater:
@@ -100,6 +103,7 @@ class Colonie:
                 self.texte_rects[texte.split()[0]] = _texte_rect.move(menu_x, menu_y)
             y_offset += 40
         self.menu_a_updater = False
+
     def update_menu_fourmis(self):
         if not self.menu_f_a_updater:
             return
@@ -165,7 +169,34 @@ class Colonie:
             screen.blit(self.menu_fourmis_surface, (0, 720 / 2 - self.menu_fourmis_surface.get_height() / 2))
 
 
+    def load_sprites(self):
+        for f in self.fourmis:
+            if isinstance(f, Ouvriere):
+                sprite_sheet = self.sprite_sheet_ouvr
+            elif isinstance(f, Soldat):
+                sprite_sheet = self.sprite_sheet_sold
 
+            sprite = FourmisSprite(f, sprite_sheet, 16, 16, 4, 300)
+            self.sprites.append(sprite)
+            print(sprite.image.get_rect())
+        print(f"Loaded {len(self.sprites)} sprites.")
+
+    def load_groupe_images(self):
+        for x in range(2,6):
+            self.groupe_images.append(pygame.image.load(trouver_img(f"numero-{x}.png")))
+
+    def render_ants(self,tile_size, screen, camera):
+
+        for sprite in self.sprites:
+            sprite.update(pygame.time.get_ticks()/1000, camera, tile_size)
+            if screen.get_rect().colliderect(sprite.rect):
+                screen.blit(sprite.image, sprite.rect)
+
+                # f = self.fourmis[sprite.fourmis]
+                # if f.moving:
+                #     f.centre_x, f.centre_y = sprite.get_rect().x, sprite.x
+        self.menu_f_a_updater = True
+        self.update_menu_fourmis()
 
     def handle_click(self, pos, tile_x, tile_y, screen):
         if tile_x == self.tuile_debut[0] and tile_y == self.tuile_debut[1]:
