@@ -2,6 +2,7 @@ import random
 import tkinter as tk
 
 import pygame
+from fontTools.subset.svg import group_elements_by_id
 from pygame.examples.scroll import scroll_view
 
 from Fourmis import Ouvriere, Soldat, Groupe
@@ -58,7 +59,7 @@ class Colonie:
     def process(self,dt):
         for f in self.fourmis:
             f.process(dt)
-            self.map_data[f.centre_y][f.centre_x].fourmis.append(f)
+
 
 
 
@@ -134,10 +135,10 @@ class Colonie:
                 sprite_sheet = self.sprite_sheet_ouvr
             elif isinstance(fourmi, Soldat):
                 sprite_sheet = self.sprite_sheet_sold
-            fourmi.scale = 2
-            sprite = FourmisSprite(fourmi, sprite_sheet, 16, 16, 4, 300).extract_frames()[0]
 
-            list_surface.blit(sprite, (10, y_offset - 5))
+            sprite = FourmisSprite(fourmi, sprite_sheet, 16, 16, 4, 300).extract_frames()[0]
+            sprite = pygame.transform.scale(sprite, (32, 32))
+            list_surface.blit(sprite, (10, y_offset - 10))
             ant_info = f"HP: {fourmi.hp} Pos: ({fourmi.centre_x}, {fourmi.centre_y})"
             _texte = font.render(ant_info, True, WHITE)
             list_surface.blit(_texte, (50, y_offset))
@@ -182,8 +183,10 @@ class Colonie:
         print(f"Loaded {len(self.sprites)} sprites.")
 
     def load_groupe_images(self):
+        groupe_images = []
         for x in range(2,6):
-            self.groupe_images.append(pygame.image.load(trouver_img(f"numero-{x}.png")))
+            groupe_images.append(pygame.image.load(trouver_img(f"numero-{x}.png")))
+        return groupe_images
 
     def render_ants(self,tile_size, screen, camera):
 
@@ -214,8 +217,7 @@ class Colonie:
                 self.couleur_texte = AQUA
                 # On ferme le menu si on re clique sur le meme tab
                 self.menu_fourmis_ouvert = not self.menu_fourmis_ouvert if key == self.last_tab else True
-                if not self.menu_fourmis_ouvert:
-                    self.objets.clear()
+
                 self.menu_a_updater = True
                 self.menu_f_a_updater = True
                 return
@@ -248,17 +250,14 @@ class Colonie:
             if rect.collidepoint(pos):
                 self.hover_texte = key
                 self.menu_a_updater = True
+                self.update_menu()
                 return
 
         if self.menu_fourmis_rect.collidepoint(pos):
 
-            self.scrolling = True
             self.menu_f_a_updater = True
 
 
-        else:
-            self.scrolling = False
-            self.objets.clear()
 
 
         self.hover_texte = None
@@ -275,9 +274,10 @@ class Colonie:
                 self.scroll_offset = max(0, self.scroll_offset - self.scroll_speed)
             elif dir  == "down":
                 self.scroll_offset = min(max_offset, self.scroll_offset + self.scroll_speed)
-
+            self.scrolling = True
             self.menu_f_a_updater = True
             self.update_menu_fourmis()
+        else: self.scrolling = False
 
 class PrototypeIA:
     def __init__(self, root):
