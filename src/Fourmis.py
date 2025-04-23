@@ -232,6 +232,10 @@ class Groupe:
         if self.get_size() + fourmis.size <= self.max_capacite:
             self.fourmis.append(fourmis)
         else: print("pas assez de place")
+    def enlever_fourmis(self, fourmis):
+        if fourmis in self.fourmis:
+            self.fourmis.remove(fourmis)
+        else: print("fourmi pas dans le groupe")
 
     def get_size(self):
         tot = 0
@@ -241,3 +245,6 @@ class Groupe:
 
     def get_nb_fourmis(self):
         return len(self.fourmis)
+
+    def est_vide(self):
+        return len(self.fourmis) == 0

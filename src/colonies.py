@@ -2,7 +2,6 @@ import random
 import tkinter as tk
 
 import pygame
-from fontTools.subset.svg import group_elements_by_id
 from pygame.examples.scroll import scroll_view
 
 from Fourmis import Ouvriere, Soldat, Groupe
@@ -53,14 +52,28 @@ class Colonie:
 
         self.sprites = []
         self.load_sprites()
-        self.groupe_images = self.load_groupe_images()
+        self.groupe_images = []
+        self.load_groupe_images()
+        self.cache_groupes_a_updater = False
+        self.groupes_cache = {}
 
 
     def process(self,dt):
+        fourmis_bouge = False
+
         for f in self.fourmis:
+            dern_x, dern_y = f.centre_x, f.centre_y
+
             f.process(dt)
 
 
+            if (dern_x, dern_y) != (f.centre_x, f.centre_y):
+                fourmis_bouge = True
+            else:
+                None
+
+        if fourmis_bouge:
+            self.cache_groupes_a_updater = True
 
 
     def ajouter(self):
@@ -182,18 +195,33 @@ class Colonie:
             print(sprite.image.get_rect())
         print(f"Loaded {len(self.sprites)} sprites.")
 
+    def update_cache_groupes(self):
+        self.groupes_cache = {}
+        for f in self.fourmis:
+            tuile = (f.centre_x, f.centre_y)
+            if tuile not in self.groupes_cache:
+                self.groupes_cache[tuile] = Groupe(tuile[0], tuile[1], self.groupe_images)
+            self.groupes_cache[tuile].ajouter_fourmis(f)
+        self.cache_groupes_a_updater = False
+
     def load_groupe_images(self):
-        groupe_images = []
         for x in range(2,6):
-            groupe_images.append(pygame.image.load(trouver_img(f"numero-{x}.png")))
-        return groupe_images
+            self.groupe_images.append(pygame.image.load(trouver_img(f"numero-{x}.png")))
 
     def render_ants(self,tile_size, screen, camera):
+        if self.cache_groupes_a_updater:
+            self.update_cache_groupes()
 
-        for sprite in self.sprites:
-            sprite.update(pygame.time.get_ticks()/1000, camera, tile_size)
-            if screen.get_rect().colliderect(sprite.rect):
-                screen.blit(sprite.image, sprite.rect)
+        for tuile, groupe in self.groupes_cache.items():
+            if groupe.get_nb_fourmis() > 1:
+                groupe.update(camera, tile_size)
+                screen.blit(groupe.image, groupe.rect)
+            else:
+                f = groupe.fourmis[0]
+                sprite = self.sprites[self.fourmis.index(f)]
+                sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
+                if screen.get_rect().colliderect(sprite.rect):
+                    screen.blit(sprite.image, sprite.rect)
 
                 # f = self.fourmis[sprite.fourmis]
                 # if f.moving:
@@ -227,7 +255,12 @@ class Colonie:
             rel_y = pos[1] - self.menu_fourmis_rect.y + self.scroll_offset
 
             y_offset = 40
-            for fourmi in self.fourmis:
+            if self.curr_tab == "Ouvrières":
+                fourmis = [f for f in self.fourmis if isinstance(f, Ouvriere)]
+            else:
+                fourmis = [f for f in self.fourmis if isinstance(f, Soldat)]
+
+            for fourmi in fourmis:
                 rect = pygame.Rect(0, y_offset - 5, 250, 50)
 
                 if rect.collidepoint((rel_x, rel_y)):
@@ -238,7 +271,6 @@ class Colonie:
                         self.fourmis_selection = fourmi
 
                     self.menu_f_a_updater = True
-                    print(self.fourmis_selection)
                     return
 
                 y_offset += 50
