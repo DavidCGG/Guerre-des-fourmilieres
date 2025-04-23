@@ -23,6 +23,7 @@ class Fourmis(ABC):
         self.width = 0
         self.height = 0
         self.pause_timer = 0
+        self.tient_ressource = False
 
     @abstractmethod
     def attack(self, other):
@@ -82,17 +83,17 @@ class Fourmis(ABC):
                 self.centre_y = target_y
                 self.path.pop(0)  # Remove the reached tile
                 self.moving = len(self.path) > 0
-            # Update facing direction
 
 
         else:
             self.moving = False
 
+
     def calculate_path(self):
         start_tile = self.get_tuile()
 
         target_tile = (self.target_x, self.target_y)
-        print(f"Calculating path from {start_tile} to {target_tile}")
+
         # Example: Simple straight-line path (replace with A* for complex maps)
         path = []
         x, y = start_tile
@@ -107,7 +108,6 @@ class Fourmis(ABC):
                 y -= 1
             path.append((x, y))
 
-        print(f"Path from {start_tile} to {target_tile}: {path}")
         return path
 
     def get_tuile(self):
@@ -231,11 +231,16 @@ class Groupe:
     def ajouter_fourmis(self, fourmis):
         if self.get_size() + fourmis.size <= self.max_capacite:
             self.fourmis.append(fourmis)
-        else: print("pas assez de place")
+        return
+
+
     def enlever_fourmis(self, fourmis):
         if fourmis in self.fourmis:
             self.fourmis.remove(fourmis)
         else: print("fourmi pas dans le groupe")
+
+    def get_tuile(self):
+        return int(self.centre_x), int(self.centre_y)
 
     def get_size(self):
         tot = 0
