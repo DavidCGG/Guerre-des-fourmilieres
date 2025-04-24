@@ -1,5 +1,6 @@
 import random
 import pygame
+import numpy as np
 from colonies import Colonie
 from memory_profiler import profile
 
@@ -38,7 +39,7 @@ class Carte:
         self.moving = False # lorsqu'on deplace la camera
 
         self.gen_map = GenerationMap(self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
-        self.map_data = self.gen_map.liste_tuiles()
+        self.map_data = np.array(self.gen_map.liste_tuiles())
         self.hover_tuile = None  # la tuile qui devient couleur AQUA quand on a une fourmi selectionnee
         self.tuiles_ressources = [] # liste des tuiles ayant une ressource
 

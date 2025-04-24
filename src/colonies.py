@@ -184,9 +184,9 @@ class Colonie:
 
         modif_tuiles = set()
         for f in self.fourmis:
-            if f in dern_positions and dern_positions[f] != (int(f.centre_x), int(f.centre_y)):
+            if f in dern_positions and dern_positions[f] != f.get_tuile():
                 modif_tuiles.add(dern_positions[f])
-                modif_tuiles.add((int(f.centre_x), int(f.centre_y)))
+                modif_tuiles.add(f.get_tuile())
 
         self.groupes_cache = nouv_groupe
         self.cache_groupes_a_updater = False
@@ -195,23 +195,22 @@ class Colonie:
 
 
     def update_fourmis_tuiles(self, modif_tuiles):
-        if modif_tuiles is None:
-            for y in self.map_data:
-                for tuile in y:
-                    tuile.fourmis = []
+        for tuile in modif_tuiles:
+            self.map_data[tuile[1]][tuile[0]].fourmis = []
+        for tuile, groupe in self.groupes_cache.items():
+            if tuile in modif_tuiles:
+                self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
 
-            for tuile, groupe in self.groupes_cache.items():
-                self.map_data[tuile[1]][tuile[0]].fourmis = groupe
-        else:
-            for tuile in modif_tuiles:
-                self.map_data[tuile[1]][tuile[0]].fourmis = []
-            for tuile, groupe in self.groupes_cache.items():
-                if tuile in modif_tuiles:
-                    self.map_data[tuile[1]][tuile[0]].fourmis = groupe
-        
+
+    def get_fourmis_de_groupe(self, groupe) -> :
+        if groupe.get_nb_fourmis() == 1:
+            return groupe.fourmis[0] # Retourne une fourmi particuliere
+        return groupe
+
     def ajouter_fourmis_tuile(self):
         for tuile, groupe in self.groupes_cache.items():
-            self.map_data[tuile[1]][tuile[0]].fourmis = groupe
+            self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
+
 
     def load_groupe_images(self):
         for x in range(2,6):
@@ -234,6 +233,8 @@ class Colonie:
 
 
     def handle_click(self, pos, tile_x, tile_y, screen):
+        if self.map_data[tile_y][tile_x].fourmis is not None:
+            pass
         if tile_x == self.tuile_debut[0] and tile_y == self.tuile_debut[1]:
             self.menu_colonie(screen)
             return

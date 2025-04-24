@@ -198,12 +198,76 @@ class Groupe:
 
         self.images = images
         self.image = self.images[0]
-
+        self.speed = 1.25
         self.centre_x = tile_x
         self.centre_y = tile_y
+        self.target_x = self.centre_x
+        self.target_y = self.centre_y
         self.rect = self.image.get_rect(center=(self.centre_x, self.centre_y))
 
+    def process(self, dt):
+        if self.target_x != self.centre_x or self.target_y != self.centre_y:
+            self.goto_target(dt)
 
+    def set_target(self, target_x, target_y):
+        self.target_x = target_x
+        self.target_y = target_y
+
+    def goto_target(self, dt):
+        if not hasattr(self, "path") or not self.path:
+            # Calculate path if not already calculated
+            self.path = self.calculate_path()
+
+        if self.path:
+            next_tile = self.path[0]
+            target_x = next_tile[0]
+            target_y = next_tile[1]
+
+            dx = target_x - self.centre_x
+            dy = target_y - self.centre_y
+            distance = math.sqrt(dx ** 2 + dy ** 2)
+
+            if distance > 0.1:
+                self.centre_x += self.speed * dx / distance * (dt / 1000)
+                self.centre_y += self.speed * dy / distance * (dt / 1000)
+                self.moving = True
+
+                self.facing = 0 if dx > 0 else 1
+            else:
+                # Reached the next tile
+                self.centre_x = target_x
+                self.centre_y = target_y
+                self.path.pop(0)  # Remove the reached tile
+                self.moving = len(self.path) > 0
+
+
+        else:
+            self.moving = False
+
+
+    def calculate_path(self):
+        start_tile = self.get_tuile()
+
+        target_tile = (self.target_x, self.target_y)
+
+        # Example: Simple straight-line path (replace with A* for complex maps)
+        path = []
+        x, y = start_tile
+        while (x, y) != target_tile:
+            if x < target_tile[0]:
+                x += 1
+            elif x > target_tile[0]:
+                x -= 1
+            elif y < target_tile[1]:
+                y += 1
+            elif y > target_tile[1]:
+                y -= 1
+            path.append((x, y))
+
+        return path
+
+    def get_tuile(self):
+        return int(self.centre_x), int(self.centre_y)
 
     def update(self, camera, tile_size):
         match self.get_nb_fourmis():
