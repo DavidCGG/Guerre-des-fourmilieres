@@ -1,11 +1,12 @@
 import random
 import pygame
+import numpy as np
 from colonies import Colonie
 from memory_profiler import profile
 
 from classes import Bouton
 from camera import Camera
-from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE
+from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE, AQUA
 from config import trouver_font
 from generation_map import GenerationMap
 from random_noise import RandomNoise
@@ -22,43 +23,38 @@ class Carte:
         self.running = True
         self.size = (1280, 720)
         self.screen = pygame.display.set_mode(self.size)
+        self.clock = pygame.time.Clock()
         pygame.display.set_caption("Guerre des fourmilières")
+
+        self.TILE_SIZE = 32
+        self.MAP_WIDTH = 100
+        self.MAP_HEIGHT = 100
 
         self.water_amount = 0.46
         self.sand_amount = 0.013
         self.land_amount = 0.44
 
-        self.grid_mode = False
-        self.in_menu = False
-        self.close_menu = False
-        self.moving = False
-        self.menu_colonie = False
+        self.grid_mode = False # option pour montrer la bordure des tuiles en noir
+        self.in_menu = False # pour savoir si on est dans le menu d'options
+        self.moving = False # lorsqu'on deplace la camera
 
-        self.TILE_SIZE = 32
-        self.MAP_WIDTH = 100
-        self.MAP_HEIGHT = 100
         self.gen_map = GenerationMap(self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
-        self.map_data = self.gen_map.liste_tuiles()
-        self.liste_boutons = []
-        self.clock = pygame.time.Clock()
-        self.objets = []
+        self.map_data = np.array(self.gen_map.liste_tuiles())
+        self.hover_tuile = None  # la tuile qui devient couleur AQUA quand on a une fourmi selectionnee
+        self.tuiles_ressources = [] # liste des tuiles ayant une ressource
 
+        self.liste_boutons = []
 
         self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
-        self.last_cam_x = self.camera.x
-        self.last_cam_y = self.camera.y
-        self.last_zoom = self.camera.zoom
-        self.surface_map = pygame.Surface((self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE))
 
         self.noise_gen = RandomNoise(self.MAP_WIDTH, self.MAP_HEIGHT, 255, extra=65)
         self.noise_gen.randomize()
         self.transformer_tuiles()
 
-        self.tuiles_debut = []
-        self.tuile_selection = None
+        self.tuiles_debut = []  # liste des tuiles de debut de chaque colonie, peu important
         self.placer_colonies(region_size=15, min_dist=20)
-        self.tuile_debut = self.tuiles_debut[self.rand_tuile_debut()]
-        self.colonie_joeur = Colonie(self.tuile_debut, self.objets)
+        self.tuile_debut = self.tuiles_debut[random.randint(0, 3)]
+        self.colonie_joeur = Colonie(self.tuile_debut, self.map_data)
 
         self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
@@ -66,18 +62,23 @@ class Carte:
         self.police2 = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
         self.police_grids = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 26)
 
-    def rand_tuile_debut(self):
-        return random.randint(0,3)
+    def set_camera_tuile_debut(self):
+        """Place la camera sur la tuile de debut de la colonie"""
+        x, y = self.colonie_joeur.tuile_debut
+        tile_size = (self.TILE_SIZE * self.camera.zoom)
+        self.camera.x = x * tile_size - self.size[0] / 2 + tile_size/2
+        self.camera.y = y * tile_size - self.size[1] / 2 + tile_size/2
 
-    def etoile_tuile_debut(self, start_x, start_y, end_x, end_y, tile_size):
+    def etoile_tuile_debut(self, tile_size):
+        """Dessine une étoile sur la tuile de début de la colonie"""
         if self.in_menu:
             return
+
         x, y = self.colonie_joeur.tuile_debut
-        if start_x <= x < end_x and start_y <= y < end_y:
-            rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+        rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+
+        if self.screen.get_rect().colliderect(self.camera.apply(rect)):
             self.screen.blit(pygame.transform.scale(self.image_etoile, (tile_size, tile_size)), self.camera.apply(rect))
-
-
 
     def placer_colonies(self, min_dist=5, region_size=10):
         # On definit des regions aux coins de la carte
@@ -97,7 +98,7 @@ class Carte:
                 y = random.randint(region_y, region_y + region_size - 1)
                 if isinstance(self.map_data[y][x], (Terre, Montagne)):
                     self.map_data[y][x].tuile_debut = True
-                    self.map_data[y][x].color = couleurs_colonies[curr_couleur]  # Red color for colonies
+                    self.map_data[y][x].color = couleurs_colonies[curr_couleur]
                     placed = True
                     curr_couleur += 1
                     self.tuiles_debut.append((x, y))
@@ -105,29 +106,34 @@ class Carte:
     def get_colonies_coords(self):
         return self.tuiles_debut
 
-
     def transformer_tuiles(self):
+        """Transforme les tuiles de la carte en fonction de la valeur du bruit"""
         vals_noise = self.noise_gen.smoothNoise2d(smoothing_passes=20, upper_value_limit=1)
         for y in range(self.MAP_HEIGHT):
             for x in range(self.MAP_WIDTH):
-                self.map_data[y][x].val_noise = vals_noise[y][x]  # Ensure correct indexing
+                self.map_data[y][x].val_noise = vals_noise[y][x]
                 col = int(vals_noise[y][x] * 255)
 
                 # Convert noise value to color
                 if col < int(255 * self.water_amount):  # water
                     self.map_data[y][x] = Eau(x, y, self.TILE_SIZE, self.TILE_SIZE)
                     self.map_data[y][x].color = (0, 0, col)
-                elif col < int(255 * (self.water_amount + self.sand_amount)):  # sand
 
+                elif col < int(255 * (self.water_amount + self.sand_amount)):  # sand
                     self.map_data[y][x] = Sable(x, y, self.TILE_SIZE, self.TILE_SIZE)
                     self.map_data[y][x].color = (col, col, 0)
-                elif col < int(255 * (self.water_amount + self.sand_amount + self.land_amount)):  # land
 
+                elif col < int(255 * (self.water_amount + self.sand_amount + self.land_amount)):  # land
                     self.map_data[y][x] = Terre(x, y, self.TILE_SIZE, self.TILE_SIZE)
                     self.map_data[y][x].color = (0, col, 0)
+
                 else:
                     self.map_data[y][x] = Montagne(x, y, self.TILE_SIZE, self.TILE_SIZE)
                     self.map_data[y][x].color = (0, 0, 0)
+
+                if self.map_data[y][x].tuile_ressource:
+                    self.tuiles_ressources.append(self.map_data[y][x])
+
 
     def decouvrir_tuiles(self, x_tuile, y_tuile):
         for y in range(y_tuile - 2, y_tuile+3):
@@ -137,8 +143,8 @@ class Carte:
                         self.map_data[y][x].toggle_color()
 
     def draw_top_bar(self):
+        """Dessine la barre du haut de l'écran"""
         if not any(isinstance(bout, Bouton) and bout.texte == "Options" for bout in self.liste_boutons):
-
             bouton = Bouton(self.screen, self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police)
             self.liste_boutons.append(bouton)
             
@@ -150,18 +156,26 @@ class Carte:
         self.screen.blit(zoom_info, (10, 30))
 
 
-
     def draw_tiles(self, start_x, start_y, end_x, end_y, tile_size):
+        """Dessine les tuiles visibles sur l'écran
+        Args:
+            start_x (int): coordonnee x de la tuile de gauche
+            start_y (int): coordonnee y de la tuile du haut
+            end_x (int): coordonnee x de la tuile de droite
+            end_y (int): coordonnee y de la tuile du bas
+        Voir aussi: trouver_tuiles_visibles()
+            """
         for y in range(start_y, end_y):
             for x in range(start_x, end_x):
                 tile = self.map_data[y][x]
                 tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
                 tile.draw(self.screen, self.camera.apply(tile_rect), self.grid_mode)
+                if self.colonie_joeur.fourmis_selection and self.hover_tuile == (x, y):
+                    pygame.draw.rect(self.screen, AQUA, self.camera.apply(tile_rect), 2)
 
     def menu_options(self):
         if self.in_menu:
             self.retour()
-            return
 
         surface = pygame.Surface((300, 500))
         surface.fill(BLACK)
@@ -169,7 +183,6 @@ class Carte:
         texte_render = self.police1.render("Options", True, WHITE)
 
         self.in_menu = True
-
 
         grid_mode_str = "ON" if self.grid_mode else "OFF"
         surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
@@ -182,13 +195,15 @@ class Carte:
                                 'Quitter', self.quitter, self.police2))
 
 
-
     def toggle_grid(self):
+        """Change l'affichage des tuiles, avec ou sans bordures."""
         self.grid_mode = not self.grid_mode
         for bout in self.liste_boutons:
             if isinstance(bout, Bouton) and 'Grids' in bout.texte:
                 grid_mode_str = "ON" if self.grid_mode else "OFF"
                 bout.texte = f'Grids: {grid_mode_str}'
+        self.menu_options()
+
 
     def menu_principal(self):
         self.liste_boutons.clear()
@@ -196,6 +211,7 @@ class Carte:
         bouton_options = Bouton(self.size[0] - 100, 25, 100, 30, "Options", self.menu_options, police, self.screen)
 
     def retour(self):
+        """Fonction qui ferme le menu"""
         self.liste_boutons.clear()
         self.in_menu = False
         self.moving = True
@@ -205,6 +221,7 @@ class Carte:
         self.liste_boutons.clear()
 
     def handle_event(self, event):
+        """Gère les évènements de pygame"""
         if event.type == pygame.QUIT:
             self.running = False
             self.liste_boutons.clear()
@@ -213,31 +230,32 @@ class Carte:
             if event.key == pygame.K_ESCAPE:
                 self.menu_options() if not self.in_menu else self.retour()
             elif event.key == pygame.K_q:
-                self.menu_colonie = not self.menu_colonie
+                self.colonie_joeur.menu_colonie_ouvert = not self.colonie_joeur.menu_colonie_ouvert
 
         elif event.type == pygame.MOUSEBUTTONDOWN and not self.in_menu:
-            tile_size = (self.TILE_SIZE * self.camera.zoom)
-            tile_x = int((self.camera.x + event.pos[0]) // tile_size)
-            tile_y = int((self.camera.y + event.pos[1] - 50) // tile_size)
+            tile_x, tile_y = self.get_tuile(event)
             self.moving = True
             if event.button == 1:  # Left click
                 self.camera.start_drag(*event.pos)
                 self.colonie_joeur.handle_click(event.pos, tile_x, tile_y, self.screen)
                 if (tile_x, tile_y) == self.tuile_debut:
-                    self.menu_colonie = not self.menu_colonie
+                    self.colonie_joeur.menu_colonie_ouvert = not self.colonie_joeur.menu_colonie_ouvert
+
             if event.button == 3:  # Right click
                 if self.colonie_joeur.fourmis_selection:
                     self.colonie_joeur.fourmis_selection.set_target(tile_x, tile_y)
                     self.colonie_joeur.fourmis_selection = None
+                    self.hover_tuile = None
+
             elif event.button == 4:
+                self.colonie_joeur.handle_scroll("up", event.pos)
                 if not self.colonie_joeur.scrolling: # Scroll up
                     self.camera.zoom_camera(*event.pos, "in")
-                self.colonie_joeur.handle_scroll("up", event.pos)
+
             elif event.button == 5:
+                self.colonie_joeur.handle_scroll("down", event.pos)
                 if not self.colonie_joeur.scrolling: # Scroll down
                     self.camera.zoom_camera(*event.pos, "out")
-                self.colonie_joeur.handle_scroll("down", event.pos)
-
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
@@ -247,9 +265,21 @@ class Carte:
         elif event.type == pygame.MOUSEMOTION:
             self.camera.drag(*event.pos)
             self.colonie_joeur.handle_hover(event.pos)
+            if self.colonie_joeur.fourmis_selection is not None:
+                self.hover_tuile = self.get_tuile(event)
+
+    def get_tuile(self, event) -> tuple:
+        """Retourne la tuile sur laquelle on clique
+        Args:
+            event (tuple): pygame.event
+        """
+        tile_size = (self.TILE_SIZE * self.camera.zoom)
+        tile_x = int((self.camera.x + event.pos[0]) // tile_size)
+        tile_y = int((self.camera.y + event.pos[1] - 50) // tile_size)
+        return tile_x, tile_y
 
     def trouver_tuiles_visibles(self) -> tuple:
-
+        """Retourne les tuiles visibles sur l'ecran"""
         tile_size = (self.TILE_SIZE * self.camera.zoom)
         start_x = max(0, int(self.camera.x // tile_size))
         start_y = max(0, int(self.camera.y // tile_size))
@@ -260,43 +290,46 @@ class Carte:
 
         return start_x, start_y, end_x, end_y
 
-
+    @profile
     def run(self):
         try:
-            tile_size = int(self.TILE_SIZE * self.camera.zoom)
-            start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
-            self.draw_tiles(start_x, start_y, end_x, end_y, tile_size)
+            self.set_camera_tuile_debut() # Met la camera sur la colonie du joueur
             while self.running:
                 for event in pygame.event.get():
-                    self.handle_event(event)
+                    self.handle_event(event) # On handle chaque event a chaque frame
 
                 tile_size = int(self.TILE_SIZE * self.camera.zoom)
-                start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
+                start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()  # Calcule les tuiles visibles pour sauver de la memoire
+                # Idee: utiliser rect.collidepoint pour voir si une tuile collide avec l'ecran
+                # comme dans etoile_tuile_debut()
 
-
-
-                if not self.in_menu:
+                if not self.in_menu: # On ne met pas a jour la carte si on est dans le menu d'options
                     self.screen.fill(BLACK)
                     self.draw_tiles(start_x, start_y, end_x, end_y, tile_size)
 
-                self.etoile_tuile_debut(start_x, start_y, end_x, end_y, tile_size)
-                self.draw_top_bar()
 
-                if self.menu_colonie:
+                self.etoile_tuile_debut(tile_size) # Render l'étoile sur la colonie du joueur
+                self.colonie_joeur.render_ants(tile_size, self.screen, self.camera) if not self.in_menu else None
+                self.draw_top_bar() # Render la bar du haut en dernier pour qu'elle soit en premier plan
+
+
+                # Je run les menus de colonie dans le main loop, car je veux qu'ils soient mis a jour en temps reel
+                # et qu'ils restent ouverts
+                if self.colonie_joeur.menu_colonie_ouvert:
                     self.colonie_joeur.menu_colonie(self.screen)
 
-                if self.colonie_joeur.menu_fourmis_ouvert and self.menu_colonie:
+                if self.colonie_joeur.menu_fourmis_ouvert: # and self.menu_colonie
                     self.colonie_joeur.menu_fourmis(self.screen)
 
-
+                # Process de la colonie (process chaque fourmi) et dessin des boutons
+                self.colonie_joeur.process(self.clock.get_time())
                 for bout in self.liste_boutons:
                     if bout.draw():
                         continue
 
-                self.colonie_joeur.process(self.clock.get_time(), tile_size)
-                pygame.display.update()
                 self.clock.tick(60)
 
+                pygame.display.update()
 
         finally:
             pygame.quit()
