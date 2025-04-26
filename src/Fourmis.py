@@ -6,8 +6,8 @@ from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 class FourmiTitleScreen():
     def __init__(self, x0, y0, scale=1.0):
-        self.width = 0
-        self.height = 0
+        self.width = 16
+        self.height = 16
         self.scale = scale
 
         self.centre_y = y0
@@ -41,8 +41,8 @@ class FourmiTitleScreen():
         self.target_y = self.centre_y + distance*math.sin(angle)
 
         # On s'assure que la cible est dans les limites de l'écran
-        self.target_x = max(0+self.width//2, min(SCREEN_WIDTH-self.width//2, self.target_x))
-        self.target_y = max(0+self.height//2, min(SCREEN_HEIGHT-self.height//2, self.target_y))
+        self.target_x = max(0+self.width * self.scale, min(SCREEN_WIDTH-self.width * self.scale, self.target_x))
+        self.target_y = max(0+self.height * self.scale, min(SCREEN_HEIGHT-self.height * self.scale, self.target_y))
 
     def goto_target(self, dt):
             dx = self.target_x - self.centre_x
@@ -274,7 +274,7 @@ class FourmisSprite(pygame.sprite.Sprite):
         world_y = self.fourmis.centre_y * tile_size
 
         self.rect = self.image.get_rect(center=(world_x+scaled_width/2, world_y+scaled_height/2))
-        self.rect = camera.apply(self.rect)
+        self.rect = camera.apply_rect(self.rect)
 
 class Groupe:
     def __init__(self, tile_x, tile_y, images):
@@ -374,7 +374,7 @@ class Groupe:
         world_y = self.centre_y * tile_size
 
         self.rect = self.image.get_rect(center=(world_x + scaled_width / 2, world_y + scaled_height / 2))
-        self.rect = camera.apply(self.rect)
+        self.rect = camera.apply_rect(self.rect)
 
 
     def ajouter_fourmis(self, fourmis):

@@ -328,7 +328,7 @@ class Graphe:
                     continue
                 nb_salles += 1
 
-            return nb_salles >= 2 and nb_salles <= 3
+            return nb_salles == 3
         
         def verifier_longueur_tunnels(scale) -> bool:
             """

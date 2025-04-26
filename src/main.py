@@ -1,6 +1,6 @@
 import pygame
 import carte2 as carte
-import affichage_nid2 as nid
+import affichage_nid as nid
 from config import trouver_font, trouver_img
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import WHITE, BLACK, YELLOW
@@ -88,7 +88,7 @@ def draw() -> None:
 
         #font_info = pygame.font.Font(None, 24)
         fps_info = tiny_font.render(f'FPS: {clock.get_fps():.0f}', True, YELLOW)
-        zoom_info = tiny_font.render(f'Zoom: {camera.get_zoom() * 100:.2f}%', True, YELLOW)
+        zoom_info = tiny_font.render(f'Zoom: {camera.zoom * 100:.2f}%', True, YELLOW)
 
         screen.blit(fps_info, (10, 5))
         screen.blit(zoom_info, (10, 25))

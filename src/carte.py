@@ -5,7 +5,7 @@ from colonies import Colonie
 from memory_profiler import profile
 
 from classes import Bouton
-from camera import Camera
+from camera_ancienne import Camera
 from config import WHITE, BLACK, YELLOW, RED, ORANGE, PURPLE, BLUE, AQUA
 from config import trouver_font
 from generation_map import GenerationMap

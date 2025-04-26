@@ -1,12 +1,15 @@
+import pygame
+
 class Camera:
-    def __init__(self, width, height, map_limit_x, map_limit_y):
+    def __init__(self, width, height, map_width, map_height, tile_size):
         self.width = width   # Screen width
         self.height = height  # Screen height
-        self.map_limit_x = map_limit_x
-        self.map_limit_y = map_limit_y
+        self.map_width = map_width
+        self.map_height = map_height
+        self.tile_size = tile_size
 
-        self.x = map_limit_x // 2 - width // 2
-        self.y = 0
+        self.x = (map_width * tile_size - width) // 2  # Pour commencer centré, mais ca sera modifié
+        self.y = (map_height * tile_size - height) // 2
         self.zoom = 1.0
         self.dragging = False
         self.offset_x = 0
@@ -16,11 +19,14 @@ class Camera:
 
         self.zoom_levels = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5]
 
-    def apply(self, point):
+    def apply(self, rect):
         """Applique la camera a un rectangle, pour le 'deplacer'"""
-        new_x = point[0] * self.zoom - self.x
-        new_y = point[1] * self.zoom - self.y + 50  # + 50 pour la barre du haut
-        return (new_x, new_y)
+        return pygame.Rect(
+            rect.x - self.x,
+            rect.y - self.y + 50,  # + 50 pour la barre du haut
+            rect.width,
+            rect.height,
+        )
 
     def move(self, dx, dy):
         """Deplace la camera tout en gardant la camera dans les limites de la map"""
@@ -29,8 +35,8 @@ class Camera:
         dx = dx * self.zoom
         dy = dy * self.zoom
 
-        self.x = max(0, min(self.x - dx, self.map_limit_x * self.zoom - self.width))
-        self.y = max(0, min(self.y - dy, self.map_limit_y * self.zoom - self.height + 50))
+        self.x = max(0, min(self.x - dx, self.map_width * self.tile_size * self.zoom - self.width))
+        self.y = max(0, min(self.y - dy, self.map_height * self.tile_size * self.zoom - self.height + 50))
 
     def start_drag(self, mouse_x, mouse_y):
         """Debut du drag de la camera"""
@@ -44,7 +50,7 @@ class Camera:
         """Mise a jour de la position de la camera pendant le drag"""
         if self.dragging:
             ### dx et dy sont les deplacements de la souris
-            ### entre le premier clic et la position actuelle de drag
+            ### entre le le premier clic et la position actuelle de drag
             ### On divise par le zoom pour que le deplacement soit plus lent
             dx = (mouse_x - self.offset_x) / self.zoom
             dy = (mouse_y - self.offset_y) / self.zoom
@@ -68,20 +74,17 @@ class Camera:
         else:
             return
 
-        ## On garde la position de la souris dans le jeu en prenant en compte le zoom et la position de la camera
+            ### On garde la position de la souris dans le jeu en prenant en compte le zoom
+        ### et la position de la camera
         world_x = (mouse_x + self.x) / self.zoom
         world_y = (mouse_y + self.y - 50) / self.zoom
 
         # On met a jour le zoom
         self.zoom = new_zoom
-
         # On garde la position de la souris fixe
         self.x = world_x * self.zoom - mouse_x
         self.y = world_y * self.zoom - mouse_y + 50
 
         # On s'assure que la camera reste dans les limites de la map
-        self.x = max(0, min(self.x, self.map_limit_x * self.zoom - self.width))
-        self.y = max(0, min(self.y , self.map_limit_y * self.zoom - self.height))
-
-    def get_zoom(self):
-        return self.zoom
+        self.x = max(0, min(self.x, self.map_width * self.tile_size * self.zoom - self.width))
+        self.y = max(0, min(self.y, self.map_height * self.tile_size * self.zoom - self.height))

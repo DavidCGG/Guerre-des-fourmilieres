@@ -39,7 +39,7 @@ class Carte:
 
         self.generation_map()
 
-        self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
+        self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE)
         self.set_camera_tuile_debut()
 
     def generation_map(self):
@@ -127,8 +127,8 @@ class Carte:
             x, y = self.colonie_joeur.tuile_debut
             rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
 
-            if screen.get_rect().colliderect(self.camera.apply(rect)):
-                screen.blit(pygame.transform.scale(self.image_etoile, (tile_size, tile_size)), self.camera.apply(rect))
+            if screen.get_rect().colliderect(self.camera.apply_rect(rect)):
+                screen.blit(pygame.transform.scale(self.image_etoile, (tile_size, tile_size)), self.camera.apply_rect(rect))
 
         def draw_tiles(start_x, start_y, end_x, end_y):
             """Dessine les tuiles visibles sur l'écran
@@ -145,9 +145,9 @@ class Carte:
                 for x in range(start_x, end_x):
                     tile = self.map_data[y][x]
                     tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
-                    tile.draw(screen, self.camera.apply(tile_rect), self.grid_mode)
+                    tile.draw(screen, self.camera.apply_rect(tile_rect), self.grid_mode)
                     if self.colonie_joeur.fourmis_selection and self.hover_tuile == (x, y):
-                        pygame.draw.rect(screen, AQUA, self.camera.apply(tile_rect), 2)
+                        pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
         
         screen.fill(BLACK)
         start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
