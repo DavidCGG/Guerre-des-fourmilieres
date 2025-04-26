@@ -37,6 +37,13 @@ nids: list[nid.Nid] =[]
 current_nid: nid.Nid = None
 
 def initialiser() -> None:
+    """
+    Initialise Pygame, la fenêtre de jeu et les éléments du menu principal
+    Args:
+        None
+    Returns:
+        None
+    """
     global screen
     global spritesheet
     global fourmi
@@ -57,7 +64,21 @@ def initialiser() -> None:
     sprites.add(fourmi_sprite)
 
 def draw() -> None:
+    """
+    Dessine l'écran de jeu ou le menu principal
+    Args:
+        None
+    Returns:
+        None
+    """
     def draw_menu_principal() -> None:
+        """
+        Dessine la fourmi et le texte du menu principal en appelant draw_text_menu_principal
+        Args:
+            None
+        Returns:
+            None
+        """
         screen.fill(BLACK)
         sprites.draw(screen)
 
@@ -65,17 +86,34 @@ def draw() -> None:
             y = SCREEN_HEIGHT // 2 - (150 * (len(liste_options) - 1)) // 2 - small_font.get_height() // 2 + i * 150
 
             if i == selected_option:
-                draw_text_menu_principal(liste_options[i], font, WHITE, screen, 100, y)
+                draw_text_menu_principal(liste_options[i], font, 100, y)
             else:
-                draw_text_menu_principal(liste_options[i], small_font, WHITE, screen, 100, y)
+                draw_text_menu_principal(liste_options[i], small_font, 100, y)
         
-    def draw_text_menu_principal(text, font, color, surface, x, y) -> None:
-        textobj = font.render(text, True, color)
+    def draw_text_menu_principal(text, font, x, y) -> None:
+        """
+        Dessine le texte d'une option du menu principal
+        Args:
+            text (str): Le texte à dessiner
+            font (pygame.font.Font): La police de caractères
+            x (int): La position x du texte
+            y (int): La position y du texte
+        Returns:
+            None
+        """
+        textobj = font.render(text, True, WHITE)
         textrect = textobj.get_rect()
         textrect.topleft = (x, y)
-        surface.blit(textobj, textrect)
+        screen.blit(textobj, textrect)
 
-    def draw_top_bar():
+    def draw_top_bar() -> None:
+        """
+        Dessine la barre supérieure de l'écran de jeu pour la carte ou un nid
+        Args:
+            None
+        Returns:
+            None
+        """
         global liste_boutons
 
         camera = carte_jeu.camera if in_carte else current_nid.camera
@@ -86,7 +124,6 @@ def draw() -> None:
 
         pygame.draw.rect(screen, BLACK, (0, 0, SCREEN_WIDTH, 50))
 
-        #font_info = pygame.font.Font(None, 24)
         fps_info = tiny_font.render(f'FPS: {clock.get_fps():.0f}', True, YELLOW)
         zoom_info = tiny_font.render(f'Zoom: {camera.zoom * 100:.2f}%', True, YELLOW)
 
@@ -119,6 +156,13 @@ def draw() -> None:
     pygame.display.update()
 
 def menu_options() -> None:
+    """
+    Affiche le menu des options de la carte et du nid
+    Args:
+        None
+    Returns:
+        None
+    """
     global liste_boutons
     global in_menu_secondaire
 
@@ -142,8 +186,14 @@ def menu_options() -> None:
     liste_boutons.append(Bouton(screen, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 15,
                             'Quitter', quitter, police_boutons))
 
-def toggle_grid():
-    """Change l'affichage des tuiles, avec ou sans bordures."""
+def toggle_grid() -> None:
+    """
+    Ajoute ou enlève la bordure des tuiles de la carte
+    Args:
+        None
+    Returns:
+        None
+    """
     carte_jeu.grid_mode = not carte_jeu.grid_mode
     for bout in carte_jeu.liste_boutons:
         if isinstance(bout, Bouton) and 'Grids' in bout.texte:
@@ -151,14 +201,28 @@ def toggle_grid():
             bout.texte = f'Grids: {grid_mode_str}'
     menu_options()
 
-def retour():
+def retour() -> None:
+    """
+    Ferme le menu secondaire
+    Args:
+        None
+    Returns:
+        None
+    """
     global liste_boutons
     global in_menu_secondaire
 
     liste_boutons.clear()
     in_menu_secondaire = False
 
-def quitter():
+def quitter() -> None:
+    """
+    Retourne au menu principal
+    Args:
+        None
+    Returns:
+        None
+    """
     global in_menu_principal
     global in_carte
     global in_nid
@@ -171,7 +235,21 @@ def quitter():
     in_nid = False
 
 def gestion_evenement(event: pygame.event) -> None:
+    """
+    Gère un événement du jeu et du menu principal
+    Args:
+        event (pygame.event): L'événement à gérer
+    Returns:
+        None
+    """
     def gestion_menu_principal(event: pygame.event) -> None:
+        """
+        Gère un événement du menu principal
+        Args:
+            event (pygame.event): L'événement à gérer
+        Returns:
+            None
+        """
         global selected_option
         global running
 
@@ -189,6 +267,13 @@ def gestion_evenement(event: pygame.event) -> None:
                     running = False
 
     def gestion_shortcuts_jeu(event: pygame.event) -> None:
+        """
+        Gère les shortcuts du jeu
+        Args:
+            event (pygame.event): L'événement à gérer
+        Returns:
+            None
+        """
         global in_menu_secondaire
 
         if event.type == pygame.KEYDOWN:
@@ -223,6 +308,13 @@ def gestion_evenement(event: pygame.event) -> None:
             current_nid = None
 
 def demarrer_jeu() -> None:
+    """
+    Démarre le jeu en initialisant la carte et les nids
+    Args:
+        None
+    Returns:
+        None
+    """
     global in_menu_principal
     global in_carte
     global carte_jeu
@@ -238,6 +330,13 @@ def demarrer_jeu() -> None:
         nids.append(new_nid)
 
 def run() -> None:
+    """
+    Initialise le jeu et gère la boucle principale
+    Args:
+        None
+    Returns:
+        None
+    """
     initialiser()
 
     while running:

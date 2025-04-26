@@ -10,12 +10,34 @@ MAP_LIMIT_Y: int = 3000
 HAUTEUR_SOL: int = 200
 
 class Nid:
+    """
+    Représente un des nids
+    Attributs :
+        graphe (Graphe): Graphe contenant les salles et tunnels du nid
+        camera (Camera): Caméra pour le zoom et le déplacement
+    """
+
     def __init__(self, graphe):
         self.graphe = graphe
         self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
 
     def draw(self, screen) -> None:
+        """
+        Dessine tous les éléments du nid sur l'écran incluant l'arrière-plan
+        Args:
+            screen (pygame.Surface): La surface sur laquelle dessiner
+        Returns:
+            None
+        """
+
         def draw_background() -> None:
+            """
+            Dessine l'arrière-plan du nid
+            Args:
+                None
+            Returns:
+                None
+            """
             rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
             rectangle_sol = pygame.Rect(0, HAUTEUR_SOL, MAP_LIMIT_X, MAP_LIMIT_Y - HAUTEUR_SOL)
 
@@ -28,12 +50,26 @@ class Nid:
                 pygame.draw.rect(screen, color, new_rect)
 
         def draw_tunnels() -> None:
+            """
+            Dessine les tunnels du nid
+            Args:
+                None
+            Returns:
+                None
+            """
             for tunnel in self.graphe.tunnels:
                 depart = self.camera.apply(tunnel.depart.noeud.coord)
                 arrivee = self.camera.apply(tunnel.arrivee.noeud.coord)
                 pygame.draw.line(screen, (0, 0, 0), depart, arrivee, int(tunnel.largeur * self.camera.zoom))
 
         def draw_salles() -> None:
+            """
+            Dessine les salles du nid
+            Args:
+                None
+            Returns:
+                None
+            """
             for salle in self.graphe.salles:
                 pos = self.camera.apply(salle.noeud.coord)
                 pygame.draw.circle(screen, (0, 0, 0), pos, int(salle.type.value[0] * self.camera.zoom))
@@ -42,8 +78,14 @@ class Nid:
         draw_tunnels()
         draw_salles()
 
-    #Retourne true si le ciel à été clické pour retourner à la carte
     def handle_event(self, event) -> bool:
+        """
+        Gère tous les événements liés au nid
+        Args:
+            event (pygame.event.Event): L'événement à gérer
+        Returns:
+            bool: True si le ciel a été cliqué pour sortir du nid, False sinon
+        """
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
 
@@ -65,11 +107,26 @@ class Nid:
             self.camera.drag(*event.pos)
 
 def chargement(screen: pygame.Surface) -> list:
-    def afficher_chargement(n, total):
+    """
+    Créer tous les graphes du jeu et affiche un écran de chargement
+    Args:
+        screen (pygame.Surface): La surface sur laquelle dessiner
+    Returns:
+        list: Liste des graphes générés
+    """
+    def afficher_chargement(nb_genere, total):
+        """
+        Affiche l'écran de chargement
+        Args:
+            n (int): Le nombre de graphes déjà générés
+            total (int): Le nombre total de graphes à générer
+        Returns:
+            None
+        """
         screen.fill((30, 30, 30))
 
         titre = font.render("Création des nids", True, (255, 255, 255))
-        progression = small_font.render(f"{n} sur {total}", True, (200, 200, 200))
+        progression = small_font.render(f"{nb_genere} sur {total}", True, (200, 200, 200))
 
         screen.blit(titre, (SCREEN_WIDTH//2 - titre.get_width()//2, SCREEN_HEIGHT//2 - 100))
         screen.blit(progression, (screen.get_width()//2 - progression.get_width()//2, SCREEN_HEIGHT//2))
