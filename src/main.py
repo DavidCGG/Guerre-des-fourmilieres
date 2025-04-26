@@ -1,10 +1,11 @@
 import pygame
 import carte2 as carte
 import affichage_nid2 as nid
-from config import trouver_font
+from config import trouver_font, trouver_img
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import WHITE, BLACK, YELLOW
 from classes import Bouton
+from Fourmis import FourmiTitleScreen, FourmiTitleScreenSprite
 
 #Variables globales
 screen: pygame.Surface = None
@@ -12,6 +13,7 @@ clock: pygame.time.Clock = pygame.time.Clock()
 
 font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74)
 small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
+tiny_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 18)
 liste_boutons: list[Bouton] = []
 
 running: bool = True
@@ -24,6 +26,11 @@ in_nid: bool = False
 selected_option: int = 0
 liste_options = ["Nouvelle partie", "Options", "Quitter"]
 
+spritesheet: pygame.image = None
+fourmi: FourmiTitleScreen = None
+fourmi_sprite: FourmiTitleScreenSprite = None
+sprites = pygame.sprite.Group()
+
 #Variables du jeu
 carte_jeu: carte.Carte = None
 nids: list[nid.Nid] =[]
@@ -31,21 +38,36 @@ current_nid: nid.Nid = None
 
 def initialiser() -> None:
     global screen
+    global spritesheet
+    global fourmi
+    global fourmi_sprite
+    global sprites
 
     pygame.init()
     pygame.font.init()
     pygame.display.set_caption("Guerre des fourmillières")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+    spritesheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
+    icon = spritesheet.subsurface(pygame.Rect(16, 0, 16, 16))
+    pygame.display.set_icon(icon)
+
+    fourmi = FourmiTitleScreen(3 * SCREEN_WIDTH // 5, 3 * SCREEN_HEIGHT // 5, 8)
+    fourmi_sprite = FourmiTitleScreenSprite(fourmi, spritesheet, 16, 16, 4, 300)
+    sprites.add(fourmi_sprite)
+
 def draw() -> None:
     def draw_menu_principal() -> None:
         screen.fill(BLACK)
+        sprites.draw(screen)
 
         for i in range(len(liste_options)):
+            y = SCREEN_HEIGHT // 2 - (150 * (len(liste_options) - 1)) // 2 - small_font.get_height() // 2 + i * 150
+
             if i == selected_option:
-                draw_text_menu_principal(liste_options[i], font, WHITE, screen, 100, 100 + i * 100)
+                draw_text_menu_principal(liste_options[i], font, WHITE, screen, 100, y)
             else:
-                draw_text_menu_principal(liste_options[i], small_font, WHITE, screen, 100, 100 + i * 100)
+                draw_text_menu_principal(liste_options[i], small_font, WHITE, screen, 100, y)
         
     def draw_text_menu_principal(text, font, color, surface, x, y) -> None:
         textobj = font.render(text, True, color)
@@ -64,12 +86,12 @@ def draw() -> None:
 
         pygame.draw.rect(screen, BLACK, (0, 0, SCREEN_WIDTH, 50))
 
-        font_info = pygame.font.Font(None, 24)
-        fps_info = font_info.render(f'FPS: {clock.get_fps():.2f}', True, YELLOW)
-        zoom_info = font_info.render(f'Zoom: {camera.get_zoom() * 100:.2f}%', True, YELLOW)
+        #font_info = pygame.font.Font(None, 24)
+        fps_info = tiny_font.render(f'FPS: {clock.get_fps():.0f}', True, YELLOW)
+        zoom_info = tiny_font.render(f'Zoom: {camera.get_zoom() * 100:.2f}%', True, YELLOW)
 
-        screen.blit(fps_info, (10, 10))
-        screen.blit(zoom_info, (10, 30))
+        screen.blit(fps_info, (10, 5))
+        screen.blit(zoom_info, (10, 25))
 
         titre_message: str = None
         if in_carte:
@@ -222,11 +244,16 @@ def run() -> None:
         for event in pygame.event.get():
             gestion_evenement(event)
         
+        dt = clock.tick(60)
+
         if carte_jeu != None:
             carte_jeu.colonie_joeur.process(clock.get_time())
 
+        if in_menu_principal:
+            fourmi.random_mouvement(dt)
+            sprites.update(dt)
+
         draw()
-        clock.tick(60)
 
 if __name__ == "__main__":
     run()   

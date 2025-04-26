@@ -2,8 +2,115 @@ import math
 import random
 from abc import ABC, abstractmethod
 import pygame
-from config import SCREEN_WIDTH, SCREEN_HEIGHT, trouver_img
+from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
+class FourmiTitleScreen():
+    def __init__(self, x0, y0, scale=1.0):
+        self.width = 0
+        self.height = 0
+        self.scale = scale
+
+        self.centre_y = y0
+        self.centre_x = x0
+
+        self.target_x = x0
+        self.target_y = y0
+        self.speed = 5 * self.scale
+
+        self.moving = False
+        self.facing = 0 # 0 : droite, 1 : gauche
+        self.pause_timer = 0
+
+    def random_mouvement(self, dt):
+        if self.pause_timer > 0:
+            self.pause_timer -= dt
+            return
+
+        if self.centre_x == self.target_x and self.centre_y == self.target_y:
+            self.set_nouv_target()
+            self.pause_timer = random.uniform(0, 1.5) * 1000
+
+        else:
+            self.goto_target(dt)
+
+    def set_nouv_target(self):
+        angle = random.uniform(0, 2*math.pi)
+        distance = random.uniform(40, 150)
+
+        self.target_x = self.centre_x + distance*math.cos(angle)
+        self.target_y = self.centre_y + distance*math.sin(angle)
+
+        # On s'assure que la cible est dans les limites de l'écran
+        self.target_x = max(0+self.width//2, min(SCREEN_WIDTH-self.width//2, self.target_x))
+        self.target_y = max(0+self.height//2, min(SCREEN_HEIGHT-self.height//2, self.target_y))
+
+    def goto_target(self, dt):
+            dx = self.target_x - self.centre_x
+            dy = self.target_y - self.centre_y
+            distance = math.sqrt(dx ** 2 + dy ** 2)
+
+            if distance > 0.5:
+                self.centre_x += self.speed * dx / distance * (dt / 1000)
+                self.centre_y += self.speed * dy / distance * (dt / 1000)
+
+                self.moving = True
+                self.facing = 0 if dx > 0 else 1
+
+            else:
+                self.centre_x = self.target_x
+                self.centre_y = self.target_y
+
+                self.moving = False
+
+
+class FourmiTitleScreenSprite(pygame.sprite.Sprite):
+    def __init__(self, fourmi: FourmiTitleScreen, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int):
+        super().__init__()
+        self.fourmi = fourmi
+        self.spritesheet = spritesheet
+        self.frame_width = frame_width
+        self.frame_height = frame_height
+        self.num_frames = num_frames
+        self.frame_duration = frame_duration
+        self.current_frame = 0
+        self.timer = 0
+        self.frames_LEFT = self.extract_frames()
+        self.frames_RIGHT = self.extract_frames(flipped=True)
+        self.image = self.frames_LEFT[self.current_frame]
+        self.rect = self.image.get_rect(center=(fourmi.centre_x, fourmi.centre_y))
+
+    def extract_frames(self, flipped=False):
+        frames = []
+        frame = None
+        for i in range(self.num_frames):
+            frame = self.spritesheet.subsurface(pygame.Rect(i*self.frame_width, 0, self.frame_width, self.frame_height))
+
+            if flipped:
+                frame = pygame.transform.flip(frame, True, False)
+            frames.append(frame)
+
+        self.fourmi.width = frame.get_width()
+        self.fourmi.height = frame.get_height()
+        return frames
+
+
+    def update(self, dt):
+        if self.fourmi.moving:
+            self.timer += dt
+
+            while self.timer > self.frame_duration:
+                self.timer -= self.frame_duration
+                self.current_frame = (self.current_frame + 1) % self.num_frames
+
+        if self.fourmi.facing == 0:
+            self.image = self.frames_RIGHT[self.current_frame]
+        else:
+            self.image = self.frames_LEFT[self.current_frame]
+
+        width = int(self.image.get_width() * self.fourmi.scale)
+        height = int(self.image.get_height() * self.fourmi.scale)
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect(center=(self.fourmi.centre_x + width/2, self.fourmi.centre_y + height/2))
 
 class Fourmis(ABC):
     def __init__(self, hp: int, atk: int, scale,  x0, y0):
@@ -32,25 +139,6 @@ class Fourmis(ABC):
     def process(self, dt):
         if self.target_x != self.centre_x or self.target_y != self.centre_y:
             self.goto_target(dt)
-
-    def random_mouvement(self, dt):
-        if self.centre_x == self.target_x and self.centre_y == self.target_y:
-            self.set_nouv_target()
-            self.pause_timer = random.uniform(800, 2000)
-
-        self.goto_target(dt)
-
-    def set_nouv_target(self):
-        angle = random.uniform(0, 2*math.pi)
-        distance = random.uniform(40, 150)
-
-        self.target_x = self.centre_x + distance*math.cos(angle)
-        self.target_y = self.centre_y + distance*math.sin(angle)
-
-
-        ## On s'assure que la cible est dans les limites de l'écran
-        self.target_x = max(0+self.width//2, min(WIDTH-self.width//2, self.target_x))
-        self.target_y = max(0+self.height//2, min(HEIGHT-self.height//2, self.target_y))
 
     def set_target(self, target_x, target_y):
         self.target_x = target_x
@@ -120,9 +208,6 @@ class Ouvriere(Fourmis):
         self.base_speed = 3
         self.speed = self.base_speed * self.scale
         self.size = 1
-
-
-
 
     def attack(self, other):
         other.hp -= self.atk

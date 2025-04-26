@@ -4,7 +4,7 @@ from numpy.random import normal
 
 #Variables de génération
 nb_noeuds_cible: int = 8 #Nombre total de noeuds à générer
-nb_iter_forces: int = 75 #Nombre d'itérations pour appliquer les forces
+nb_iter_forces: int = 50 #Nombre d'itérations pour appliquer les forces
 connect_chance: float = 0.3 #Chance de connexion entre les noeuds
 taux_mean: float = -1 #Taux de croissance de la médiane de la distribution normale
 initial_mean: float = 3 #Valeur de initiale de la médiane de la distribution normale
@@ -216,28 +216,30 @@ def attribuer_poids(root: cg.NoeudGeneration) -> cg.NoeudPondere:
         return profondeur_max
 
     #Applique les forces sur tous les noeuds
-    def calculer_force(root_pondere: cg.NoeudPondere) -> None:
+    def calculer_force(root_pondere: cg.NoeudPondere, deplacement_attraction: float, deplacement_repulsion: float) -> None:
         """
         Applique les forces de répulsion et d'attraction sur tous les noeuds de l'arbre en utilisant bfs et un helper.
         Args:
             root_pondere (cg.NoeudPondere): Le noeud racine de l'arbre avec les coordonnées attribuées.
+            deplacement_attraction (float): Le facteur d'attraction.
+            deplacement_repulsion (float): Le facteur de répulsion.
         Returns:
             None
         """
         def calculer_force_helper(noeud: cg.NoeudPondere, _) -> None:
-            calculer_repulsion(noeud, root_pondere)
-            calculer_attraction(noeud)
+            calculer_repulsion(noeud, root_pondere, deplacement_repulsion)
+            calculer_attraction(noeud, deplacement_attraction)
         
         bfs(root_pondere, calculer_force_helper)
 
     #Applique une force de repulsion sur un noeud
-    def calculer_repulsion(noeud: cg.NoeudPondere, root_pondere: cg.NoeudPondere) -> None:
+    def calculer_repulsion(noeud: cg.NoeudPondere, root_pondere: cg.NoeudPondere, deplacement_repulsion: float) -> None:
         """
         Applique une force de répulsion sur un noeud en fonction de la distance entre les noeuds en utilisant bfs et un helper.
         Args:
             noeud (cg.NoeudPondere): Le noeud actuel.
             root_pondere (cg.NoeudPondere): Le noeud racine de l'arbre avec les coordonnées attribuées.
-        Returns:
+            deplacement_repulsion (float): Le facteur de répulsion.
             None
         """
         def calculer_repulsion_helper(autre: cg.NoeudPondere, _) -> None:
@@ -248,31 +250,34 @@ def attribuer_poids(root: cg.NoeudGeneration) -> cg.NoeudPondere:
             dy = noeud.coord[1] - autre.coord[1]
             dist = (dx ** 2 + dy ** 2) ** 0.5
 
-            force_x, force_y = 0.01 * dx / (dist ** 2), 0.01 * dy / (dist ** 2)
+            force_x, force_y = deplacement_repulsion * dx / (dist ** 2), deplacement_repulsion * dy / (dist ** 2)
             noeud.coord = [noeud.coord[0] + force_x, noeud.coord[1] + force_y]
 
         bfs(root_pondere, calculer_repulsion_helper)
 
     #Applique une force d'attraction sur un noeud
-    def calculer_attraction(noeud: cg.NoeudPondere) -> None:
+    def calculer_attraction(noeud: cg.NoeudPondere, deplacement_attraction: float) -> None:
         """
         Applique une force d'attraction sur un noeud en fonction de la distance avec les noeuds voisins.
         Args:
             noeud (cg.NoeudPondere): Le noeud actuel.
+            deplacement_attraction (float): Le facteur d'attraction.
         Returns:
             None
         """
         for v in noeud.voisins:
             dx = v.coord[0] - noeud.coord[0]
             dy = v.coord[1] - noeud.coord[1]
-            force_x, force_y = 0.01 * dx, 0.01 * dy
+            force_x, force_y = deplacement_attraction * dx, deplacement_attraction * dy
 
             noeud.coord = [noeud.coord[0] + force_x, noeud.coord[1] + force_y]
 
     root_pondere = initialiser_coord(root)
+    deplacement_attraction: float = 0.02 + (random.random() * 0.01 - 0.005)
+    deplacement_repulsion: float = 0.02 + (random.random() * 0.01 - 0.005)
 
     for _ in range(nb_iter_forces):
-        calculer_force(root_pondere)
+        calculer_force(root_pondere, deplacement_attraction, deplacement_repulsion)
 
     return root_pondere
 

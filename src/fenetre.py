@@ -1,14 +1,14 @@
 import pygame
 import sys
 import os
-from Fourmis import FourmisSprite, Ouvriere, Soldat
-from config import WIDTH, HEIGHT
+from Fourmis import FourmiTitleScreen, FourmiTitleScreenSprite
+from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 # Initialize Pygame
 pygame.init()
 
 # Set up the display
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Menu Principal")
 
 # Define colors
@@ -35,17 +35,16 @@ pygame.display.set_icon(pygame.image.load(trouver_img("Fourmi.png")))
 font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74)
 small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
 
-#spritesheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
-#fourmis = Ouvriere(600, 300, 8.5, "random")
-#fourmis_sprite = FourmisSprite(fourmis, spritesheet, 16, 16, 4, 300)
+spritesheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
+fourmi = FourmiTitleScreen(3 * SCREEN_WIDTH // 5, 3 * SCREEN_HEIGHT // 5, 8)
+fourmi_sprite = FourmiTitleScreenSprite(fourmi, spritesheet, 16, 16, 4, 300)
 
-#sprites = pygame.sprite.Group()
-#sprites.add(fourmis_sprite)
-
+sprites = pygame.sprite.Group()
+sprites.add(fourmi_sprite)
 
 def main_menu():
-    selected_option = 0
-    clock = pygame.time.Clock()
+    # selected_option = 0
+    # clock = pygame.time.Clock()
 
     while True:
         dt = clock.tick(60)
@@ -80,8 +79,9 @@ def main_menu():
                         pygame.quit()
                         sys.exit()
 
-        #sprites.update(dt)
-        #sprites.draw(screen)
+        fourmi.random_mouvement(dt)
+        sprites.update(dt)
+        sprites.draw(screen)
         pygame.display.update()
 
 if __name__ == "__main__":

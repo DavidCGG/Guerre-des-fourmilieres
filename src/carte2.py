@@ -3,7 +3,7 @@ import pygame
 import numpy as np
 from colonies import Colonie
 from camera import Camera
-from generation_map import GenerationMap
+from tuile import Tuile
 from random_noise import RandomNoise
 from tuile import Terre, Sable, Eau, Montagne
 
@@ -43,6 +43,10 @@ class Carte:
         self.set_camera_tuile_debut()
 
     def generation_map(self):
+        def liste_tuiles() -> list:
+            tuiles = [[Tuile(x, y, self.TILE_SIZE, self.TILE_SIZE) for x in range(self.MAP_WIDTH)] for y in range(self.MAP_HEIGHT)]
+            return tuiles
+    
         def transformer_tuiles():
             """Transforme les tuiles de la carte en fonction de la valeur du bruit"""
             noise_gen = RandomNoise(self.MAP_WIDTH, self.MAP_HEIGHT, 255, extra=65)
@@ -110,8 +114,7 @@ class Carte:
             self.tuiles_debut[0] = self.tuile_debut
             self.tuiles_debut[index_tuile_debut] = temp
 
-        gen_map = GenerationMap(self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
-        self.map_data = np.array(gen_map.liste_tuiles())
+        self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
         placer_colonies(region_size=15, min_dist=20)
         set_tuile_debut()
