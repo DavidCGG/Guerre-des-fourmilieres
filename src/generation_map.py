@@ -1,5 +1,4 @@
 from tuile import Tuile
-from config import BLACK
 
 class GenerationMap:
     def __init__(self, width, height, tile_size):
@@ -10,5 +9,4 @@ class GenerationMap:
 
     def liste_tuiles(self) -> list:
         tuiles = [[Tuile(x, y, self.tile_size, self.tile_size) for x in range(self.width)] for y in range(self.height)]
-
         return tuiles

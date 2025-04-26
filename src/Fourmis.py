@@ -2,7 +2,7 @@ import math
 import random
 from abc import ABC, abstractmethod
 import pygame
-from config import WIDTH, HEIGHT, trouver_img
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, trouver_img
 
 
 class Fourmis(ABC):

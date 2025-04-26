@@ -1,7 +1,5 @@
 import pygame
 from pygame import Vector2, Color
-from pyglet import image
-
 
 class Colonie:
     def __init__(self, nom, dt_pointer, screen_pointer, liste_fourmis_pointeur, x, y, liste_items_pointeur):

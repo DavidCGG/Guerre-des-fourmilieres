@@ -3,7 +3,7 @@ import random
 from config import WHITE, BLACK, BLUE
 import pygame
 
-from src.config import trouver_img
+from config import trouver_img
 
 
 class Tuile:

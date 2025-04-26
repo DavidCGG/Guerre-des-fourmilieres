@@ -3,8 +3,8 @@
 import pygame
 import os
 
-WIDTH = 800
-HEIGHT = 600
+SCREEN_WIDTH: int = 1280
+SCREEN_HEIGHT: int = 720
 
 WHITE = pygame.Color("white")
 BLACK = pygame.Color("black")

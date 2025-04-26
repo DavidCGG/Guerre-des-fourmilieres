@@ -202,7 +202,7 @@ class Colonie:
                 self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
 
 
-    def get_fourmis_de_groupe(self, groupe) -> :
+    def get_fourmis_de_groupe(self, groupe):
         if groupe.get_nb_fourmis() == 1:
             return groupe.fourmis[0] # Retourne une fourmi particuliere
         return groupe
