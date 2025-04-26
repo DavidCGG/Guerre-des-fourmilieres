@@ -74,7 +74,7 @@ def draw() -> None:
         titre_message: str = None
         if in_carte:
             titre_message = f"Carte"
-        elif in_nid and nids.index(current_nid) == 0: #TODO changer la logique
+        elif in_nid and nids.index(current_nid) == 0:
             titre_message = f"Nid joueur"
         else:
             titre_message = f"Nid ennemi {nids.index(current_nid)}"
@@ -86,7 +86,6 @@ def draw() -> None:
         draw_menu_principal()
     elif in_carte and not in_menu_secondaire:
         carte_jeu.draw(screen)
-        #TODO faire en sorte que le menu des fourmis se ferme quand on enlève l'autre
     elif in_nid and not in_menu_secondaire:
         current_nid.draw(screen)
 
@@ -141,8 +140,10 @@ def quitter():
     global in_menu_principal
     global in_carte
     global in_nid
+    global nids
 
     retour()
+    nids.clear()
     in_menu_principal = True
     in_carte = False
     in_nid = False

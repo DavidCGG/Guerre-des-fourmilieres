@@ -3,8 +3,8 @@ import random
 from numpy.random import normal
 
 #Variables de génération
-nb_noeuds_cible: int = 10 #Nombre total de noeuds à générer
-nb_iter_forces: int = 100 #Nombre d'itérations pour appliquer les forces
+nb_noeuds_cible: int = 8 #Nombre total de noeuds à générer
+nb_iter_forces: int = 75 #Nombre d'itérations pour appliquer les forces
 connect_chance: float = 0.3 #Chance de connexion entre les noeuds
 taux_mean: float = -1 #Taux de croissance de la médiane de la distribution normale
 initial_mean: float = 3 #Valeur de initiale de la médiane de la distribution normale
