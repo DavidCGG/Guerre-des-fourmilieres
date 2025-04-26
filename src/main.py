@@ -64,12 +64,23 @@ def draw() -> None:
 
         pygame.draw.rect(screen, BLACK, (0, 0, SCREEN_WIDTH, 50))
 
-        font = pygame.font.Font(None, 24)
-        fps_info = font.render(f'FPS: {clock.get_fps():.2f}', True, YELLOW)
-        zoom_info = font.render(f'Zoom: {camera.get_zoom() * 100:.2f}%', True, YELLOW)
+        font_info = pygame.font.Font(None, 24)
+        fps_info = font_info.render(f'FPS: {clock.get_fps():.2f}', True, YELLOW)
+        zoom_info = font_info.render(f'Zoom: {camera.get_zoom() * 100:.2f}%', True, YELLOW)
 
         screen.blit(fps_info, (10, 10))
         screen.blit(zoom_info, (10, 30))
+
+        titre_message: str = None
+        if in_carte:
+            titre_message = f"Carte"
+        elif in_nid and nids.index(current_nid) == 0: #TODO changer la logique
+            titre_message = f"Nid joueur"
+        else:
+            titre_message = f"Nid ennemi {nids.index(current_nid)}"
+
+        titre = small_font.render(titre_message, True, WHITE)
+        screen.blit(titre, (SCREEN_WIDTH / 2 - titre.get_width() / 2, 10))
 
     if in_menu_principal:
         draw_menu_principal()
@@ -131,6 +142,7 @@ def quitter():
     global in_carte
     global in_nid
 
+    retour()
     in_menu_principal = True
     in_carte = False
     in_nid = False

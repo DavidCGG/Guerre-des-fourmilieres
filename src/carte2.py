@@ -100,14 +100,21 @@ class Carte:
                         placed = True
                         curr_couleur += 1
                         self.tuiles_debut.append((x, y))
+        
+        def set_tuile_debut():
+            self.tuile_debut = self.tuiles_debut[random.randint(0, 3)]
+            self.colonie_joeur = Colonie(self.tuile_debut, self.map_data)
+
+            index_tuile_debut = self.tuiles_debut.index(self.tuile_debut)
+            temp = self.tuiles_debut[0]
+            self.tuiles_debut[0] = self.tuile_debut
+            self.tuiles_debut[index_tuile_debut] = temp
 
         gen_map = GenerationMap(self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
         self.map_data = np.array(gen_map.liste_tuiles())
         transformer_tuiles()
-
         placer_colonies(region_size=15, min_dist=20)
-        self.tuile_debut = self.tuiles_debut[random.randint(0, 3)]
-        self.colonie_joeur = Colonie(self.tuile_debut, self.map_data)
+        set_tuile_debut()
 
     def draw(self, screen):
         def etoile_tuile_debut():
