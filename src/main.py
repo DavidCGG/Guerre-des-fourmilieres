@@ -167,6 +167,10 @@ def menu_options() -> None:
     global in_menu_secondaire
 
     in_menu_secondaire = True
+    if in_carte:
+        carte_jeu.camera.stop_drag()
+    elif in_nid:
+        current_nid.camera.stop_drag()
 
     surface = pygame.Surface((300, 400))
     surface.fill(BLACK)
