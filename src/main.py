@@ -311,6 +311,16 @@ def gestion_evenement(event: pygame.event) -> None:
             in_carte = True
             current_nid = None
 
+def process() -> None:
+    dt = clock.tick(60)
+
+    if carte_jeu != None:
+        carte_jeu.colonie_joeur.process(clock.get_time())
+
+    if in_menu_principal:
+        fourmi.random_mouvement(dt)
+        sprites.update(dt)
+
 def demarrer_jeu() -> None:
     """
     Démarre le jeu en initialisant la carte et les nids
@@ -346,16 +356,8 @@ def run() -> None:
     while running:
         for event in pygame.event.get():
             gestion_evenement(event)
-        
-        dt = clock.tick(60)
 
-        if carte_jeu != None:
-            carte_jeu.colonie_joeur.process(clock.get_time())
-
-        if in_menu_principal:
-            fourmi.random_mouvement(dt)
-            sprites.update(dt)
-
+        process()
         draw()
 
 if __name__ == "__main__":
