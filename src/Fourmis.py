@@ -3,6 +3,7 @@ import random
 from abc import ABC, abstractmethod
 import pygame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
+import tuile
 
 class FourmiTitleScreen():
     def __init__(self, x0, y0, scale=1.0):
@@ -197,6 +198,105 @@ class Fourmis(ABC):
             path.append((x, y))
 
         return path
+    
+    def a_star(self, depart, arrivee, map_data):
+        #Note: le path retourné contient des tuiles et non des coordonnées
+        def sort_queue(arr):
+            if len(arr) <= 1:
+                return arr
+
+            mid = len(arr) // 2
+            left_half = sort_queue(arr[:mid])
+            right_half = sort_queue(arr[mid:])
+
+            return merge(left_half, right_half)
+
+        def merge(left, right):
+            sorted_arr = []
+            i, j = 0, 0
+
+            while i < len(left) and j < len(right):
+                if distance_geo[left[i]] + distance_trajet[left[i]] < distance_geo[right[j]] + distance_trajet[right[j]]:
+                    sorted_arr.append(left[i])
+                    i += 1
+                else:
+                    sorted_arr.append(right[j])
+                    j += 1
+
+            sorted_arr.extend(left[i:])
+            sorted_arr.extend(right[j:])
+            
+            return sorted_arr
+        
+        def get_voisins(tuile):
+            voisins = []
+
+            if(tuile.x - 1 >= 0):
+                voisins.append(map_data[tuile.x - 1][tuile.y])
+            if(tuile.x + 1 < len(map_data[0])):
+                voisins.append(map_data[tuile.x + 1][tuile.y])
+            if(tuile.y - 1 >= 0):
+                voisins.append(map_data[tuile.x][tuile.y - 1])
+            if(tuile.y + 1 < len(map_data)):
+                voisins.append(map_data[tuile.x][tuile.y + 1])
+
+            for voisin in voisins:
+                if isinstance(voisin, tuile.Eau):
+                    voisins.remove(voisin)
+
+            return voisins  
+
+        def calculate_distance(tuile1, tuile2):
+            x1 = tuile1.x
+            y1 = tuile1.y
+            x2 = tuile2.x
+            y2 = tuile2.y
+            return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        
+        queue: list[tuile.Tuile] = [] #queue qui permet de savoir quel noeud visiter
+        distance_trajet: dict[tuile.Tuile : int] = dict() #nb de noeud à parcourir pour arriver à ce noeud
+        distance_geo: dict[tuile.Tuile : int] = dict() #distance géométrique entre le noeud et la destination {tuile: distance}
+        previous: dict[tuile.Tuile : tuile.Tuile] = dict() #noeud par lequel on est arrivé à ce noeud
+        visited: set[tuile.Tuile] = set() #noeuds dont tous les voisins ont été visités
+
+        queue.append(depart)
+        distance_trajet[depart] = 0
+        distance_geo[depart] = calculate_distance(v, arrivee)
+        previous[depart] = None
+        
+        #Naviguation
+        while queue[0] != arrivee:
+            sort_queue(queue)
+            current: tuile.Tuile = queue[0]
+
+            for v in get_voisins(current):
+                if v in visited:
+                    continue
+
+                if v not in queue:
+                    queue.append(v)
+                    distance_trajet[v] = distance_trajet[current] + 1
+                    distance_geo[v] = calculate_distance(v, arrivee)
+                    previous[v] = current
+                    continue
+
+                elif distance_trajet[current] + 1 < distance_trajet[v]:
+                    distance_trajet[v] = distance_trajet[current] + 1
+                    previous[v] = current
+            
+            visited.add(current)
+            queue.pop(0)
+
+        #Reconstruction du chemin
+        chemin: list[tuile.Tuile] = [] #le chemin pris pour arriver à la fin
+        current = arrivee
+
+        while current != None:
+            chemin.append((current.x, current.y))
+            current = previous[current]
+
+        chemin.reverse()
+        return chemin
 
     def get_tuile(self):
         return int(self.centre_x), int(self.centre_y)
