@@ -187,11 +187,11 @@ class Carte:
 
             if event.button == 3:  #Right click
                 if self.colonie_joeur.fourmis_selection:
-                    self.colonie_joeur.fourmis_selection.set_target(tile_x, tile_y)
+                    self.colonie_joeur.fourmis_selection.set_target(tile_x, tile_y, self.map_data)
                     self.colonie_joeur.fourmis_selection = None
                     self.hover_tuile = None
                 elif self.colonie_joeur.groupe_selection:
-                    self.colonie_joeur.groupe_selection.set_target(tile_x, tile_y)
+                    self.colonie_joeur.groupe_selection.set_target(tile_x, tile_y, self.map_data)
                     self.colonie_joeur.groupe_selection = None
                     self.hover_tuile = None
 

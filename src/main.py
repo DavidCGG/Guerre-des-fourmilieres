@@ -314,7 +314,7 @@ def gestion_evenement(event: pygame.event) -> None:
 def process() -> None:
     dt = clock.tick(60)
 
-    if carte_jeu != None:
+    if not in_menu_principal:
         carte_jeu.colonie_joeur.process(clock.get_time())
 
     if in_menu_principal:

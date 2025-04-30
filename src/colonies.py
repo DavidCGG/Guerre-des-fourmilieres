@@ -73,7 +73,7 @@ class Colonie:
         for f in self.fourmis:
             if not self.fourmi_dans_groupe(f):
                 dern_x, dern_y = f.centre_x, f.centre_y
-                f.process(dt)
+                f.process(dt, self.map_data)
                 if (dern_x, dern_y) != (f.centre_x, f.centre_y):
                     fourmis_bouge = True
                 if f.get_tuile() == self.tuile_debut:

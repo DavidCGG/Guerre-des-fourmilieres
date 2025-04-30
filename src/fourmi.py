@@ -4,7 +4,7 @@ import uuid
 from abc import ABC, abstractmethod
 import pygame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
-import tuile
+from tuile import Tuile, Eau
 
 class FourmiTitleScreen():
     def __init__(self, x0, y0, scale=1.0):
@@ -144,19 +144,21 @@ class Fourmis(ABC):
 
         return
 
-    def process(self, dt):
+    def process(self, dt, map_data):
         if self.target_x != self.centre_x or self.target_y != self.centre_y:
-            self.goto_target(dt)
+            self.goto_target(dt, map_data)
 
-    def set_target(self, target_x, target_y):
+    def set_target(self, target_x, target_y, map_data):
+        if isinstance(map_data[target_y][target_x], Eau):
+            return
+        
         self.target_x = target_x
         self.target_y = target_y
 
-    def goto_target(self, dt):
-
+    def goto_target(self, dt, map_data):
         if not self.path:
             # Calculate path if not already calculated
-            self.path = self.calculate_path()
+            self.path = self.a_star(map_data)
 
         if self.path:
             next_tile = self.path[0]
@@ -182,30 +184,8 @@ class Fourmis(ABC):
 
         else:
             self.moving = False
-
-
-    def calculate_path(self):
-        start_tile = self.get_tuile()
-
-        target_tile = (self.target_x, self.target_y)
-
-        # Example: Simple straight-line path (replace with A* for complex maps)
-        path = []
-        x, y = start_tile
-        while (x, y) != target_tile:
-            if x < target_tile[0]:
-                x += 1
-            elif x > target_tile[0]:
-                x -= 1
-            elif y < target_tile[1]:
-                y += 1
-            elif y > target_tile[1]:
-                y -= 1
-            path.append((x, y))
-
-        return path
     
-    def a_star(self, depart, arrivee, map_data):
+    def a_star(self, map_data):
         #Note: le path retourné contient des tuiles et non des coordonnées
         def sort_queue(arr):
             if len(arr) <= 1:
@@ -238,16 +218,16 @@ class Fourmis(ABC):
             voisins = []
 
             if(tuile.x - 1 >= 0):
-                voisins.append(map_data[tuile.x - 1][tuile.y])
+                voisins.append(map_data[tuile.y][tuile.x - 1])
             if(tuile.x + 1 < len(map_data[0])):
-                voisins.append(map_data[tuile.x + 1][tuile.y])
+                voisins.append(map_data[tuile.y][tuile.x + 1])
             if(tuile.y - 1 >= 0):
-                voisins.append(map_data[tuile.x][tuile.y - 1])
+                voisins.append(map_data[tuile.y - 1][tuile.x])
             if(tuile.y + 1 < len(map_data)):
-                voisins.append(map_data[tuile.x][tuile.y + 1])
+                voisins.append(map_data[tuile.y + 1][tuile.x])
 
             for voisin in voisins:
-                if isinstance(voisin, tuile.Eau):
+                if isinstance(voisin, Eau):
                     voisins.remove(voisin)
 
             return voisins  
@@ -259,21 +239,25 @@ class Fourmis(ABC):
             y2 = tuile2.y
             return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
         
-        queue: list[tuile.Tuile] = [] #queue qui permet de savoir quel noeud visiter
-        distance_trajet: dict[tuile.Tuile : int] = dict() #nb de noeud à parcourir pour arriver à ce noeud
-        distance_geo: dict[tuile.Tuile : int] = dict() #distance géométrique entre le noeud et la destination {tuile: distance}
-        previous: dict[tuile.Tuile : tuile.Tuile] = dict() #noeud par lequel on est arrivé à ce noeud
-        visited: set[tuile.Tuile] = set() #noeuds dont tous les voisins ont été visités
+
+        depart = map_data[self.get_tuile()[1]][self.get_tuile()[0]]
+        arrivee = map_data[self.target_y][self.target_x]
+
+        queue: list[Tuile] = [] #queue qui permet de savoir quel noeud visiter
+        distance_trajet: dict[Tuile : int] = dict() #nb de noeud à parcourir pour arriver à ce noeud
+        distance_geo: dict[Tuile : int] = dict() #distance géométrique entre le noeud et la destination {tuile: distance}
+        previous: dict[Tuile : Tuile] = dict() #noeud par lequel on est arrivé à ce noeud
+        visited: set[Tuile] = set() #noeuds dont tous les voisins ont été visités
 
         queue.append(depart)
         distance_trajet[depart] = 0
-        distance_geo[depart] = calculate_distance(v, arrivee)
+        distance_geo[depart] = calculate_distance(depart, arrivee)
         previous[depart] = None
         
         #Naviguation
         while queue[0] != arrivee:
             sort_queue(queue)
-            current: tuile.Tuile = queue[0]
+            current: Tuile = queue[0]
 
             for v in get_voisins(current):
                 if v in visited:
@@ -294,7 +278,7 @@ class Fourmis(ABC):
             queue.pop(0)
 
         #Reconstruction du chemin
-        chemin: list[tuile.Tuile] = [] #le chemin pris pour arriver à la fin
+        chemin: list[Tuile] = [] #le chemin pris pour arriver à la fin
         current = arrivee
 
         while current != None:
