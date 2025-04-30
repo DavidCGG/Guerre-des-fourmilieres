@@ -183,50 +183,6 @@ class Salle:
         self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
         self.screen[0].blit(surface_texte, (self.pos.x, self.pos.y+self.hauteur))
 
-
-class Bouton():
-    def __init__(self, screen, x, y, largeur, hauteur, texte, fonction_sur_click, police):
-        #self.surface=surface
-        self.screen=screen
-        self.x = x - largeur / 2
-        self.y = y - hauteur / 2
-        self.largeur = largeur
-        self.hauteur = hauteur
-        self.texte = texte
-        self.police = police
-        self.fonction_sur_click = fonction_sur_click
-        self.surface_self = pygame.Surface((self.largeur, self.hauteur))
-        self.couleurs = {'normale': '#ffffff',
-                         'survol': '#666666',
-                         'clické': '#333333'}
-        self.rectangle = pygame.Rect(self.x, self.y, self.largeur, self.hauteur)
-        self.texte_render = police.render(self.texte, False, "black")
-        self.deja_clicke = True
-
-    def draw(self):
-        #print("bouton "+self.texte+" drawn")
-        position_souris = pygame.mouse.get_pos()
-        self.surface_self.fill(self.couleurs['normale'])
-        cursor_sur_bouton=False
-        if self.rectangle.collidepoint(position_souris):
-            # survol:
-            self.surface_self.fill(self.couleurs['survol'])
-            cursor_sur_bouton=True
-            if pygame.mouse.get_pressed(num_buttons=3)[0]:
-                # sur click tenu :
-                self.surface_self.fill(self.couleurs['clické'])
-                if not self.deja_clicke:
-                    self.fonction_sur_click()
-                self.deja_clicke = True
-            else:
-                self.deja_clicke = False
-
-        self.surface_self.blit(self.texte_render, [self.rectangle.width / 2 - self.texte_render.get_rect().width / 2,self.rectangle.height / 2 - self.texte_render.get_rect().height / 2])
-        pygame.draw.rect(self.surface_self, pygame.Color("black"), self.surface_self.get_rect(), 3)
-        self.screen.blit(self.surface_self, (self.x, self.y))
-        return cursor_sur_bouton
-
-
 class Fourmi():
     def __init__(self, type, dt_pointer, colonie_origine, screen, liste_fourmis_pointeur, liste_items_pointeur):
         self.pos = Vector2(colonie_origine.salles[0].pos.x+colonie_origine.salles[0].largeur*2,colonie_origine.salles[0].pos.y)

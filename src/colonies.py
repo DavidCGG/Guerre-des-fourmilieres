@@ -4,11 +4,9 @@ import tkinter as tk
 import pygame
 from pygame.examples.scroll import scroll_view
 
-from Fourmis import Ouvriere, Soldat, Groupe
+from fourmi import Ouvriere, Soldat, Groupe
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN
-from Fourmis import FourmisSprite
-from classes import Bouton
-
+from fourmi import FourmisSprite
 
 class Colonie:
     def __init__(self, tuile_debut, map_data):

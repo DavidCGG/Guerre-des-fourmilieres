@@ -1,11 +1,11 @@
 import pygame
-import carte2 as carte
+import carte as carte
 import affichage_nid as nid
 from config import trouver_font, trouver_img
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import WHITE, BLACK, YELLOW
-from classes import Bouton
-from Fourmis import FourmiTitleScreen, FourmiTitleScreenSprite
+from config import Bouton
+from fourmi import FourmiTitleScreen, FourmiTitleScreenSprite
 
 #Variables globales
 screen: pygame.Surface = None

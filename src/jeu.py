@@ -3,6 +3,7 @@ from types import NoneType
 
 import pygame
 from classes import *
+from config import Bouton
 
 from pygame.locals import *
 
