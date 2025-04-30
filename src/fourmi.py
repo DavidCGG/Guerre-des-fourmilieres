@@ -1,5 +1,6 @@
 import math
 import random
+import uuid
 from abc import ABC, abstractmethod
 import pygame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
@@ -131,11 +132,17 @@ class Fourmis(ABC):
         self.width = 0
         self.height = 0
         self.pause_timer = 0
-        self.tient_ressource = False
+        self.tient_ressource = None
 
     @abstractmethod
     def attack(self, other):
         pass
+
+    def depot(self):
+        if self.tient_ressource is not None:
+            return self.tient_ressource
+
+        return
 
     def process(self, dt):
         if self.target_x != self.centre_x or self.target_y != self.centre_y:
@@ -147,7 +154,7 @@ class Fourmis(ABC):
 
     def goto_target(self, dt):
 
-        if not hasattr(self, "path") or not self.path:
+        if not self.path:
             # Calculate path if not already calculated
             self.path = self.calculate_path()
 
@@ -172,7 +179,6 @@ class Fourmis(ABC):
                 self.centre_y = target_y
                 self.path.pop(0)  # Remove the reached tile
                 self.moving = len(self.path) > 0
-
 
         else:
             self.moving = False
@@ -317,7 +323,7 @@ class Soldat(Fourmis):
         super().__init__(hp=25, atk=5, scale=scale, x0=x0, y0=y0)
         self.base_speed = 1.5
         self.speed = self.base_speed * self.scale
-        self.size = 2 # prend 2 places dans le groupe
+        self.size = 1 # prend 2 places dans le groupe
 
     def attack(self, other):
         other.hp -= self.atk
@@ -378,28 +384,38 @@ class FourmisSprite(pygame.sprite.Sprite):
 
 class Groupe:
     def __init__(self, tile_x, tile_y, images):
+        self.id = str(uuid.uuid4())
         self.fourmis = []
         self.max_capacite = 5
-
         self.images = images
         self.image = self.images[0]
-        self.speed = 1.25
+        self.speed = 2
         self.centre_x = tile_x
         self.centre_y = tile_y
         self.target_x = self.centre_x
         self.target_y = self.centre_y
         self.rect = self.image.get_rect(center=(self.centre_x, self.centre_y))
+        self.moving = False
+        self.path = None
+        self.indexe_fourmis = 0 # indexe de la fourmi qui va collecter la ressource
 
     def process(self, dt):
+        dern_x, dern_y = self.centre_x, self.centre_y
+
         if self.target_x != self.centre_x or self.target_y != self.centre_y:
             self.goto_target(dt)
+
+            if (dern_x, dern_y) != (self.centre_x, self.centre_y):
+                for f in self.fourmis:
+                    f.centre_x = self.centre_x
+                    f.centre_y = self.centre_y
 
     def set_target(self, target_x, target_y):
         self.target_x = target_x
         self.target_y = target_y
 
     def goto_target(self, dt):
-        if not hasattr(self, "path") or not self.path:
+        if not self.path:
             # Calculate path if not already calculated
             self.path = self.calculate_path()
 
@@ -417,7 +433,6 @@ class Groupe:
                 self.centre_y += self.speed * dy / distance * (dt / 1000)
                 self.moving = True
 
-                self.facing = 0 if dx > 0 else 1
             else:
                 # Reached the next tile
                 self.centre_x = target_x
@@ -488,8 +503,25 @@ class Groupe:
             self.fourmis.remove(fourmis)
         else: print("fourmi pas dans le groupe")
 
-    def get_tuile(self):
-        return int(self.centre_x), int(self.centre_y)
+    def collecter_ressource(self, ressource) -> bool:
+        if self.indexe_fourmis < len(self.fourmis):
+            if self.fourmis[self.indexe_fourmis].tient_ressource is None:
+                self.fourmis[self.indexe_fourmis].tient_ressource = ressource
+                self.indexe_fourmis += 1
+                return True
+        return False
+
+    def deposer_ressources(self):
+        metal = 0
+        nourr = 0
+        for fourmi in self.fourmis:
+            if fourmi.tient_ressource == "metal":
+                metal += 1
+            elif fourmi.tient_ressource == "pomme":
+                nourr += 1
+            fourmi.tient_ressource = None
+        self.indexe_fourmis = 0
+        return nourr, metal
 
     def get_size(self):
         tot = 0

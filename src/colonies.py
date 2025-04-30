@@ -2,9 +2,8 @@ import random
 import tkinter as tk
 
 import pygame
-from pygame.examples.scroll import scroll_view
 
-from fourmi import Ouvriere, Soldat, Groupe
+from fourmi import Ouvriere, Soldat, Groupe, Fourmis
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN
 from fourmi import FourmisSprite
 
@@ -19,8 +18,10 @@ class Colonie:
         self.metal = 0
 
         self.fourmis_selection = None # fourmi selectionnée dans le menu de fourmis
+        self.groupe_selection = None
 
-        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(9)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(2)]
+        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(3)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(2)]
+        self.groupes = {}
         self.texte_rects = {} # les rects dans le menu colonie pour changer leur coloeur trop cool
         self.couleur_texte = WHITE
         self.hover_texte = None # soit Ouvrieres ou Soldats dans menu colonie
@@ -60,17 +61,35 @@ class Colonie:
 
 
     def process(self,dt):
+        groupe_bouge = False
+        for _, groupe in self.groupes_cache.items():
+            if groupe.get_nb_fourmis() > 1 and not groupe.est_vide():
+                dern_x, dern_y = groupe.centre_x, groupe.centre_y
+                groupe.process(dt)
+                if (dern_x, dern_y) != (groupe.centre_x, groupe.centre_y):
+                    groupe_bouge = True
+
         fourmis_bouge = False
         for f in self.fourmis:
-            dern_tuile = f.get_tuile()
-            f.process(dt)
-            if f.get_tuile() != dern_tuile:
-                fourmis_bouge = True
+            if not self.fourmi_dans_groupe(f):
+                dern_x, dern_y = f.centre_x, f.centre_y
+                f.process(dt)
+                if (dern_x, dern_y) != (f.centre_x, f.centre_y):
+                    fourmis_bouge = True
+                if f.get_tuile() == self.tuile_debut:
+                    ress = f.depot()
+                    self.nourriture += 1 if ress == "pomme" else 0
+                    self.metal += 1 if ress == "metal" else 0
+                    f.tient_ressource = None
 
-        if fourmis_bouge:
+
+
+        if fourmis_bouge or groupe_bouge:
             self.cache_groupes_a_updater = True
             if self.menu_fourmis_ouvert:
                 self.menu_f_a_updater = True
+            if self.menu_colonie_ouvert:
+                self.menu_a_updater = True
 
     def nombre_ouvrieres(self):
         return len([f for f in self.fourmis if isinstance(f, Ouvriere)])
@@ -87,6 +106,7 @@ class Colonie:
         y_offset = 40
         info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
         info_sold = f"Soldats ({self.nombre_soldats()})"
+        info_groupes = f"Groupes ({self.get_vrai_nb_groupes()})"
         info_vie = f"Vie: {self.vie * 100}%"
         info_nourr = f"Nourriture: {self.nourriture}"
         info_metal = f"Métal: {self.metal}"
@@ -94,7 +114,7 @@ class Colonie:
         menu_x = 1280 - self.menu_colonie_surface.get_width()
         menu_y = 720 / 2 - self.menu_colonie_surface.get_height() / 2
 
-        liste_textes = [info_ouvr, info_sold, info_vie, info_nourr, info_metal]
+        liste_textes = [info_ouvr, info_sold, info_groupes,info_vie, info_nourr, info_metal]
 
         for texte in liste_textes:
             couleur = AQUA if texte.split()[0] == self.hover_texte else WHITE
@@ -103,7 +123,7 @@ class Colonie:
                 center=(self.menu_colonie_surface.get_width() / 2, y_offset + _texte.get_height() / 2))
             self.menu_colonie_surface.blit(_texte, (
             self.menu_colonie_surface.get_width() / 2 - _texte.get_width() / 2, y_offset))
-            if texte.startswith("Ouvrières") or texte.startswith("Soldats"):
+            if texte.startswith("Ouvrières") or texte.startswith("Soldats") or texte.startswith("Groupes"):
                 self.texte_rects[texte.split()[0]] = _texte_rect.move(menu_x, menu_y)
             y_offset += 40
         self.menu_a_updater = False
@@ -168,47 +188,119 @@ class Colonie:
             self.sprites.append(sprite)
 
     def update_cache_groupes(self):
-        dern_positions = {}
-        for tuile, groupe in self.groupes_cache.items():
-            for f in groupe.fourmis:
-                dern_positions[f] = tuile
-
-        nouv_groupe = {}
+        ants_by_tile = {}
         for f in self.fourmis:
             tuile = f.get_tuile()
-            if tuile not in nouv_groupe:
-                nouv_groupe[tuile] = Groupe(tuile[0], tuile[1], self.groupe_images)
-            nouv_groupe[tuile].ajouter_fourmis(f)
+            if tuile != self.tuile_debut:
+                if tuile not in ants_by_tile:
+                    ants_by_tile[tuile] = []
+                ants_by_tile[tuile].append(f)
 
+        # Track tiles that need updating
         modif_tuiles = set()
-        for f in self.fourmis:
-            if f in dern_positions and dern_positions[f] != f.get_tuile():
-                modif_tuiles.add(dern_positions[f])
-                modif_tuiles.add(f.get_tuile())
+
+        # Update existing groups or create new ones
+        nouv_groupe = {}
+        for tuile, ants in ants_by_tile.items():
+            # Find existing group at this tile
+            existing_group = next((g for g in self.groupes.values()
+                                   if g.get_tuile() == tuile), None)
+
+            if existing_group:
+                # Update existing group
+                existing_group.fourmis = []
+                for ant in ants:
+                    existing_group.ajouter_fourmis(ant)
+                nouv_groupe[tuile] = existing_group
+            else:
+                # Create new group
+                new_group = Groupe(tuile[0], tuile[1], self.groupe_images)
+                self.groupes[new_group.id] = new_group
+                for ant in ants:
+                    new_group.ajouter_fourmis(ant)
+                nouv_groupe[tuile] = new_group
+
+            # Mark tile as modified
+            if tuile not in self.groupes_cache or self.groupes_cache[tuile] != nouv_groupe[tuile]:
+                modif_tuiles.add(tuile)
+
+        # Find tiles that no longer have groups
+        for tuile in self.groupes_cache:
+            if tuile not in nouv_groupe:
+                modif_tuiles.add(tuile)
+
+        # Clean up empty groups
+        for group_id in list(self.groupes.keys()):
+            group = self.groupes[group_id]
+            if group.est_vide() or group not in nouv_groupe.values():
+                del self.groupes[group_id]
 
         self.groupes_cache = nouv_groupe
         self.cache_groupes_a_updater = False
+        self.menu_a_updater = True
 
         self.update_fourmis_tuiles(modif_tuiles)
 
 
     def update_fourmis_tuiles(self, modif_tuiles):
         for tuile in modif_tuiles:
-            self.map_data[tuile[1]][tuile[0]].fourmis = []
+            self.map_data[tuile[1]][tuile[0]].fourmis = None
+
         for tuile, groupe in self.groupes_cache.items():
-            if tuile in modif_tuiles:
-                self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
+
+            self.gerer_collection(tuile, groupe)
+            self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
 
 
-    def get_fourmis_de_groupe(self, groupe):
+    def gerer_collection(self, tuile, _groupe):
+        x, y = tuile
+        if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
+            ress = self.map_data[y][x].get_ressource()
+            groupe = self.get_fourmis_de_groupe(_groupe)
+            if isinstance(groupe, Fourmis) and groupe.tient_ressource is None:
+                print("fourmi collecte")
+                groupe.tient_ressource = ress
+                self.map_data[y][x].collectee = True
+            elif isinstance(groupe, Groupe):
+                if groupe.collecter_ressource(ress):
+                    print("groupe collecte")
+                    self.map_data[y][x].collectee = True
+
+    def gerer_depot(self, tuile, groupe):
+        if tuile == self.tuile_debut:
+            occupants = self.get_fourmis_de_groupe(groupe)
+            if isinstance(occupants, Fourmis):
+                if occupants.tient_ressource == "metal":
+                    print("depot fourmi metal")
+                    self.metal += 1
+                elif occupants.tient_ressource == "pomme":
+                    print("depot fourmi pomme")
+                    self.nourriture += 1
+                occupants.tient_ressource = None
+            if isinstance(groupe, Groupe) and groupe.get_nb_fourmis() > 1:
+                print("depot groupe")
+                nourr, metal = groupe.deposer_ressources()
+                print(nourr, metal, groupe)
+                self.metal += metal
+                self.nourriture += nourr
+            self.menu_a_updater = True
+            self.update_menu()
+            print(self.nourriture, self.metal)
+    def fourmi_dans_groupe(self, fourmi):
+        for _, groupe in self.groupes_cache.items():
+            if groupe.get_nb_fourmis() >1 and fourmi in groupe.fourmis:
+                return True
+    def get_fourmis_de_groupe(self, groupe) -> Fourmis | Groupe:
         if groupe.get_nb_fourmis() == 1:
             return groupe.fourmis[0] # Retourne une fourmi particuliere
         return groupe
 
-    def ajouter_fourmis_tuile(self):
+    def get_vrai_nb_groupes(self):
+        tot = 0
         for tuile, groupe in self.groupes_cache.items():
-            self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
-
+            if groupe.get_nb_fourmis() > 1:
+                tot += 1
+        return tot
 
     def load_groupe_images(self):
         for x in range(2,6):
@@ -222,7 +314,7 @@ class Colonie:
             if groupe.get_nb_fourmis() > 1:
                 groupe.update(camera, tile_size)
                 screen.blit(groupe.image, groupe.rect)
-            else:
+            elif not groupe.est_vide():
                 f = groupe.fourmis[0]
                 sprite = self.sprite_dict[f]
                 sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
@@ -232,7 +324,25 @@ class Colonie:
 
     def handle_click(self, pos, tile_x, tile_y, screen):
         if self.map_data[tile_y][tile_x].fourmis is not None:
-            pass
+            occupants = self.map_data[tile_y][tile_x].fourmis
+            if isinstance(occupants, Fourmis):
+                if occupants == self.fourmis_selection:
+                    self.fourmis_selection = None
+                else:
+                    self.fourmis_selection = occupants
+                self.menu_f_a_updater = True
+                return
+
+            if isinstance(occupants, Groupe):
+                if self.groupe_selection == occupants:
+                    self.groupe_selection = None
+                else:
+                    self.groupe_selection = occupants
+                    print("groupe select")
+
+                self.menu_f_a_updater = True
+                return
+
         if tile_x == self.tuile_debut[0] and tile_y == self.tuile_debut[1]:
             self.menu_colonie(screen)
             return
@@ -244,6 +354,8 @@ class Colonie:
                     self.curr_tab = "Ouvrières"
                 elif key=="Soldats":
                     self.curr_tab = "Soldats"
+                elif key=="Groupes":
+                    self.curr_tab = "Groupes"
                 self.scroll_offset = 0
                 self.couleur_texte = AQUA
                 # On ferme le menu si on re clique sur le meme tab
@@ -260,7 +372,7 @@ class Colonie:
             y_offset = 40
             if self.curr_tab == "Ouvrières":
                 fourmis = [f for f in self.fourmis if isinstance(f, Ouvriere)]
-            else:
+            elif self.curr_tab == "Soldats":
                 fourmis = [f for f in self.fourmis if isinstance(f, Soldat)]
 
             for fourmi in fourmis:
@@ -298,6 +410,8 @@ class Colonie:
             max_offset = max(0, self.nombre_ouvrieres() * 50 - 335)
         elif self.curr_tab == "Soldats":
             max_offset = max(0, self.nombre_soldats() * 50 - 335)
+        elif self.curr_tab == "Groupes":
+            max_offset = max(0, self.get_vrai_nb_groupes() * 50 - 335)
 
         if self.menu_fourmis_rect.collidepoint(pos): # On scroll seulement si la souris est dans le rect du menu
             if dir == "up":

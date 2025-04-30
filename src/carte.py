@@ -7,7 +7,7 @@ from tuile import Tuile
 from random_noise import RandomNoise
 from tuile import Terre, Sable, Eau, Montagne
 
-from config import trouver_img
+from config import trouver_img, GREEN
 from config import trouver_font
 from config import BLACK, YELLOW, RED, PURPLE, BLUE, AQUA
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
@@ -146,8 +146,16 @@ class Carte:
                     tile = self.map_data[y][x]
                     tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
                     tile.draw(screen, self.camera.apply_rect(tile_rect), self.grid_mode)
-                    if self.colonie_joeur.fourmis_selection and self.hover_tuile == (x, y):
-                        pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
+                    if self.colonie_joeur.fourmis_selection:
+                        if self.hover_tuile == (x, y):
+                            pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
+                        if self.colonie_joeur.fourmis_selection.get_tuile() == (x, y):
+                            pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
+                    if self.colonie_joeur.groupe_selection:
+                        if self.hover_tuile == (x, y):
+                            pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
+                        if self.colonie_joeur.groupe_selection.get_tuile() == (x, y):
+                            pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
         
         screen.fill(BLACK)
         start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
@@ -160,7 +168,7 @@ class Carte:
         if self.colonie_joeur.menu_colonie_ouvert:
             self.colonie_joeur.menu_colonie(screen)
 
-        if self.colonie_joeur.menu_fourmis_ouvert:
+        if self.colonie_joeur.menu_fourmis_ouvert and self.colonie_joeur.menu_colonie_ouvert:
             self.colonie_joeur.menu_fourmis(screen)
 
     #retourne l'index de la colonie cliquée avec un right click
@@ -182,7 +190,11 @@ class Carte:
                     self.colonie_joeur.fourmis_selection.set_target(tile_x, tile_y)
                     self.colonie_joeur.fourmis_selection = None
                     self.hover_tuile = None
-                
+                elif self.colonie_joeur.groupe_selection:
+                    self.colonie_joeur.groupe_selection.set_target(tile_x, tile_y)
+                    self.colonie_joeur.groupe_selection = None
+                    self.hover_tuile = None
+
                 elif (tile_x, tile_y) in self.tuiles_debut:
                     return self.tuiles_debut.index((tile_x, tile_y))
 
@@ -204,6 +216,8 @@ class Carte:
             self.camera.drag(*event.pos)
             self.colonie_joeur.handle_hover(event.pos)
             if self.colonie_joeur.fourmis_selection is not None:
+                self.hover_tuile = self.get_tuile(event)
+            elif self.colonie_joeur.groupe_selection is not None:
                 self.hover_tuile = self.get_tuile(event)
     
     def set_camera_tuile_debut(self):

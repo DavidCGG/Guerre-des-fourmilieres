@@ -19,7 +19,7 @@ class Tuile:
         self.proprietaire = None
         self.val_noise = 0
         self.type = None
-        self.fourmis = []
+        self.fourmis = None
         self.en_utilisation = False
 
         self.tuile_ressource = self.rand_ressource()
@@ -60,6 +60,12 @@ class Tuile:
     def get_fourmis(self):
         if self.decouverte:
             return self.fourmis
+
+    def get_ressource(self):
+        if isinstance(self, Sable):
+            return "metal"
+        elif isinstance(self, Terre):
+            return "pomme"
 
 class Eau(Tuile):
     def __init__(self, x, y, width, height):

@@ -1,0 +1,164 @@
+Index: jeu.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>#import sys\r\nfrom types import NoneType\r\n\r\nfrom carte import MapApp\r\nimport pygame\r\nfrom classes import *\r\n\r\nfrom pygame.locals import *\r\n\r\npygame.init()\r\nscreen = pygame.display.set_mode((1280,720), pygame.SCALED)\r\nscreen_pointer = [screen]\r\nclock = pygame.time.Clock()\r\nrunning = True\r\ndt=0\r\ndt_pointer=[dt]\r\nobjets = []\r\ncolonies = []\r\nliste_fourmis=[]\r\nliste_fourmis_pointeur=[liste_fourmis]\r\nhud=[]\r\nmax_fps=100\r\ncolonie_presente=[]\r\ncouleur_joueur=\"noire\"\r\nliste_items=[]\r\nliste_items_pointeur=[liste_items]\r\n\r\ndans_menu_principal=[]\r\n\r\npolice = pygame.font.Font(\"assets/Minecraft.ttf\",30)\r\n\r\nplayer_pos = pygame.Vector2(screen.get_width()/2,screen.get_height()/2)\r\n\r\npygame.display.set_caption(\"Guerre des fourmilières\")\r\n\r\nimage_icone=pygame.image.load('assets/fourmi_noire.png')\r\npygame.display.set_icon(image_icone)\r\n\r\ncarte=[]\r\n\r\ndef nouvelle_partie():\r\n    dans_menu_principal.clear()\r\n    dans_menu_principal.append(False)\r\n\r\n    objets.clear()\r\n    hud.clear()\r\n    partie = Partie()\r\n\r\n    print('Nouvelle parite')\r\n    titre=\"test\"\r\n    with open(\"parties_sauvegardees/\"+\".txt\", \"w\") as fichier:\r\n        fichier.write(\"Created using write mode.\")\r\n\r\n    colonie_joueur=Colonie(\"noire\",dt_pointer,screen_pointer,liste_fourmis_pointeur,600,600,liste_items_pointeur)\r\n    colonie_ennemie=Colonie(\"rouge\",dt_pointer,screen_pointer,liste_fourmis_pointeur,1000,200,liste_items_pointeur)\r\n    colonies.append(colonie_joueur)\r\n    colonies.append(colonie_ennemie)\r\n\r\n    liste_items.append(Item(500, 100, None, \"metal\", screen_pointer,False))\r\n    liste_items.append(Item(600, 100, None, \"metal\", screen_pointer,False))\r\n    liste_items.append(Item(200, 400, None, \"metal\", screen_pointer,False))\r\n    liste_items.append(Item(100, 700, None, \"metal\", screen_pointer,False))\r\n    liste_items.append(Item(600, 600,colonie_joueur, \"metal\", screen_pointer,False))\r\n    liste_items.append(Item(500, 600,colonie_joueur, \"metal\", screen_pointer,False))\r\n\r\n    # créer hud\r\n    hud.append(None)\r\n\r\n    def entrer_colonie_ennemie():\r\n        entrer_colonie(colonie_ennemie)\r\n\r\n    hud.append(Bouton(screen, screen.get_width() / 10, screen.get_height() * 3 / 20, screen.get_width() / 5,screen.get_height() / 15, \"Colonie enemie\", entrer_colonie_ennemie, police))\r\n    hud.append(Bouton(screen, screen.get_width() / 10, screen.get_height() * 5 / 20, screen.get_width() / 5,screen.get_height() / 15, \"Menu principal\", menu_principal, police))\r\n\r\n    entrer_colonie(colonie_joueur)\r\n\r\n    carte.append(Carte(screen_pointer, colonies,liste_fourmis_pointeur,liste_items_pointeur))\r\n    #game = MapApp()\r\n    #game.run()\r\n\r\ndef entrer_carte():\r\n    objets.clear()\r\n    objets.append(carte[0])\r\n    colonie_presente.clear()\r\n\r\n    def entrer_colonie_joueur():\r\n        entrer_colonie(colonies[0])\r\n\r\n    hud[0]=(Bouton(screen, screen.get_width() / 10, screen.get_height() / 20, screen.get_width() / 5,screen.get_height() / 15, \"Colonie joueur\", entrer_colonie_joueur, police))\r\n    print(\"carte entré\")\r\n\r\ndef entrer_colonie(colonie_entree):\r\n    objets.clear()\r\n    objets.append(colonie_entree)\r\n    hud[0]=(Bouton(screen,screen.get_width() / 10, screen.get_height() / 20, screen.get_width()/5, screen.get_height()/15, \"Carte du monde\", entrer_carte,police))\r\n    colonie_presente.append(colonie_entree)\r\n    print(\"Colonie \" + colonie_entree.nom + \" entrée\")\r\n\r\ndef menu_options():\r\n    hud.clear()\r\n    print('menu options')\r\n    objets.clear()\r\n    #pygame.display.update()\r\n    surface_menu_option = pygame.Surface((screen.get_width(), screen.get_height()))\r\n    surface_menu_option.fill('green')\r\n    hud.append(surface_menu_option)\r\n    hud.append(Bouton(screen,screen.get_width() / 2, screen.get_height() * 9 / 10, screen.get_width()/3, screen.get_height()/15, 'Retour', menu_principal,police))\r\n\r\ndef quitter():\r\n    quit()\r\n\r\ndef menu_principal():\r\n    dans_menu_principal.clear()\r\n    dans_menu_principal.append(True)\r\n\r\n    objets.clear()\r\n    colonies.clear()\r\n    liste_fourmis.clear()\r\n    hud.clear()\r\n    colonie_presente.clear()\r\n    liste_items.clear()\r\n    carte.clear()\r\n\r\n    surface_menu_principal = pygame.Surface((screen.get_width(), screen.get_height()))\r\n    surface_menu_principal.fill('cyan')\r\n\r\n    surface_titre = police.render(\"Guerre des fourmilieres\",False,'black')\r\n    surface_menu_principal.blit(surface_titre, (screen.get_width()/2-surface_titre.get_rect().width/2,screen.get_height()/10-surface_titre.get_rect().height/2))\r\n    image_menu_principal=pygame.transform.scale(image_icone,(screen.get_height()*image_icone.get_height()/100,screen.get_height()*image_icone.get_height()/100))\r\n    surface_menu_principal.blit(image_menu_principal,(screen.get_width()/2-image_menu_principal.get_width()/2,screen.get_height()*3/10-image_menu_principal.get_height()/2))\r\n    hud.append(surface_menu_principal)\r\n\r\n    hud.append(Bouton(screen,screen.get_width() / 2, screen.get_height() * 5 / 10, screen.get_width()/3, screen.get_height()/15, 'Nouvelle partie', nouvelle_partie,police))\r\n    hud.append(Bouton(screen,screen.get_width() / 2, screen.get_height() * 6 / 10, screen.get_width()/3, screen.get_height()/15, 'Options', menu_options,police))\r\n    hud.append(Bouton(screen,screen.get_width() / 2, screen.get_height() * 7 / 10, screen.get_width()/3, screen.get_height()/15, 'Quitter', quitter,police))\r\n\r\n\r\n\r\nmenu_principal()\r\nwhile running:\r\n    for event in pygame.event.get():\r\n        if event.type == pygame.QUIT:\r\n            running = False\r\n\r\n    #screen.fill(pygame.Color(100,50,0))\r\n    #input manager\r\n\r\n\r\n    \"\"\"\r\n    if dt != 0:\r\n        pygame.display.set_caption(str(1/dt))\r\n    \"\"\"\r\n    for colonie in colonies:\r\n        colonie.process(liste_items)\r\n    if len(carte)==1:\r\n        carte[0].process()\r\n\r\n    for objet_a_dessine in objets:\r\n        if type(objet_a_dessine) is Bouton:\r\n            objet_a_dessine.draw()\r\n        else:\r\n            objet_a_dessine.draw(liste_fourmis,liste_items)\r\n    cursor_sur_bouton=False\r\n    for element in hud:\r\n        if type(element) is pygame.Surface and dans_menu_principal[0]:\r\n            screen.blit(element, (0, 0))\r\n        elif type(element) is pygame.Surface and not dans_menu_principal[0]:\r\n            screen.blit(element, ((screen.get_width()-element.get_width())/2, (screen.get_height()*3/20-element.get_height())/2))\r\n        elif type(element) is not NoneType:\r\n            if element.draw():\r\n                cursor_sur_bouton=True\r\n\r\n    for fourmi in liste_fourmis:\r\n        fourmi.process()\r\n        #print(fourmi.colonie_origine.nom+\" inventaire :\",end=\"\")\r\n        #for item in fourmi.inventaire:\r\n            #print(item.sorte+\", \",end=\"\")\r\n        #print()\r\n        if not cursor_sur_bouton and fourmi.colonie_origine.nom==couleur_joueur:\r\n            if fourmi.dans_colonie is None and len(colonie_presente)==0:\r\n                #print(\"fourmi dans aucune colonie\")\r\n                fourmi.carte_input_process(colonies[0])\r\n            elif len(colonie_presente)!=0 and fourmi.dans_colonie is not None:\r\n                #print(\"fourmi dans colonie \"+fourmi.dans_colonie.nom)\r\n                if (fourmi.dans_colonie.nom==colonie_presente[0].nom):\r\n                    fourmi.colonie_input_process(colonies[0])\r\n   # for item in liste_items:\r\n        #print(item.sorte+\": \"+item.id+\" \",end=\"\")\r\n   # print()\r\n    #draw fourmi here instead of carte and colonie\r\n    \"\"\"for fourmi in fourmis:\r\n        if len(colonie_presente)!=0:\r\n            #print(\"A\")\r\n            if fourmi.dans_colonie is not None:\r\n                #print(\"C\")\r\n                if fourmi.dans_colonie.nom==colonie_presente[0].nom:\r\n                    #print(\"D\")\r\n                    fourmi.draw()\r\n        else:\r\n            #print(\"B\")\r\n            if fourmi.dans_colonie is None:\r\n                fourmi.draw()\"\"\"\r\n    au_moins_un_ennemi_en_vie=False\r\n    for colonie in colonies:\r\n        if colonies.index(colonie)!=0 and not colonie.salles[0].detruit:\r\n            au_moins_un_ennemi_en_vie=True\r\n    #victoire\r\n    if not au_moins_un_ennemi_en_vie and len(colonies)>0:\r\n        print(\"Victoire!\")\r\n        colonie_presente[0].draw(liste_fourmis,liste_items)\r\n        objets.clear()\r\n        colonies.clear()\r\n        liste_fourmis.clear()\r\n        hud.clear()\r\n        colonie_presente.clear()\r\n        liste_items.clear()\r\n\r\n        #surface_victoire = pygame.Surface((screen.get_width(), screen.get_height()))\r\n        #surface_victoire.fill(\"red\")\r\n\r\n        police_titre = pygame.font.Font(\"assets/Minecraft.ttf\", 100)\r\n\r\n        surface_victoire_titre = police_titre.render(\"Victoire!\", False, 'black')\r\n        #surface_victoire.blit(surface_victoire_titre, (screen.get_width() / 2 - surface_victoire_titre.get_rect().width / 2, screen.get_height() / 10 - surface_victoire_titre.get_rect().height / 2))\r\n        #image_menu_principal = pygame.transform.scale(image_icone, (screen.get_height() * image_icone.get_height() / 100, screen.get_height() * image_icone.get_height() / 100))\r\n        #surface_victoire.blit(image_menu_principal, (screen.get_width() / 2 - image_menu_principal.get_width() / 2, screen.get_height() * 3 / 10 - image_menu_principal.get_height() / 2))\r\n        #hud.append(surface_victoire)\r\n\r\n        hud.append(surface_victoire_titre)\r\n        hud.append(Bouton(screen, screen.get_width() / 2, screen.get_height() * 5 / 20, screen.get_width() / 5,screen.get_height() / 15, \"Menu principal\", menu_principal, police))\r\n\r\n    pygame.display.flip()\r\n\r\n    dt = clock.tick(max_fps) / 1000\r\n    dt_pointer = [dt]\r\n    screen_pointer = [screen]\r\n    liste_fourmis_pointeur = [liste_fourmis]\r\n    liste_items_pointeur = [liste_items]\r\n    #print(dt)\r\n\r\npygame.quit()\r\n#sys.exit()
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/jeu.py b/jeu.py
+--- a/jeu.py	(revision e6ec16a0d5ec5c769393e58400bf2500c3790deb)
++++ b/jeu.py	(date 1742560103265)
+@@ -1,7 +1,6 @@
+ #import sys
+ from types import NoneType
+ 
+-from carte import MapApp
+ import pygame
+ from classes import *
+ 
+@@ -48,8 +47,8 @@
+ 
+     print('Nouvelle parite')
+     titre="test"
+-    with open("parties_sauvegardees/"+".txt", "w") as fichier:
+-        fichier.write("Created using write mode.")
++    # with open("parties_sauvegardees/"+".txt", "w") as fichier:
++    #     fichier.write("Created using write mode.")
+ 
+     colonie_joueur=Colonie("noire",dt_pointer,screen_pointer,liste_fourmis_pointeur,600,600,liste_items_pointeur)
+     colonie_ennemie=Colonie("rouge",dt_pointer,screen_pointer,liste_fourmis_pointeur,1000,200,liste_items_pointeur)
+Index: carte.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import pygame\r\nimport os\r\nfrom numpy import array\r\nfrom config import WHITE, BLACK, YELLOW, RED, BLUE\r\nfrom camera import Camera\r\n\r\nclass Tile:\r\n    def __init__(self, x, y, width, color, height, is_border=False):\r\n        self.x = x\r\n        self.y = y\r\n        self.width = width\r\n        self.height = height\r\n        self.color = WHITE\r\n        self.is_border = is_border\r\n\r\n    def toggle_color(self):\r\n        if self.color == WHITE:\r\n            self.color = BLUE\r\n        else:\r\n            self.color = WHITE\r\n\r\n    def draw(self, screen, rect):\r\n        pygame.draw.rect(screen, self.color, rect)\r\n        if not self.is_border:\r\n            pygame.draw.rect(screen, BLACK, rect, 1)\r\n\r\nclass MapApp:\r\n    def __init__(self):\r\n        pygame.init()\r\n        self.running = True\r\n        self.size = (1280, 720)\r\n        self.screen = pygame.display.set_mode(self.size, pygame.SCALED)\r\n        pygame.display.set_caption(\"Tile Map with Camera\")\r\n\r\n        self.TILE_SIZE = 32\r\n        self.MAP_WIDTH = 100\r\n        self.MAP_HEIGHT = 100\r\n        self.map_data = [[Tile(x, y, self.TILE_SIZE, self.TILE_SIZE, WHITE) for x in range(self.MAP_WIDTH)] for y in range(self.MAP_HEIGHT)]\r\n        for y in range(self.MAP_HEIGHT):\r\n            for x in range(self.MAP_WIDTH):\r\n                if x == 0 or y == 0 or x == self.MAP_WIDTH - 1 or y == self.MAP_HEIGHT - 1:\r\n                    self.map_data[y][x].is_border = True\r\n                    self.map_data[y][x].color = RED\r\n\r\n        self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)\r\n\r\n    def draw_top_bar(self):\r\n        pygame.draw.rect(self.screen, BLACK, (0, 0, self.size[0], 50))\r\n        font = pygame.font.Font(None, 24)\r\n        camera_info = font.render(f'Camera X: {int(self.camera.x)}, Camera Y: {int(self.camera.y)}', True, YELLOW)\r\n        zoom_info = font.render(f'Zoom: {self.camera.get_zoom() * 100:.2f}%', True, YELLOW)\r\n        self.screen.blit(camera_info, (10, 10))\r\n        self.screen.blit(zoom_info, (10, 30))\r\n\r\n    def draw_tiles(self):\r\n        tile_size = int(self.TILE_SIZE * self.camera.zoom)\r\n        start_x = max(0, self.camera.x // tile_size)\r\n        start_y = max(0, self.camera.y // tile_size)\r\n        end_x = min((self.camera.x + self.size[0]) // tile_size + 1, self.MAP_WIDTH)\r\n        end_y = min((self.camera.y + self.size[1]) // tile_size + 1, self.MAP_HEIGHT)\r\n\r\n        for y in range(int(start_y), int(end_y)):\r\n            for x in range(int(start_x), int(end_x)):\r\n                tile = self.map_data[y][x]\r\n                tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)\r\n                tile.draw(self.screen, self.camera.apply(tile_rect))\r\n\r\n    def handle_event(self, event):\r\n        if event.type == pygame.QUIT:\r\n            self.running = False\r\n\r\n        elif event.type == pygame.MOUSEBUTTONDOWN:\r\n            if event.button == 1:  # Left click\r\n                self.camera.start_drag(*event.pos)\r\n                tile_size = int(self.TILE_SIZE * self.camera.zoom)\r\n                grid_x = int((event.pos[0] + self.camera.x) // tile_size)\r\n                grid_y = int((event.pos[1] + self.camera.y - 50) // tile_size)\r\n                if 0 <= grid_x < self.MAP_WIDTH and 0 <= grid_y < self.MAP_HEIGHT:\r\n                    self.map_data[grid_y][grid_x].toggle_color()\r\n            elif event.button == 4:  # Scroll up\r\n                self.camera.zoom_camera(*event.pos, \"in\")\r\n            elif event.button == 5:  # Scroll down\r\n                self.camera.zoom_camera(*event.pos, \"out\")\r\n\r\n        elif event.type == pygame.MOUSEBUTTONUP:\r\n            if event.button == 1:\r\n                self.camera.stop_drag()\r\n\r\n        elif event.type == pygame.MOUSEMOTION:\r\n            self.camera.drag(*event.pos)\r\n\r\n    def run(self):\r\n        clock = pygame.time.Clock()\r\n        while self.running:\r\n            for event in pygame.event.get():\r\n                self.handle_event(event)\r\n            self.screen.fill(BLACK)\r\n            self.draw_tiles()\r\n            self.draw_top_bar()\r\n            pygame.display.flip()\r\n            clock.tick(120)\r\n        pygame.quit()\r\n\r\nif __name__ == \"__main__\":\r\n    app = MapApp()\r\n    app.run()
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/carte.py b/carte.py
+--- a/carte.py	(revision e6ec16a0d5ec5c769393e58400bf2500c3790deb)
++++ b/carte.py	(date 1742560022964)
+@@ -3,46 +3,27 @@
+ from numpy import array
+ from config import WHITE, BLACK, YELLOW, RED, BLUE
+ from camera import Camera
+-
+-class Tile:
+-    def __init__(self, x, y, width, color, height, is_border=False):
+-        self.x = x
+-        self.y = y
+-        self.width = width
+-        self.height = height
+-        self.color = WHITE
+-        self.is_border = is_border
++from generation_map import GenerationMap
++from tuile import Tuile
+ 
+-    def toggle_color(self):
+-        if self.color == WHITE:
+-            self.color = BLUE
+-        else:
+-            self.color = WHITE
+-
+-    def draw(self, screen, rect):
+-        pygame.draw.rect(screen, self.color, rect)
+-        if not self.is_border:
+-            pygame.draw.rect(screen, BLACK, rect, 1)
+-
+-class MapApp:
++class Carte:
+     def __init__(self):
+         pygame.init()
+         self.running = True
+         self.size = (1280, 720)
+         self.screen = pygame.display.set_mode(self.size, pygame.SCALED)
+-        pygame.display.set_caption("Tile Map with Camera")
++        pygame.display.set_caption("Guerre des fourmilières")
+ 
+         self.TILE_SIZE = 32
+         self.MAP_WIDTH = 100
+         self.MAP_HEIGHT = 100
+-        self.map_data = [[Tile(x, y, self.TILE_SIZE, self.TILE_SIZE, WHITE) for x in range(self.MAP_WIDTH)] for y in range(self.MAP_HEIGHT)]
+-        for y in range(self.MAP_HEIGHT):
+-            for x in range(self.MAP_WIDTH):
+-                if x == 0 or y == 0 or x == self.MAP_WIDTH - 1 or y == self.MAP_HEIGHT - 1:
+-                    self.map_data[y][x].is_border = True
+-                    self.map_data[y][x].color = RED
++        self.gen_map = GenerationMap(self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
++        self.map_data = self.gen_map.liste_tuiles()
++
+ 
+         self.camera = Camera(self.size[0], self.size[1], self.MAP_WIDTH, self.MAP_HEIGHT, self.TILE_SIZE)
++        self.surface_map = pygame.Surface((self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE))
++
+ 
+     def draw_top_bar(self):
+         pygame.draw.rect(self.screen, BLACK, (0, 0, self.size[0], 50))
+@@ -54,10 +35,7 @@
+ 
+     def draw_tiles(self):
+         tile_size = int(self.TILE_SIZE * self.camera.zoom)
+-        start_x = max(0, self.camera.x // tile_size)
+-        start_y = max(0, self.camera.y // tile_size)
+-        end_x = min((self.camera.x + self.size[0]) // tile_size + 1, self.MAP_WIDTH)
+-        end_y = min((self.camera.y + self.size[1]) // tile_size + 1, self.MAP_HEIGHT)
++        start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
+ 
+         for y in range(int(start_y), int(end_y)):
+             for x in range(int(start_x), int(end_x)):
+@@ -65,6 +43,15 @@
+                 tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+                 tile.draw(self.screen, self.camera.apply(tile_rect))
+ 
++
++    def draw_tiles_experimental(self):
++        surface_zoomee = pygame.transform.scale(self.surface_map,(
++                    int(self.MAP_WIDTH * self.TILE_SIZE * self.camera.zoom),
++                    int(self.MAP_HEIGHT * self.TILE_SIZE * self.camera.zoom)
++                    )
++        )
++        self.screen.blit(surface_zoomee, (-self.camera.x, -self.camera.y + 50))
++
+     def handle_event(self, event):
+         if event.type == pygame.QUIT:
+             self.running = False
+@@ -75,8 +62,10 @@
+                 tile_size = int(self.TILE_SIZE * self.camera.zoom)
+                 grid_x = int((event.pos[0] + self.camera.x) // tile_size)
+                 grid_y = int((event.pos[1] + self.camera.y - 50) // tile_size)
++
+                 if 0 <= grid_x < self.MAP_WIDTH and 0 <= grid_y < self.MAP_HEIGHT:
+                     self.map_data[grid_y][grid_x].toggle_color()
++
+             elif event.button == 4:  # Scroll up
+                 self.camera.zoom_camera(*event.pos, "in")
+             elif event.button == 5:  # Scroll down
+@@ -89,6 +78,14 @@
+         elif event.type == pygame.MOUSEMOTION:
+             self.camera.drag(*event.pos)
+ 
++    def trouver_tuiles_visibles(self) -> tuple:
++        tile_size = int(self.TILE_SIZE * self.camera.zoom)
++        start_x = max(0, self.camera.x // tile_size)
++        start_y = max(0, self.camera.y // tile_size)
++        end_x = min((self.camera.x + self.size[0]) // tile_size + 1, self.MAP_WIDTH)
++        end_y = min((self.camera.y + self.size[1]) // tile_size + 1, self.MAP_HEIGHT)
++        return start_x, start_y, end_x, end_y
++
+     def run(self):
+         clock = pygame.time.Clock()
+         while self.running:
+@@ -98,9 +95,9 @@
+             self.draw_tiles()
+             self.draw_top_bar()
+             pygame.display.flip()
+-            clock.tick(120)
++            clock.tick(60)
+         pygame.quit()
+ 
+ if __name__ == "__main__":
+-    app = MapApp()
+-    app.run()
+\ No newline at end of file
++    carte = Carte()
++    carte.run()
+\ No newline at end of file
