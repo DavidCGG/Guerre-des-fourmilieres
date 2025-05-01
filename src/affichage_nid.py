@@ -1,7 +1,8 @@
 import pygame
+import math
 from camera import Camera
 from generation_graphe import generer_graphe
-from config import trouver_font
+from config import trouver_font,trouver_img
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 #Variables globales
@@ -20,6 +21,8 @@ class Nid:
     def __init__(self, graphe):
         self.graphe = graphe
         self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
+        self.image_terre = pygame.image.load(trouver_img("terre.png"))
+        self.image_terre = pygame.transform.scale(self.image_terre, (self.image_terre.get_width() * 2, self.image_terre.get_height() * 2))
 
     def draw(self, screen) -> None:
         """
@@ -39,7 +42,9 @@ class Nid:
                 None
             """
             rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
+
             rectangle_sol = pygame.Rect(0, HAUTEUR_SOL, MAP_LIMIT_X, MAP_LIMIT_Y - HAUTEUR_SOL)
+
 
             for i in range(2):
                 rect = rectangle_ciel if i == 0 else rectangle_sol
@@ -48,6 +53,22 @@ class Nid:
                 new_point = self.camera.apply((rect.x, rect.y))
                 new_rect = pygame.Rect(new_point[0], new_point[1], rect.width * self.camera.zoom, rect.height * self.camera.zoom)
                 pygame.draw.rect(screen, color, new_rect)
+
+
+            tuilesX = math.ceil(MAP_LIMIT_X / self.image_terre.get_width())
+            tuilesY = math.ceil((MAP_LIMIT_Y - HAUTEUR_SOL) / self.image_terre.get_height())
+
+            new_point = self.camera.apply((rectangle_sol.x, rectangle_sol.y))
+            new_rect = pygame.Rect(new_point[0], new_point[1], rectangle_sol.width * self.camera.zoom,rectangle_sol.height * self.camera.zoom)
+
+            imageScaled = pygame.transform.scale(self.image_terre, (int(self.image_terre.get_width() * 2 * self.camera.zoom), int(self.image_terre.get_height() * 2 * self.camera.zoom)))
+
+            for x in range(tuilesX):
+                for y in range(tuilesY):
+                    screen.blit(imageScaled, (x * imageScaled.get_width() + new_rect.x, y * imageScaled.get_height() + new_rect.y))
+
+
+
 
         def draw_tunnels() -> None:
             """
@@ -60,7 +81,7 @@ class Nid:
             for tunnel in self.graphe.tunnels:
                 depart = self.camera.apply(tunnel.depart.noeud.coord)
                 arrivee = self.camera.apply(tunnel.arrivee.noeud.coord)
-                pygame.draw.line(screen, (0, 0, 0), depart, arrivee, int(tunnel.largeur * self.camera.zoom))
+                pygame.draw.line(screen, (68, 40, 21), depart, arrivee, int(tunnel.largeur * self.camera.zoom))
 
         def draw_salles() -> None:
             """
@@ -72,7 +93,11 @@ class Nid:
             """
             for salle in self.graphe.salles:
                 pos = self.camera.apply(salle.noeud.coord)
-                pygame.draw.circle(screen, (0, 0, 0), pos, int(salle.type.value[0] * self.camera.zoom))
+                pygame.draw.circle(screen, (68, 40, 21), pos, int(salle.type.value[0] * self.camera.zoom))
+                if len(salle.type.value) == 3:
+                    imageSalle = pygame.image.load(salle.type.value[2])
+                    imageSalle = pygame.transform.scale(imageSalle, (int(salle.type.value[0] * 2 * self.camera.zoom), int(salle.type.value[0] * 2 * self.camera.zoom)))
+                    screen.blit(imageSalle,(pos[0] - imageSalle.get_rect()[2] / 2, pos[1] - imageSalle.get_rect()[3] / 2))
 
         draw_background()
         draw_tunnels()

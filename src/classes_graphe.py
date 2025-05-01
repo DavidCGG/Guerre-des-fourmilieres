@@ -1,6 +1,9 @@
 from enum import Enum
 from pygame import Vector2
 
+from src.config import trouver_img
+
+
 class NoeudGeneration:
     """
     Représente le noeud d'un graphe
@@ -81,8 +84,9 @@ class TypeSalle(Enum):
 
     INDEFINI = (40, "indéfini")
     INTERSECTION = (40, "intersection")
-    SALLE = (120, "salle")
+    SALLE = (128, "salle",trouver_img("salle_vide.png"))
     SORTIE = (40, "sortie")
+    ENCLUME = (128, "enclume",trouver_img("enclume.png"))
 
 class Salle:
     """
