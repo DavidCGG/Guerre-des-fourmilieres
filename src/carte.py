@@ -14,10 +14,10 @@ from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 pygame.font.init()
 police = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22)
-couleurs_colonies = [RED, BLUE, PURPLE, YELLOW]
+couleurs_possibles = [BLACK, YELLOW, RED, PURPLE, BLUE, AQUA]
 
 class Carte:
-    def __init__(self):
+    def __init__(self,nb_colonies_nids):
         self.TILE_SIZE = 32
         self.MAP_WIDTH = 100
         self.MAP_HEIGHT = 100
@@ -36,6 +36,11 @@ class Carte:
 
         self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
+
+        self.nb_colonies_nids = nb_colonies_nids
+        self.couleurs_colonies=[]
+        for i in range(self.nb_colonies_nids):
+            self.couleurs_colonies.append(couleurs_possibles[i])
 
         self.generation_map()
 
@@ -82,7 +87,7 @@ class Carte:
                     if self.map_data[y][x].tuile_ressource:
                         self.tuiles_ressources.append(self.map_data[y][x])
 
-        def placer_colonies(min_dist=5, region_size=10):
+        def placer_colonies(region_size, min_dist):
             # On definit des regions aux coins de la carte
             curr_couleur = 0
             regions = [
@@ -94,19 +99,20 @@ class Carte:
 
             # On les placent a l'interieur de ces regions aleatoirement
             for region_x, region_y in regions:
-                placed = False
-                while not placed:
+                #placed = False
+                while len(self.tuiles_debut)<self.nb_colonies_nids:
                     x = random.randint(region_x, region_x + region_size - 1)
                     y = random.randint(region_y, region_y + region_size - 1)
                     if isinstance(self.map_data[y][x], (Terre, Montagne)):
                         self.map_data[y][x].tuile_debut = True
-                        self.map_data[y][x].color = couleurs_colonies[curr_couleur]
-                        placed = True
+                        self.map_data[y][x].color = self.couleurs_colonies[curr_couleur]
+                        #placed = True
                         curr_couleur += 1
                         self.tuiles_debut.append((x, y))
+                        #print(len(self.tuiles_debut))
         
         def set_tuile_debut():
-            self.tuile_debut = self.tuiles_debut[random.randint(0, 3)]
+            self.tuile_debut = self.tuiles_debut[random.randint(0, self.nb_colonies_nids-1)]
             self.colonie_joeur = Colonie(self.tuile_debut, self.map_data)
 
             index_tuile_debut = self.tuiles_debut.index(self.tuile_debut)
@@ -116,7 +122,7 @@ class Carte:
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(region_size=15, min_dist=20)
+        placer_colonies(region_size=70, min_dist=30)
         set_tuile_debut()
 
     def draw(self, screen):

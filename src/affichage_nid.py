@@ -131,7 +131,7 @@ class Nid:
         elif event.type == pygame.MOUSEMOTION:
             self.camera.drag(*event.pos)
 
-def chargement(screen: pygame.Surface) -> list:
+def chargement(screen: pygame.Surface,nb_nids) -> list:
     """
     Créer tous les graphes du jeu et affiche un écran de chargement
     Args:
@@ -159,7 +159,7 @@ def chargement(screen: pygame.Surface) -> list:
         pygame.display.update()
 
     graphes = []
-    total = 4
+    total = nb_nids
 
     font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 48)
     small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 32)

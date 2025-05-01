@@ -2,8 +2,11 @@ import math
 import random
 import uuid
 from abc import ABC, abstractmethod
+from enum import Enum
+
 import pygame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
+from src.config import trouver_img
 from tuile import Tuile, Eau
 
 class FourmiTitleScreen():
@@ -114,16 +117,19 @@ class FourmiTitleScreenSprite(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (width, height))
         self.rect = self.image.get_rect(center=(self.fourmi.centre_x + width/2, self.fourmi.centre_y + height/2))
 
+class CouleurFourmi(Enum):
+    NOIRE = (trouver_img("fourmi_noire.png"))
+    ROUGE = (trouver_img("fourmi_rouge.png"))
+
 class Fourmis(ABC):
-    def __init__(self, hp: int, atk: int, scale,  x0, y0):
+    def __init__(self, hp: int, atk: int, x0, y0, size, couleur):
         super().__init__()
         self.centre_y = y0
         self.centre_x = x0
-        self.scale = scale
         self.target_x = x0
         self.target_y = y0
         self.base_speed = 2
-        self.speed = self.base_speed * self.scale
+        self.speed = self.base_speed
         self.path = None
         self.moving = False
         self.facing = 0 # 0 : droite, 1 : gauche
@@ -133,6 +139,10 @@ class Fourmis(ABC):
         self.height = 0
         self.pause_timer = 0
         self.tient_ressource = None
+        self.size = size
+        self.couleur = couleur
+        self.image = pygame.image.load(self.couleur.value)
+        self.image = pygame.transform.scale(self.image,(self.image.get_width() * self.size, self.image.get_height() * self.size))
 
     @abstractmethod
     def attack(self, other):
@@ -145,6 +155,7 @@ class Fourmis(ABC):
         return
 
     def process(self, dt, map_data):
+        #print("Pos:"+str(self.centre_x)+", "+str(self.centre_y))
         if self.target_x != self.centre_x or self.target_y != self.centre_y:
             self.goto_target(dt, map_data)
 
@@ -291,23 +302,28 @@ class Fourmis(ABC):
     def get_tuile(self):
         return int(self.centre_x), int(self.centre_y)
 
+    def draw(self,camera,screen):
+        #print(self.couleur)
+        pos = camera.apply((self.centre_x,self.centre_y))
+        image_transformee = pygame.transform.scale(self.image, (int(self.image.get_width() * 2 * camera.zoom), int(self.image.get_height() * 2 * camera.zoom)))
+        screen.blit(image_transformee, (pos[0] - image_transformee.get_rect()[2] / 2, pos[1] - image_transformee.get_rect()[3] / 2))
+
 
 class Ouvriere(Fourmis):
-    def __init__(self, x0, y0, scale=1.0):
-        super().__init__(hp=10, atk=2, scale=scale, x0=x0, y0=y0)
+    def __init__(self, x0, y0, couleur):
+        super().__init__(hp=10, atk=2, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 3
-        self.speed = self.base_speed * self.scale
-        self.size = 1
+        self.speed = self.base_speed
+
 
     def attack(self, other):
         other.hp -= self.atk
 
 class Soldat(Fourmis):
-    def __init__(self, x0, y0, scale=1.0):
-        super().__init__(hp=25, atk=5, scale=scale, x0=x0, y0=y0)
+    def __init__(self, x0, y0, couleur):
+        super().__init__(hp=25, atk=5, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 1.5
-        self.speed = self.base_speed * self.scale
-        self.size = 1 # prend 2 places dans le groupe
+        self.speed = self.base_speed
 
     def attack(self, other):
         other.hp -= self.atk
