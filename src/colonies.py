@@ -11,6 +11,7 @@ from src.fourmi import CouleurFourmi
 
 class Colonie:
     def __init__(self, tuile_debut, map_data):
+        #self.graphe = graphe
         #print("a")
         self.sprite_sheet_ouvr = pygame.image.load(trouver_img("ouvriere_sheet.png")).convert_alpha()
         self.sprite_sheet_sold = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()

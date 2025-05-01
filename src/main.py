@@ -146,8 +146,6 @@ def draw() -> None:
         draw_menu_principal()
     elif in_carte and not in_menu_secondaire:
         carte_jeu.draw(screen)
-        for fourmi in carte_jeu.colonie_joeur.fourmis:
-            fourmi.draw(carte_jeu.camera,screen)
     elif in_nid and not in_menu_secondaire:
         current_nid.draw(screen)
 
@@ -319,7 +317,7 @@ def process() -> None:
     dt = clock.tick(60)
 
     if not in_menu_principal:
-        carte_jeu.colonie_joeur.process(clock.get_time())
+        carte_jeu.colonies[0].process(clock.get_time())
 
     if in_menu_principal:
         fourmi.random_mouvement(dt)

@@ -297,13 +297,6 @@ class Fourmis(ABC):
     def get_tuile(self):
         return int(self.centre_x), int(self.centre_y)
 
-    def draw(self,camera,screen):
-        #print(self.couleur)
-        pos = camera.apply((self.centre_x,self.centre_y))
-        image_transformee = pygame.transform.scale(self.image, (int(self.image.get_width() * 2 * camera.zoom), int(self.image.get_height() * 2 * camera.zoom)))
-        screen.blit(image_transformee, (pos[0] - image_transformee.get_rect()[2] / 2, pos[1] - image_transformee.get_rect()[3] / 2))
-
-
 class Ouvriere(Fourmis):
     def __init__(self, x0, y0, couleur):
         super().__init__(hp=10, atk=2, x0=x0, y0=y0, size=2,couleur=couleur)

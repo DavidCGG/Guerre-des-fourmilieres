@@ -29,8 +29,8 @@ class Carte:
         self.tuiles_ressources = [] # liste des tuiles ayant une ressource
         
         self.tuiles_debut = []  # liste des tuiles de debut de chaque colonie
-        self.tuile_debut = None
-        self.colonie_joeur = None
+        #self.tuile_debut_joueur = None
+        self.colonies = []
 
         self.liste_boutons = []
 
@@ -104,33 +104,34 @@ class Carte:
                     x = random.randint(region_x, region_x + region_size - 1)
                     y = random.randint(region_y, region_y + region_size - 1)
                     if isinstance(self.map_data[y][x], (Terre, Montagne)):
-                        self.map_data[y][x].tuile_debut = True
+                        self.map_data[y][x].tuile_debut_joueur = True
                         self.map_data[y][x].color = self.couleurs_colonies[curr_couleur]
                         #placed = True
                         curr_couleur += 1
                         self.tuiles_debut.append((x, y))
                         #print(len(self.tuiles_debut))
         
-        def set_tuile_debut():
-            self.tuile_debut = self.tuiles_debut[random.randint(0, self.nb_colonies_nids-1)]
-            self.colonie_joeur = Colonie(self.tuile_debut, self.map_data)
+        def set_tuiles_debut():
+            #self.tuile_debut_joueur = self.tuiles_debut[random.randint(0, self.nb_colonies_nids - 1)]
+            for i in range(self.nb_colonies_nids):
+                self.colonies.append(Colonie(self.tuiles_debut[i], self.map_data))
 
-            index_tuile_debut = self.tuiles_debut.index(self.tuile_debut)
-            temp = self.tuiles_debut[0]
-            self.tuiles_debut[0] = self.tuile_debut
-            self.tuiles_debut[index_tuile_debut] = temp
+            #index_tuile_debut = self.tuiles_debut.index(self.tuile_debut_joueur)
+            #temp = self.tuiles_debut[0]
+            #self.tuiles_debut[0] = self.tuile_debut_joueur
+            #self.tuiles_debut[index_tuile_debut] = temp
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(region_size=70, min_dist=30)
-        set_tuile_debut()
+        placer_colonies(region_size=20, min_dist=50)
+        set_tuiles_debut()
 
     def draw(self, screen):
         def etoile_tuile_debut():
             """Dessine une étoile sur la tuile de début de la colonie"""
             tile_size = (self.TILE_SIZE * self.camera.zoom)
 
-            x, y = self.colonie_joeur.tuile_debut
+            x, y = self.colonies[0].tuile_debut
             rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
 
             if screen.get_rect().colliderect(self.camera.apply_rect(rect)):
@@ -152,15 +153,15 @@ class Carte:
                     tile = self.map_data[y][x]
                     tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
                     tile.draw(screen, self.camera.apply_rect(tile_rect), self.grid_mode)
-                    if self.colonie_joeur.fourmis_selection:
+                    if self.colonies[0].fourmis_selection:
                         if self.hover_tuile == (x, y):
                             pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
-                        if self.colonie_joeur.fourmis_selection.get_tuile() == (x, y):
+                        if self.colonies[0].fourmis_selection.get_tuile() == (x, y):
                             pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
-                    if self.colonie_joeur.groupe_selection:
+                    if self.colonies[0].groupe_selection:
                         if self.hover_tuile == (x, y):
                             pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
-                        if self.colonie_joeur.groupe_selection.get_tuile() == (x, y):
+                        if self.colonies[0].groupe_selection.get_tuile() == (x, y):
                             pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
         
         screen.fill(BLACK)
@@ -169,49 +170,49 @@ class Carte:
         etoile_tuile_debut()
 
         tile_size = int(self.TILE_SIZE * self.camera.zoom)
-        self.colonie_joeur.render_ants(tile_size, screen, self.camera)
+        self.colonies[0].render_ants(tile_size, screen, self.camera)
 
-        if self.colonie_joeur.menu_colonie_ouvert:
-            self.colonie_joeur.menu_colonie(screen)
+        if self.colonies[0].menu_colonie_ouvert:
+            self.colonies[0].menu_colonie(screen)
 
-        if self.colonie_joeur.menu_fourmis_ouvert and self.colonie_joeur.menu_colonie_ouvert:
-            self.colonie_joeur.menu_fourmis(screen)
+        if self.colonies[0].menu_fourmis_ouvert and self.colonies[0].menu_colonie_ouvert:
+            self.colonies[0].menu_fourmis(screen)
 
     #retourne l'index de la colonie cliquée avec un right click
     def handle_event(self, event, screen) -> int:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
-                self.colonie_joeur.menu_colonie_ouvert = not self.colonie_joeur.menu_colonie_ouvert
+                self.colonies[0].menu_colonie_ouvert = not self.colonies[0].menu_colonie_ouvert
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             tile_x, tile_y = self.get_tuile(event)
             if event.button == 1:  #Left click
                 self.camera.start_drag(*event.pos)
-                self.colonie_joeur.handle_click(event.pos, tile_x, tile_y, screen)
-                if (tile_x, tile_y) == self.tuile_debut:
-                    self.colonie_joeur.menu_colonie_ouvert = not self.colonie_joeur.menu_colonie_ouvert
+                self.colonies[0].handle_click(event.pos, tile_x, tile_y, screen)
+                if (tile_x, tile_y) == self.colonies[0].tuile_debut:
+                    self.colonies[0].menu_colonie_ouvert = not self.colonies[0].menu_colonie_ouvert
 
             if event.button == 3:  #Right click
-                if self.colonie_joeur.fourmis_selection:
-                    self.colonie_joeur.fourmis_selection.set_target(tile_x, tile_y, self.map_data)
-                    self.colonie_joeur.fourmis_selection = None
+                if self.colonies[0].fourmis_selection:
+                    self.colonies[0].fourmis_selection.set_target(tile_x, tile_y, self.map_data)
+                    self.colonies[0].fourmis_selection = None
                     self.hover_tuile = None
-                elif self.colonie_joeur.groupe_selection:
-                    self.colonie_joeur.groupe_selection.set_target(tile_x, tile_y, self.map_data)
-                    self.colonie_joeur.groupe_selection = None
+                elif self.colonies[0].groupe_selection:
+                    self.colonies[0].groupe_selection.set_target(tile_x, tile_y, self.map_data)
+                    self.colonies[0].groupe_selection = None
                     self.hover_tuile = None
 
                 elif (tile_x, tile_y) in self.tuiles_debut:
                     return self.tuiles_debut.index((tile_x, tile_y))
 
             elif event.button == 4: #Scroll up
-                self.colonie_joeur.handle_scroll("up", event.pos)
-                if not self.colonie_joeur.scrolling:
+                self.colonies[0].handle_scroll("up", event.pos)
+                if not self.colonies[0].scrolling:
                     self.camera.zoom_camera(*event.pos, "in")
 
             elif event.button == 5: #Scroll down
-                self.colonie_joeur.handle_scroll("down", event.pos)
-                if not self.colonie_joeur.scrolling:
+                self.colonies[0].handle_scroll("down", event.pos)
+                if not self.colonies[0].scrolling:
                     self.camera.zoom_camera(*event.pos, "out")
 
         elif event.type == pygame.MOUSEBUTTONUP:
@@ -220,15 +221,15 @@ class Carte:
 
         elif event.type == pygame.MOUSEMOTION:
             self.camera.drag(*event.pos)
-            self.colonie_joeur.handle_hover(event.pos)
-            if self.colonie_joeur.fourmis_selection is not None:
+            self.colonies[0].handle_hover(event.pos)
+            if self.colonies[0].fourmis_selection is not None:
                 self.hover_tuile = self.get_tuile(event)
-            elif self.colonie_joeur.groupe_selection is not None:
+            elif self.colonies[0].groupe_selection is not None:
                 self.hover_tuile = self.get_tuile(event)
     
     def set_camera_tuile_debut(self):
         """Place la camera sur la tuile de debut de la colonie"""
-        x, y = self.colonie_joeur.tuile_debut
+        x, y = self.colonies[0].tuile_debut
         tile_size = (self.TILE_SIZE * self.camera.zoom)
         self.camera.x = x * tile_size - SCREEN_WIDTH / 2 + tile_size/2
         self.camera.y = y * tile_size - SCREEN_HEIGHT / 2 + tile_size/2

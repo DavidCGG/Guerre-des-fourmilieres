@@ -4,8 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis">
+    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="commentaire">
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_aqua.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_blanche.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_bleue.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_jaune.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_mauve.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_orange.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_verte.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/metal.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_aqua.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_blanche.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_bleue.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_jaune.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_mauve.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_noire.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_orange.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_rouge.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_verte.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_noire.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_noire.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_rouge.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_rouge.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/metal.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/metal.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/carte.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/carte.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/colonies.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/colonies.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/fourmi.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/fourmi.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -58,38 +81,38 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Python.Fourmis.executor&quot;: &quot;Run&quot;,
-    &quot;Python.__init__.executor&quot;: &quot;Run&quot;,
-    &quot;Python.affichage_nid.executor&quot;: &quot;Run&quot;,
-    &quot;Python.camera.executor&quot;: &quot;Run&quot;,
-    &quot;Python.carte.executor&quot;: &quot;Run&quot;,
-    &quot;Python.classes.executor&quot;: &quot;Run&quot;,
-    &quot;Python.classes_graphe.executor&quot;: &quot;Run&quot;,
-    &quot;Python.colonies.executor&quot;: &quot;Run&quot;,
-    &quot;Python.fenetre.executor&quot;: &quot;Run&quot;,
-    &quot;Python.jeu.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.setup.executor&quot;: &quot;Run&quot;,
-    &quot;Python.testGenerationNid.executor&quot;: &quot;Run&quot;,
-    &quot;Python.tester.executor&quot;: &quot;Run&quot;,
-    &quot;Python.tuile.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/david/Guerre-des-fourmilieres&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Python.Fourmis.executor": "Run",
+    "Python.__init__.executor": "Run",
+    "Python.affichage_nid.executor": "Run",
+    "Python.camera.executor": "Run",
+    "Python.carte.executor": "Run",
+    "Python.classes.executor": "Run",
+    "Python.classes_graphe.executor": "Run",
+    "Python.colonies.executor": "Run",
+    "Python.fenetre.executor": "Run",
+    "Python.jeu.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.setup.executor": "Run",
+    "Python.testGenerationNid.executor": "Run",
+    "Python.tester.executor": "Run",
+    "Python.tuile.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "/home/david/Guerre-des-fourmilieres/assets/images/aseprites",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/assets/images/aseprites" />
@@ -238,7 +261,23 @@
       <option name="project" value="LOCAL" />
       <updated>1746126690000</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis">
+      <option name="closed" value="true" />
+      <created>1746126821725</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1746126821725</updated>
+    </task>
+    <task id="LOCAL-00007" summary="commentaire">
+      <option name="closed" value="true" />
+      <created>1746126948153</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1746126948153</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -273,8 +312,10 @@
     <MESSAGE value="changer version d'arcade ecrite dans README.md de 3.0.0.dev42 -&gt; 3.0 venant de requirements.txt" />
     <MESSAGE value="Ajouter draw d'image pour salle" />
     <MESSAGE value="Texture draw pour la terre a l'intérieur du nid. Nouveaux dessins pour enclume et meule" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/main'" />
     <MESSAGE value="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis" />
-    <option name="LAST_COMMIT_MESSAGE" value="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis" />
+    <MESSAGE value="commentaire" />
+    <option name="LAST_COMMIT_MESSAGE" value="commentaire" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
