@@ -215,22 +215,17 @@ class Fourmis(ABC):
             return sorted_arr
         
         def get_voisins(tuile):
-            voisins = []
+            directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Gauche, Droite, Haut, Bas
+            voisins = [] #liste des tuiles adjacentes qui ne sont pas de l'eau
 
-            if(tuile.x - 1 >= 0):
-                voisins.append(map_data[tuile.y][tuile.x - 1])
-            if(tuile.x + 1 < len(map_data[0])):
-                voisins.append(map_data[tuile.y][tuile.x + 1])
-            if(tuile.y - 1 >= 0):
-                voisins.append(map_data[tuile.y - 1][tuile.x])
-            if(tuile.y + 1 < len(map_data)):
-                voisins.append(map_data[tuile.y + 1][tuile.x])
+            for dx, dy in directions:
+                nx, ny = tuile.x + dx, tuile.y + dy
+                if 0 <= nx < len(map_data[0]) and 0 <= ny < len(map_data):
+                    voisin = map_data[ny][nx]
+                    if not isinstance(voisin, Eau):
+                        voisins.append(voisin)
 
-            for voisin in voisins:
-                if isinstance(voisin, Eau):
-                    voisins.remove(voisin)
-
-            return voisins  
+            return voisins
 
         def calculate_distance(tuile1, tuile2):
             x1 = tuile1.x
@@ -278,7 +273,7 @@ class Fourmis(ABC):
             queue.pop(0)
 
         #Reconstruction du chemin
-        chemin: list[Tuile] = [] #le chemin pris pour arriver à la fin
+        chemin: list[tuple[int, int]] = [] #le chemin pris pour arriver à la fin
         current = arrivee
 
         while current != None:
