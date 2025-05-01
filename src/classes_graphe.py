@@ -81,8 +81,9 @@ class TypeSalle(Enum):
 
     INDEFINI = (40, "indéfini")
     INTERSECTION = (40, "intersection")
-    SALLE = (120, "salle")
+    SALLE = (120, "salle","salle_vide.png")
     SORTIE = (40, "sortie")
+    ENCLUME = (120, "enclume","enclume.png")
 
 class Salle:
     """

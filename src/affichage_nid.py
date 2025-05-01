@@ -1,7 +1,7 @@
 import pygame
 from camera import Camera
 from generation_graphe import generer_graphe
-from config import trouver_font
+from config import trouver_font,trouver_img
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 #Variables globales
@@ -73,6 +73,10 @@ class Nid:
             for salle in self.graphe.salles:
                 pos = self.camera.apply(salle.noeud.coord)
                 pygame.draw.circle(screen, (0, 0, 0), pos, int(salle.type.value[0] * self.camera.zoom))
+                if len(salle.type.value) == 3:
+                    imageSalle = pygame.image.load(trouver_img(salle.type.value[2]))
+                    imageSalle = pygame.transform.scale(imageSalle, (int(salle.type.value[0] * 2 * self.camera.zoom), int(salle.type.value[0] * 2 * self.camera.zoom)))
+                    screen.blit(imageSalle,(pos[0] - imageSalle.get_rect()[2] / 2, pos[1] - imageSalle.get_rect()[3] / 2))
 
         draw_background()
         draw_tunnels()
