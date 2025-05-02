@@ -15,6 +15,7 @@ RED = pygame.Color("red")
 PURPLE = pygame.Color("purple")
 ORANGE = pygame.Color("orange")
 AQUA = pygame.Color("aqua")
+SKY_BLUE= pygame.Color(110, 180, 235)
 
 def trouver_img(nom: str) -> str:
     return os.path.join(os.path.dirname(__file__), "..", "assets", "images", nom)

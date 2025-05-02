@@ -1,9 +1,9 @@
 import pygame
-import math
 from camera import Camera
 from generation_graphe import generer_graphe
 from config import trouver_font,trouver_img
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
+from config import SKY_BLUE
 
 #Variables globales
 MAP_LIMIT_X: int = 5000
@@ -21,8 +21,16 @@ class Nid:
     def __init__(self, graphe):
         self.graphe = graphe
         self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
+
         self.image_terre = pygame.image.load(trouver_img("terre.png"))
-        self.image_terre = pygame.transform.scale(self.image_terre, (self.image_terre.get_width() * 2, self.image_terre.get_height() * 2))
+        self.image_terre_sombre = pygame.image.load(trouver_img("terre_dark_brown.png"))
+        self.scale_images(4)
+
+        self.TILE_SIZE = self.image_terre.get_width()
+
+    def scale_images(self, scale) -> None:
+        self.image_terre = pygame.transform.scale(self.image_terre, (int(self.image_terre.get_width() * scale), int(self.image_terre.get_height() * scale)))
+        self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (int(self.image_terre_sombre.get_width() * scale), int(self.image_terre_sombre.get_height() * scale)))        
 
     def draw(self, screen) -> None:
         """
@@ -32,76 +40,46 @@ class Nid:
         Returns:
             None
         """
+        def draw_terre() -> None:
+            for x in range(0, MAP_LIMIT_X, self.TILE_SIZE):
+                for y in range(HAUTEUR_SOL, MAP_LIMIT_Y - HAUTEUR_SOL, self.TILE_SIZE):
+                    screen_pos = self.camera.apply((x, y))
+                    screen.blit(self.image_terre , screen_pos)
 
-        def draw_background() -> None:
-            """
-            Dessine l'arrière-plan du nid
-            Args:
-                None
-            Returns:
-                None
-            """
+        def draw_ciel() -> None:
             rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
+            new_point = self.camera.apply((rectangle_ciel.x, rectangle_ciel.y))
+            new_rect = pygame.Rect(new_point[0], new_point[1], rectangle_ciel.width * self.camera.zoom, rectangle_ciel.height * self.camera.zoom)
+            pygame.draw.rect(screen, SKY_BLUE, new_rect)
 
-            rectangle_sol = pygame.Rect(0, HAUTEUR_SOL, MAP_LIMIT_X, MAP_LIMIT_Y - HAUTEUR_SOL)
+        def draw_nid() -> None: 
+            mask_surface = pygame.Surface((MAP_LIMIT_X, MAP_LIMIT_Y), pygame.SRCALPHA)
+            mask_surface.fill((0, 0, 0, 0))
 
-
-            for i in range(2):
-                rect = rectangle_ciel if i == 0 else rectangle_sol
-                color = (90, 160, 250) if i == 0 else (140, 90, 40)
-
-                new_point = self.camera.apply((rect.x, rect.y))
-                new_rect = pygame.Rect(new_point[0], new_point[1], rect.width * self.camera.zoom, rect.height * self.camera.zoom)
-                pygame.draw.rect(screen, color, new_rect)
-
-
-            tuilesX = math.ceil(MAP_LIMIT_X / self.image_terre.get_width())
-            tuilesY = math.ceil((MAP_LIMIT_Y - HAUTEUR_SOL) / self.image_terre.get_height())
-
-            new_point = self.camera.apply((rectangle_sol.x, rectangle_sol.y))
-            new_rect = pygame.Rect(new_point[0], new_point[1], rectangle_sol.width * self.camera.zoom,rectangle_sol.height * self.camera.zoom)
-
-            imageScaled = pygame.transform.scale(self.image_terre, (int(self.image_terre.get_width() * 2 * self.camera.zoom), int(self.image_terre.get_height() * 2 * self.camera.zoom)))
-
-            for x in range(tuilesX):
-                for y in range(tuilesY):
-                    screen.blit(imageScaled, (x * imageScaled.get_width() + new_rect.x, y * imageScaled.get_height() + new_rect.y))
-
-
-
-
-        def draw_tunnels() -> None:
-            """
-            Dessine les tunnels du nid
-            Args:
-                None
-            Returns:
-                None
-            """
-            for tunnel in self.graphe.tunnels:
-                depart = self.camera.apply(tunnel.depart.noeud.coord)
-                arrivee = self.camera.apply(tunnel.arrivee.noeud.coord)
-                pygame.draw.line(screen, (68, 40, 21), depart, arrivee, int(tunnel.largeur * self.camera.zoom))
-
-        def draw_salles() -> None:
-            """
-            Dessine les salles du nid
-            Args:
-                None
-            Returns:
-                None
-            """
             for salle in self.graphe.salles:
                 pos = self.camera.apply(salle.noeud.coord)
-                pygame.draw.circle(screen, (68, 40, 21), pos, int(salle.type.value[0] * self.camera.zoom))
-                if len(salle.type.value) == 3:
-                    imageSalle = pygame.image.load(salle.type.value[2])
-                    imageSalle = pygame.transform.scale(imageSalle, (int(salle.type.value[0] * 2 * self.camera.zoom), int(salle.type.value[0] * 2 * self.camera.zoom)))
-                    screen.blit(imageSalle,(pos[0] - imageSalle.get_rect()[2] / 2, pos[1] - imageSalle.get_rect()[3] / 2))
+                radius = salle.type.value[0] * self.camera.zoom
+                pygame.draw.circle(mask_surface, (255, 255, 255, 255), pos, radius)
 
-        draw_background()
-        draw_tunnels()
-        draw_salles()
+            for tunnel in self.graphe.tunnels:
+                start = self.camera.apply(tunnel.depart.noeud.coord)
+                end = self.camera.apply(tunnel.arrivee.noeud.coord)
+                width = int(tunnel.largeur * self.camera.zoom)
+                pygame.draw.line(mask_surface, (255, 255, 255, 255), start, end, width)
+
+            dug_surface = pygame.Surface((MAP_LIMIT_X, MAP_LIMIT_Y), pygame.SRCALPHA)
+            for x in range(0, MAP_LIMIT_X, int(self.TILE_SIZE)):
+                for y in range(0, MAP_LIMIT_Y, int(self.TILE_SIZE)):
+                    screen_pos = self.camera.apply((x, y))
+                    dug_surface.blit(self.image_terre_sombre , screen_pos)
+
+            dug_surface.blit(mask_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+
+            screen.blit(dug_surface, (0, 0))
+
+        draw_terre()
+        draw_nid()
+        draw_ciel()
 
     def handle_event(self, event) -> bool:
         """
@@ -120,9 +98,13 @@ class Nid:
                 if y < HAUTEUR_SOL:
                     return True
             elif event.button == 4:  # Molette haut
+                old_zoom = self.camera.zoom
                 self.camera.zoom_camera(*event.pos, "in")
+                self.scale_images(self.camera.zoom / old_zoom)
             elif event.button == 5:  # Molette bas
+                old_zoom = self.camera.zoom
                 self.camera.zoom_camera(*event.pos, "out")
+                self.scale_images(self.camera.zoom / old_zoom)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:

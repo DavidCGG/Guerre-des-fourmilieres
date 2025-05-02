@@ -1,7 +1,7 @@
 from enum import Enum
 from pygame import Vector2
 
-from src.config import trouver_img
+from config import trouver_img
 
 
 class NoeudGeneration:
