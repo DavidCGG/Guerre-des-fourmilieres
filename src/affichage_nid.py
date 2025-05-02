@@ -3,12 +3,11 @@ from camera import Camera
 from generation_graphe import generer_graphe
 from config import trouver_font,trouver_img
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
-from config import SKY_BLUE
 
 #Variables globales
-MAP_LIMIT_X: int = 5000
-MAP_LIMIT_Y: int = 3000
-HAUTEUR_SOL: int = 200
+MAP_LIMIT_X: int = 4000
+MAP_LIMIT_Y: int = 2250
+HAUTEUR_SOL: int = 150
 
 class Nid:
     """
@@ -24,11 +23,19 @@ class Nid:
 
         self.image_terre = pygame.image.load(trouver_img("terre.png"))
         self.image_terre_sombre = pygame.image.load(trouver_img("terre_dark_brown.png"))
-        self.scale_images(4)
+        self.image_ciel = pygame.image.load(trouver_img("ciel2.png"))
+        self.scale_images(8, initial_sky_scaling = True)
 
         self.TILE_SIZE = self.image_terre.get_width()
+        self.SKY_TILE_SIZE = self.image_ciel.get_width() - 1
 
-    def scale_images(self, scale) -> None:
+    def scale_images(self, scale, initial_sky_scaling = False) -> None:
+        if initial_sky_scaling:
+            facteur_ciel = HAUTEUR_SOL / self.image_ciel.get_height()
+            self.image_ciel = pygame.transform.scale(self.image_ciel, (int(self.image_ciel.get_width() * facteur_ciel), int(self.image_ciel.get_height() * facteur_ciel)))
+        else:
+            self.image_ciel = pygame.transform.scale(self.image_ciel, (int(self.image_ciel.get_width() * scale), int(self.image_ciel.get_height() * scale)))
+
         self.image_terre = pygame.transform.scale(self.image_terre, (int(self.image_terre.get_width() * scale), int(self.image_terre.get_height() * scale)))
         self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (int(self.image_terre_sombre.get_width() * scale), int(self.image_terre_sombre.get_height() * scale)))        
 
@@ -47,10 +54,9 @@ class Nid:
                     screen.blit(self.image_terre , screen_pos)
 
         def draw_ciel() -> None:
-            rectangle_ciel = pygame.Rect(0, 0, MAP_LIMIT_X, HAUTEUR_SOL)
-            new_point = self.camera.apply((rectangle_ciel.x, rectangle_ciel.y))
-            new_rect = pygame.Rect(new_point[0], new_point[1], rectangle_ciel.width * self.camera.zoom, rectangle_ciel.height * self.camera.zoom)
-            pygame.draw.rect(screen, SKY_BLUE, new_rect)
+            for x in range(0, MAP_LIMIT_X, self.SKY_TILE_SIZE):
+                screen_pos = self.camera.apply((x, 0))
+                screen.blit(self.image_ciel, screen_pos)
 
         def draw_nid() -> None: 
             mask_surface = pygame.Surface((MAP_LIMIT_X, MAP_LIMIT_Y), pygame.SRCALPHA)

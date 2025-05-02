@@ -6,7 +6,7 @@ from enum import Enum
 
 import pygame
 from config import SCREEN_WIDTH, SCREEN_HEIGHT
-from src.config import trouver_img
+from config import trouver_img
 from tuile import Tuile, Eau
 
 class FourmiTitleScreen():

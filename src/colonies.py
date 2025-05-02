@@ -1,12 +1,9 @@
-import random
 import tkinter as tk
-
 import pygame
-
 from fourmi import Ouvriere, Soldat, Groupe, Fourmis
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN
 from fourmi import FourmisSprite
-from src.fourmi import CouleurFourmi
+from fourmi import CouleurFourmi
 
 
 class Colonie:
