@@ -4,22 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="Classement des images, problemes avec dessin nid regles (endroits non dessinés), assignement des rôles des salles initiales,dessin des images des salles, nouvlles textures: ciel, throne">
-      <change afterPath="$PROJECT_DIR$/assets/images/Monde/eau32x32.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/Monde/montagne32x32.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/Monde/noise32x32.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/Monde/sable32x32.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/Monde/terre32x32.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/eau32x32.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/montagne32x32.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/noise32x32.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/sable32x32.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/terre32x32.aseprite" afterDir="false" />
+    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="textures pour tuiles de la carte">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/Test_64x64.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Test64x64.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/carte.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/carte.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/tuile.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/tuile.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -285,7 +272,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746210400468</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="textures pour tuiles de la carte">
+      <option name="closed" value="true" />
+      <created>1746218047375</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1746218047375</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -325,7 +320,8 @@
     <MESSAGE value="commentaire" />
     <MESSAGE value="Animation fourmi (sprite sheet) + couleurs fourmis + nouveau metal" />
     <MESSAGE value="Classement des images, problemes avec dessin nid regles (endroits non dessinés), assignement des rôles des salles initiales,dessin des images des salles, nouvlles textures: ciel, throne" />
-    <option name="LAST_COMMIT_MESSAGE" value="Classement des images, problemes avec dessin nid regles (endroits non dessinés), assignement des rôles des salles initiales,dessin des images des salles, nouvlles textures: ciel, throne" />
+    <MESSAGE value="textures pour tuiles de la carte" />
+    <option name="LAST_COMMIT_MESSAGE" value="textures pour tuiles de la carte" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
