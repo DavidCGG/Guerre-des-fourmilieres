@@ -7,7 +7,7 @@ from config import SCREEN_WIDTH, SCREEN_HEIGHT
 #Variables globales
 MAP_LIMIT_X: int = 4000
 MAP_LIMIT_Y: int = 2250
-HAUTEUR_SOL: int = 150
+HAUTEUR_SOL: int = 128
 
 class Nid:
     """
@@ -21,13 +21,14 @@ class Nid:
         self.graphe = graphe
         self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
 
-        self.image_terre = pygame.image.load(trouver_img("terre.png"))
-        self.image_terre_sombre = pygame.image.load(trouver_img("terre_sombre.png"))
-        self.image_ciel = pygame.image.load(trouver_img("ciel.png"))
-        self.scale_images(8, initial_sky_scaling = True)
+        self.image_terre = pygame.image.load(trouver_img("Monde/terre.png"))
+        self.image_terre_sombre = pygame.image.load(trouver_img("Monde/terre_sombre.png"))
+        self.image_ciel = pygame.image.load(trouver_img("Monde/ciel32x32.png"))
+        self.scale=4
+        self.scale_images(self.scale)
 
         self.TILE_SIZE = self.image_terre.get_width()
-        self.SKY_TILE_SIZE = self.image_ciel.get_width() - 1
+        self.SKY_TILE_SIZE = self.image_ciel.get_width()
 
     def scale_images(self, scale, initial_sky_scaling = False) -> None:
         if initial_sky_scaling:
@@ -49,7 +50,7 @@ class Nid:
         """
         def draw_terre() -> None:
             for x in range(0, MAP_LIMIT_X, self.TILE_SIZE):
-                for y in range(HAUTEUR_SOL, MAP_LIMIT_Y - HAUTEUR_SOL, self.TILE_SIZE):
+                for y in range(HAUTEUR_SOL, MAP_LIMIT_Y, self.TILE_SIZE):
                     screen_pos = self.camera.apply((x, y))
                     screen.blit(self.image_terre , screen_pos)
 
@@ -62,10 +63,18 @@ class Nid:
             mask_surface = pygame.Surface((MAP_LIMIT_X, MAP_LIMIT_Y), pygame.SRCALPHA)
             mask_surface.fill((0, 0, 0, 0))
 
+            buffer_images_top_layer=[]
+
             for salle in self.graphe.salles:
                 pos = self.camera.apply(salle.noeud.coord)
                 radius = salle.type.value[0] * self.camera.zoom
                 pygame.draw.circle(mask_surface, (255, 255, 255, 255), pos, radius)
+
+                #ajout de la texture spécifique au type au buffer
+                if len(salle.type.value) > 2:
+                    image_salle = pygame.image.load(salle.type.value[2])
+                    image_salle = pygame.transform.scale(image_salle,(int(image_salle.get_width()*self.scale*self.camera.zoom),int(image_salle.get_height()*self.scale*self.camera.zoom)))
+                    buffer_images_top_layer.append((image_salle, (pos[0]-image_salle.get_width()/2,pos[1]-image_salle.get_height()/2)))
 
             for tunnel in self.graphe.tunnels:
                 start = self.camera.apply(tunnel.depart.noeud.coord)
@@ -82,6 +91,10 @@ class Nid:
             dug_surface.blit(mask_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
             screen.blit(dug_surface, (0, 0))
+
+            #draw buffer
+            for image_et_pos in buffer_images_top_layer:
+                screen.blit(image_et_pos[0],image_et_pos[1])
 
         draw_terre()
         draw_nid()

@@ -72,7 +72,7 @@ class FourmiTitleScreenSprite(pygame.sprite.Sprite):
     def __init__(self, fourmi: FourmiTitleScreen, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int):
         super().__init__()
         self.fourmi = fourmi
-        self.spritesheet = spritesheet
+        self.spritesheet = pygame.transform.flip(spritesheet,True,False)
         self.frame_width = frame_width
         self.frame_height = frame_height
         self.num_frames = num_frames
@@ -118,8 +118,8 @@ class FourmiTitleScreenSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=(self.fourmi.centre_x + width/2, self.fourmi.centre_y + height/2))
 
 class CouleurFourmi(Enum):
-    NOIRE = (trouver_img("fourmi_noire.png"))
-    ROUGE = (trouver_img("fourmi_rouge.png"))
+    NOIRE = (trouver_img("Fourmis/fourmi_noire.png"))
+    ROUGE = (trouver_img("Fourmis/fourmi_rouge.png"))
 
 class Fourmis(ABC):
     def __init__(self, hp: int, atk: int, x0, y0, size, couleur):

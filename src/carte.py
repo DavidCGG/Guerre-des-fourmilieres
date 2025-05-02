@@ -34,7 +34,7 @@ class Carte:
 
         self.liste_boutons = []
 
-        self.image_etoile = pygame.image.load(trouver_img("etoile.png"))
+        self.image_etoile = pygame.image.load(trouver_img("Monde/etoile.png"))
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
 
         self.nb_colonies_nids = nb_colonies_nids

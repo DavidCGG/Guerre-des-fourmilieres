@@ -84,9 +84,12 @@ class TypeSalle(Enum):
 
     INDEFINI = (40, "indéfini")
     INTERSECTION = (40, "intersection")
-    SALLE = (128, "salle",trouver_img("salle_vide.png"))
+    SALLE = (128, "salle")
     SORTIE = (40, "sortie")
-    ENCLUME = (128, "enclume",trouver_img("enclume.png"))
+    ENCLUME = (128, "enclume",trouver_img("Salles/enclume.png"))
+    MEULE = (128, "meule", trouver_img("Salles/meule.png"))
+    BANQUE = (128, "banque", trouver_img("Salles/banque.png"))
+    THRONE = (128, "throne", trouver_img("Salles/throne.png"))
 
 class Salle:
     """

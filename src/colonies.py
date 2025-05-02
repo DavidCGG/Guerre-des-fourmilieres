@@ -10,8 +10,8 @@ class Colonie:
     def __init__(self, tuile_debut, map_data):
         #self.graphe = graphe
         #print("a")
-        self.sprite_sheet_ouvr = pygame.image.load(trouver_img("ouvriere_sheet.png")).convert_alpha()
-        self.sprite_sheet_sold = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
+        self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/ouvriere_sheet.png")).convert_alpha()
+        self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/4-frame-ant.png")).convert_alpha()
         self.map_data = map_data # la carte de jeu
         self.tuile_debut = tuile_debut
         self.vie = 1 # 1 = 100% (vie de la reine)
@@ -307,7 +307,7 @@ class Colonie:
 
     def load_groupe_images(self):
         for x in range(2,6):
-            self.groupe_images.append(pygame.image.load(trouver_img(f"numero-{x}.png")))
+            self.groupe_images.append(pygame.image.load(trouver_img("UI/"+f"numero-{x}.png")))
 
     def render_ants(self, tile_size, screen, camera):
         if self.cache_groupes_a_updater:

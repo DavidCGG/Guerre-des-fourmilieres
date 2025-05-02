@@ -1,3 +1,5 @@
+import math
+
 import classes_graphe as cg
 import random
 from numpy.random import normal
@@ -393,5 +395,25 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
         convertir_coord(graphe, scale)
         
         valide = graphe.verifier_graphe(scale, HAUTEUR_SOL)
+
+    #assigner rôle des permières salles
+    coords_sortie=0
+    salles_salle=[]
+    for salle in graphe.salles: #trouver sortie et liste de toutes les salles de type salle
+        if salle.type == cg.TypeSalle.SORTIE:
+            coords_sortie = salle.noeud.coord
+        elif salle.type == cg.TypeSalle.SALLE:
+            salles_salle.append(salle)
+
+    def distance_sortie(salle):
+        return math.sqrt((salle.noeud.coord[0]-coords_sortie[0])**2+(salle.noeud.coord[0]-coords_sortie[0])**2)
+
+    for i in range(len(salles_salle)): # sort selon distance
+        for j in range(len(salles_salle) - 1 - i):
+            if distance_sortie(salles_salle[j]) > distance_sortie(salles_salle[j + 1]):
+                salles_salle[j], salles_salle[j + 1] = salles_salle[j + 1], salles_salle[j]
+
+    salles_salle[0].type=cg.TypeSalle.THRONE
+    salles_salle[2].type=cg.TypeSalle.BANQUE
 
     return graphe

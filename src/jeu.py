@@ -33,7 +33,7 @@ player_pos = pygame.Vector2(screen.get_width()/2,screen.get_height()/2)
 
 pygame.display.set_caption("Guerre des fourmilières")
 
-image_icone=pygame.image.load('../assets/images/fourmi_noire.png')
+image_icone=pygame.image.load('../assets/images/Fourmis/fourmi_noire.png')
 pygame.display.set_icon(image_icone)
 
 carte=[]

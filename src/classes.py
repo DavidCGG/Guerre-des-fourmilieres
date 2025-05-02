@@ -172,7 +172,7 @@ class Salle:
         texte_render=None
         if self.sorte == "throne":
             if self.detruit:
-                self.image=pygame.image.load('../assets/images/salle_vide.png')
+                self.image=pygame.image.load('../assets/images/Salles/salle_vide.png')
             texte_render = police.render("Reine : " + str(self.reine_PV) + " PV", False, "Black")
         elif self.sorte == "banque":
             texte_render = police.render("Banque : " + str(self.ressources) + " ressources", False, "Black")
@@ -317,7 +317,7 @@ class Fourmi():
 
     def draw(self):
         if not self.vivant:
-            self.image=pygame.image.load('../assets/images/fourmi_morte.png')
+            self.image=pygame.image.load('../assets/images/Fourmis/fourmi_morte.png')
         self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
         #for item in self.inventaire:
             #item.draw()

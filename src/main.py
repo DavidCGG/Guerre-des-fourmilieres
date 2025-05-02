@@ -32,7 +32,7 @@ fourmi_sprite: FourmiTitleScreenSprite = None
 sprites = pygame.sprite.Group()
 
 #Variables du jeu
-nb_colonies_nids: int = 6 #ne dois pas exceder le nombre de couleurs de colonies
+nb_colonies_nids: int = 2 #ne dois pas exceder le nombre de couleurs de colonies
 carte_jeu: carte.Carte = None
 nids: list[nid.Nid] =[]
 current_nid: nid.Nid = None
@@ -56,12 +56,12 @@ def initialiser() -> None:
     pygame.display.set_caption("Guerre des fourmillières")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    spritesheet = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
-    icon = spritesheet.subsurface(pygame.Rect(16, 0, 16, 16))
+    spritesheet = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
+    icon = spritesheet.subsurface(pygame.Rect(32, 0, 32, 32))
     pygame.display.set_icon(icon)
 
     fourmi = FourmiTitleScreen(3 * SCREEN_WIDTH // 5, 3 * SCREEN_HEIGHT // 5, 8)
-    fourmi_sprite = FourmiTitleScreenSprite(fourmi, spritesheet, 16, 16, 4, 300)
+    fourmi_sprite = FourmiTitleScreenSprite(fourmi, spritesheet, 32, 32, 8, 300)
     sprites.add(fourmi_sprite)
 
 def draw() -> None:
@@ -120,7 +120,7 @@ def draw() -> None:
         camera = carte_jeu.camera if in_carte else current_nid.camera
 
         if  not any(isinstance(bouton, Bouton) and bouton.texte == "Options" for bouton in liste_boutons):
-            bouton = Bouton(screen, SCREEN_WIDTH - 100, 25, 100, 30, "Options", menu_options, pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22))
+            bouton = Bouton(screen, SCREEN_WIDTH - 100, 25, 100, 30, "Options", menu_options_overlay, pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22))
             liste_boutons.append(bouton)
 
         pygame.draw.rect(screen, BLACK, (0, 0, SCREEN_WIDTH, 50))
@@ -156,7 +156,7 @@ def draw() -> None:
 
     pygame.display.update()
 
-def menu_options() -> None:
+def menu_options_overlay() -> None:
     """
     Affiche le menu des options de la carte et du nid
     Args:
@@ -164,6 +164,7 @@ def menu_options() -> None:
     Returns:
         None
     """
+    print("menu_option_overlay")
     global liste_boutons
     global in_menu_secondaire
 
@@ -204,7 +205,7 @@ def toggle_grid() -> None:
         if isinstance(bout, Bouton) and 'Grids' in bout.texte:
             grid_mode_str = "ON" if carte_jeu.grid_mode else "OFF"
             bout.texte = f'Grids: {grid_mode_str}'
-    menu_options()
+    menu_options_overlay()
 
 def retour() -> None:
     """
@@ -283,7 +284,7 @@ def gestion_evenement(event: pygame.event) -> None:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                menu_options() if not in_menu_secondaire else retour()
+                menu_options_overlay() if not in_menu_secondaire else retour()
 
     global running
     global in_carte

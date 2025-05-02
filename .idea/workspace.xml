@@ -4,32 +4,78 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="commentaire">
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_aqua.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_blanche.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_bleue.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_jaune.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_mauve.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_orange.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_verte.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/metal.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_aqua.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_blanche.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_bleue.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_jaune.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_mauve.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_noire.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_orange.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_rouge.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_verte.png" afterDir="false" />
+    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="Animation fourmi (sprite sheet) + couleurs fourmis + nouveau metal">
+      <change afterPath="$PROJECT_DIR$/assets/images/Monde/ciel32x32.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/Salles/throne.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/Test_64x64.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/ciel16x16.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/ciel32x32.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/Salles/throne.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/old/ciel16x16.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_noire.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_noire.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_rouge.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_rouge.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/metal.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/metal.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/4-frame-ant.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/4-frame-ant.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/Fourmi.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/Fourmi.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/Fourmi.xcf" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/Fourmi.xcf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/armure.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Items/armure.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/armure.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Items/armure.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/banque.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Salles/banque.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/enclume.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Salles/enclume.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/epee.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Items/epee.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_aqua.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_aqua.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_blanche.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_blanche.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_bleue.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_bleue.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_jaune.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_jaune.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_mauve.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_mauve.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_morte.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_morte.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_noire.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_noire.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_orange.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_orange.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_rouge.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_rouge.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_verte.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Fourmis/fourmi_verte.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/metal.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Items/metal.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/meule.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Salles/meule.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/salle_vide.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Salles/salle_vide.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/terre.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/terre.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/terre_sombre.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/Monde/terre_sombre.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/banque.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Salles/banque.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/ciel.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/old/ciel.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/enclume.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Salles/enclume.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/epee.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Items/epee.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/etoile.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Monde/etoile.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/fourmi_morte.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/fourmi_morte.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/fourmi_noire.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/fourmi_noire.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/fourmi_rouge.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/fourmi_rouge.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/metal.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Items/metal.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/meule.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Salles/meule.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/numero-2.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/UI/numero-2.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/numero-3.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/UI/numero-3.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/numero-4.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/UI/numero-4.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/numero-5.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/UI/numero-5.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/ouvriere_sheet.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/ouvriere_sheet.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/pomme.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Items/pomme.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/salle_vide.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Salles/salle_vide.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_aqua.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_aqua.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_blanche.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_blanche.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_bleue.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_bleue.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_jaune.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_jaune.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_mauve.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_mauve.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_noire.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_noire.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_orange.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_orange.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_rouge.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_rouge.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_verte.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Fourmis/sprite_sheet_fourmi_verte.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/terre.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Monde/terre.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/terre_sombre.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Monde/terre_sombre.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/throne_fourmi_noire.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Salles/throne_fourmi_noire.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/throne_fourmi_rouge.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/Salles/throne_fourmi_rouge.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/affichage_nid.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/affichage_nid.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/carte.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/carte.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/classes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/classes_graphe.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/classes_graphe.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/colonies.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/colonies.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/fourmi.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/fourmi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/generation_graphe.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/generation_graphe.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/jeu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/jeu.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/tuile.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/tuile.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -103,7 +149,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "/home/david/Guerre-des-fourmilieres/assets/images/aseprites",
+    "last_opened_file_path": "/home/david/Guerre-des-fourmilieres/assets/images/aseprites/Salles",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -115,16 +161,18 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/assets/images/aseprites/Salles" />
+      <recent name="$PROJECT_DIR$/assets/images" />
+      <recent name="$PROJECT_DIR$/assets/images/aseprites/Monde" />
       <recent name="$PROJECT_DIR$/assets/images/aseprites" />
       <recent name="C:\Users\Martin\Desktop\main-branch-projet" />
-      <recent name="C:\Users\Martin\Desktop\projet-integration-2025\assets" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/assets/images" />
+      <recent name="$PROJECT_DIR$/assets/images/Salles" />
       <recent name="$PROJECT_DIR$/assets/images/aseprites/old" />
-      <recent name="C:\Users\Martin\Desktop\projet-integration-2025" />
-      <recent name="C:\Users\Martin\Desktop\projet-integration-2025\assets\images" />
-      <recent name="C:\Users\Martin\Desktop\projet-integration-2025\assets\fonts" />
+      <recent name="$PROJECT_DIR$/assets/images/Monde" />
+      <recent name="$PROJECT_DIR$/assets/images/aseprites/Monde" />
+      <recent name="$PROJECT_DIR$/assets/images/aseprites" />
     </key>
   </component>
   <component name="RunManager">
@@ -277,7 +325,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746126948153</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Animation fourmi (sprite sheet) + couleurs fourmis + nouveau metal">
+      <option name="closed" value="true" />
+      <created>1746133881452</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1746133881452</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -315,7 +371,8 @@
     <MESSAGE value="Merge remote-tracking branch 'origin/main'" />
     <MESSAGE value="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis" />
     <MESSAGE value="commentaire" />
-    <option name="LAST_COMMIT_MESSAGE" value="commentaire" />
+    <MESSAGE value="Animation fourmi (sprite sheet) + couleurs fourmis + nouveau metal" />
+    <option name="LAST_COMMIT_MESSAGE" value="Animation fourmi (sprite sheet) + couleurs fourmis + nouveau metal" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

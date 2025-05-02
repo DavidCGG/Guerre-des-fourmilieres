@@ -24,8 +24,8 @@ class Tuile:
 
         self.tuile_ressource = self.rand_ressource()
         self.collectee = False if self.tuile_ressource else None
-        self.image_metal = pygame.image.load(trouver_img("metal.png")).convert_alpha() if self.tuile_ressource else None
-        self.image_pomme = pygame.image.load(trouver_img("pomme.png")).convert_alpha() if self.tuile_ressource else None
+        self.image_metal = pygame.image.load(trouver_img("Items/metal.png")).convert_alpha() if self.tuile_ressource else None
+        self.image_pomme = pygame.image.load(trouver_img("Items/pomme.png")).convert_alpha() if self.tuile_ressource else None
 
     def rand_ressource(self):
         if isinstance(self, Sable):
