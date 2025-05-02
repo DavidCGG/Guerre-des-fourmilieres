@@ -4,28 +4,32 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="Ajouter draw d'image pour salle">
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/old/banque.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/old/enclume.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/old/meule.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/old/salle_vide.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/old/terre.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/terre.aseprite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/images/terre.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/main-branch-projet.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/main-branch-projet.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="commentaire">
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_aqua.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_blanche.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_bleue.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_jaune.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_mauve.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_orange.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_verte.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/aseprites/metal.aseprite" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_aqua.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_blanche.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_bleue.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_jaune.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_mauve.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_noire.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_orange.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_rouge.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/sprite_sheet_fourmi_verte.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/banque.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/banque.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/enclume.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/enclume.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/metal.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/old/metal.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/meule.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/meule.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/salle_vide.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/salle_vide.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/throne_fourmi_noire.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/old/throne_fourmi_noire.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/throne_fourmi_rouge.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/old/throne_fourmi_rouge.aseprite" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/enclume.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/enclume.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/images/salle_vide.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/salle_vide.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/affichage_nid.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/affichage_nid.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/classes_graphe.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/classes_graphe.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_noire.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_noire.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/aseprites/fourmi_rouge.aseprite" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/aseprites/fourmi_rouge.aseprite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/images/metal.png" beforeDir="false" afterPath="$PROJECT_DIR$/assets/images/metal.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/carte.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/carte.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/colonies.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/colonies.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/fourmi.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/fourmi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -134,7 +138,7 @@
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="SDK_NAME" value="Python 3.13 (Guerre-des-fourmilieres)" />
-      <option name="WORKING_DIRECTORY" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
@@ -241,7 +245,39 @@
       <option name="project" value="LOCAL" />
       <updated>1746065430303</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Texture draw pour la terre a l'intérieur du nid. Nouveaux dessins pour enclume et meule">
+      <option name="closed" value="true" />
+      <created>1746113478993</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1746113478993</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis">
+      <option name="closed" value="true" />
+      <created>1746126690000</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1746126690000</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis">
+      <option name="closed" value="true" />
+      <created>1746126821725</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1746126821725</updated>
+    </task>
+    <task id="LOCAL-00007" summary="commentaire">
+      <option name="closed" value="true" />
+      <created>1746126948153</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1746126948153</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -275,7 +311,21 @@
     <MESSAGE value="asifcks -xavier" />
     <MESSAGE value="changer version d'arcade ecrite dans README.md de 3.0.0.dev42 -&gt; 3.0 venant de requirements.txt" />
     <MESSAGE value="Ajouter draw d'image pour salle" />
-    <option name="LAST_COMMIT_MESSAGE" value="Ajouter draw d'image pour salle" />
+    <MESSAGE value="Texture draw pour la terre a l'intérieur du nid. Nouveaux dessins pour enclume et meule" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/main'" />
+    <MESSAGE value="Modification du placement des colonies sur la carte pour pouvoir choisir le nombre avec une seule valeur (nb_colonies_nids + début du dessin des fourmis" />
+    <MESSAGE value="commentaire" />
+    <option name="LAST_COMMIT_MESSAGE" value="commentaire" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/fourmi.py</url>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/jeu_py$main.coverage" NAME="main Coverage Results" MODIFIED="1746044225913" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />

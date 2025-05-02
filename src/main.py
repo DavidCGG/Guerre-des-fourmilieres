@@ -32,6 +32,7 @@ fourmi_sprite: FourmiTitleScreenSprite = None
 sprites = pygame.sprite.Group()
 
 #Variables du jeu
+nb_colonies_nids: int = 6 #ne dois pas exceder le nombre de couleurs de colonies
 carte_jeu: carte.Carte = None
 nids: list[nid.Nid] =[]
 current_nid: nid.Nid = None
@@ -300,6 +301,7 @@ def gestion_evenement(event: pygame.event) -> None:
     if in_carte and not in_menu_secondaire:
         index_nid: int = carte_jeu.handle_event(event, screen)
         if index_nid != None:
+            #print(index_nid)
             current_nid = nids[index_nid]
             in_carte = False
             in_nid = True
@@ -315,7 +317,7 @@ def process() -> None:
     dt = clock.tick(60)
 
     if not in_menu_principal:
-        carte_jeu.colonie_joeur.process(clock.get_time())
+        carte_jeu.colonies[0].process(clock.get_time())
 
     if in_menu_principal:
         fourmi.random_mouvement(dt)
@@ -337,8 +339,8 @@ def demarrer_jeu() -> None:
     in_menu_principal = False
     in_carte = True
 
-    carte_jeu = carte.Carte()
-    graphes = nid.chargement(screen)
+    carte_jeu = carte.Carte(nb_colonies_nids)
+    graphes = nid.chargement(screen, nb_colonies_nids)
     for graphe in graphes:
         new_nid = nid.Nid(graphe)
         nids.append(new_nid)

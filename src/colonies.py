@@ -6,9 +6,13 @@ import pygame
 from fourmi import Ouvriere, Soldat, Groupe, Fourmis
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN
 from fourmi import FourmisSprite
+from src.fourmi import CouleurFourmi
+
 
 class Colonie:
     def __init__(self, tuile_debut, map_data):
+        #self.graphe = graphe
+        #print("a")
         self.sprite_sheet_ouvr = pygame.image.load(trouver_img("ouvriere_sheet.png")).convert_alpha()
         self.sprite_sheet_sold = pygame.image.load(trouver_img("4-frame-ant.png")).convert_alpha()
         self.map_data = map_data # la carte de jeu
@@ -20,8 +24,10 @@ class Colonie:
         self.fourmis_selection = None # fourmi selectionnée dans le menu de fourmis
         self.groupe_selection = None
 
-        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(3)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1]) for _ in range(2)]
+        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE) for _ in range(3)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE) for _ in range(2)]
         self.groupes = {}
+        #self.fourmis_presentes = self.fourmis
+        #self.groupes_presents = self.groupes
         self.texte_rects = {} # les rects dans le menu colonie pour changer leur coloeur trop cool
         self.couleur_texte = WHITE
         self.hover_texte = None # soit Ouvrieres ou Soldats dans menu colonie
