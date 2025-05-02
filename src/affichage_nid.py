@@ -22,8 +22,8 @@ class Nid:
         self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
 
         self.image_terre = pygame.image.load(trouver_img("terre.png"))
-        self.image_terre_sombre = pygame.image.load(trouver_img("terre_dark_brown.png"))
-        self.image_ciel = pygame.image.load(trouver_img("ciel2.png"))
+        self.image_terre_sombre = pygame.image.load(trouver_img("terre_sombre.png"))
+        self.image_ciel = pygame.image.load(trouver_img("ciel.png"))
         self.scale_images(8, initial_sky_scaling = True)
 
         self.TILE_SIZE = self.image_terre.get_width()
