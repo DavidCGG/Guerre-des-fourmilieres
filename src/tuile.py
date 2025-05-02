@@ -7,7 +7,7 @@ from config import trouver_img
 
 
 class Tuile:
-    def __init__(self, x, y, width, height, is_border=False):
+    def __init__(self, x, y, width, height, texture_string="Monde/noise32x32.png",is_border=False):
         self.x = x
         self.y = y
         self.width = width
@@ -27,6 +27,13 @@ class Tuile:
         self.image_metal = pygame.image.load(trouver_img("Items/metal.png")).convert_alpha() if self.tuile_ressource else None
         self.image_pomme = pygame.image.load(trouver_img("Items/pomme.png")).convert_alpha() if self.tuile_ressource else None
 
+        #créer image de tuile selon couleur
+        #self.image = pygame.image.load(trouver_img("Monde/noise32x32.png")).convert_alpha()
+        #self.image = pygame.image.load(trouver_img("Test64x64.png"))
+        self.image = pygame.image.load(trouver_img(texture_string)).convert_alpha()
+        self.last_color=self.color
+
+
     def rand_ressource(self):
         if isinstance(self, Sable):
             rand = random.randint(0, 8)
@@ -45,7 +52,20 @@ class Tuile:
 
 
     def draw(self, screen, rect, grid_mode):
-        pygame.draw.rect(screen, self.color, rect)
+
+        if self.color!=self.last_color:
+            #modifie la texture noise pour donner la couleur
+            surf = pygame.Surface(self.image.get_rect().size, pygame.SRCALPHA)
+            surf.fill((int(self.color[0]**2/255)*2,int(self.color[1]**2/255)*2,int(self.color[2]**2/255)*2))
+            self.image.blit(surf, (0, 0), None, pygame.BLEND_MULT)
+
+            self.last_color=self.color
+
+        #draw image plutot que rectangle couleur
+        scaled_img = pygame.transform.scale(self.image, (rect.width, rect.height))
+        screen.blit(scaled_img,rect)
+
+        #pygame.draw.rect(screen, self.color, rect)
         if grid_mode:
             pygame.draw.rect(screen, BLACK, rect, 1)
         if self.tuile_ressource and not self.collectee and not self.tuile_debut:
@@ -69,22 +89,22 @@ class Tuile:
 
 class Eau(Tuile):
     def __init__(self, x, y, width, height):
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height,"Monde/eau32x32.png")
     def process(self):
         pass
 class Sable(Tuile):
     def __init__(self, x, y, width, height):
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height,"Monde/sable32x32.png")
     def process(self):
         pass
 class Terre(Tuile):
     def __init__(self, x, y, width, height):
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height,"Monde/terre32x32.png")
     def process(self):
         pass
 class Montagne(Tuile):
     def __init__(self, x, y, width, height):
-        super().__init__(x, y, width, height)
+        super().__init__(x, y, width, height,"Monde/montagne32x32.png")
 
     def process(self):
         pass

@@ -81,6 +81,7 @@ class Carte:
                         self.map_data[y][x].color = (0, col, 0)
 
                     else:
+                        #print("montagne")
                         self.map_data[y][x] = Montagne(x, y, self.TILE_SIZE, self.TILE_SIZE)
                         self.map_data[y][x].color = (0, 0, 0)
 
