@@ -1,8 +1,13 @@
 import pygame
+from pygame import Vector2
+
 from camera import Camera
 from generation_graphe import generer_graphe
-from config import trouver_font,trouver_img
+from config import trouver_font, trouver_img, AQUA
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
+from fourmi import FourmisSprite, CouleurFourmi
+from fourmi import Fourmis,Ouvriere,Soldat
+from src.colonies import Colonie
 
 #Variables globales
 MAP_LIMIT_X: int = 4000
@@ -17,7 +22,8 @@ class Nid:
         camera (Camera): Caméra pour le zoom et le déplacement
     """
 
-    def __init__(self, graphe,screen):
+    def __init__(self, graphe,screen,tuile_debut):
+        self.tuile_debut=tuile_debut
         self.graphe = graphe
         #print(str(screen.get_width()) + str(screen.get_height()))
         self.camera = Camera(screen.get_width(), screen.get_height(), MAP_LIMIT_X, MAP_LIMIT_Y)
@@ -35,6 +41,10 @@ class Nid:
         self.TILE_SIZE = self.image_terre.get_width()
         self.SKY_TILE_SIZE = self.image_ciel.get_width()
 
+        self.salles_sorties=[]
+        for salle in self.graphe.salles:
+            if salle.type.value[1] == "sortie":
+                self.salles_sorties.append(salle)
     def scale_images(self, scale, initial_sky_scaling = False) -> None:
         if initial_sky_scaling:
             facteur_ciel = HAUTEUR_SOL / self.image_ciel.get_height()
@@ -43,9 +53,34 @@ class Nid:
             self.image_ciel = pygame.transform.scale(self.image_ciel, (int(self.image_ciel.get_width() * scale), int(self.image_ciel.get_height() * scale)))
 
         self.image_terre = pygame.transform.scale(self.image_terre, (int(self.image_terre.get_width() * scale), int(self.image_terre.get_height() * scale)))
-        self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (int(self.image_terre_sombre.get_width() * scale), int(self.image_terre_sombre.get_height() * scale)))        
+        self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (int(self.image_terre_sombre.get_width() * scale), int(self.image_terre_sombre.get_height() * scale)))
+    
+    def process(self,liste_fourmis_jeu_complet):
+        def process_sortir_de_nid():
+            for salle in self.salles_sorties:
+                print(salle.noeud.coord)
+                for fourmi in liste_fourmis_jeu_complet:
+                    if fourmi.in_colonie_map_coords is not None:
+                        if fourmi.in_colonie_map_coords==self.tuile_debut and salle.noeud.coord[0]-40 < fourmi.centre_x_in_nid < salle.noeud.coord[0]+40 and salle.noeud.coord[1]-40 < fourmi.centre_y_in_nid < salle.noeud.coord[1]+40:
+                            if fourmi.a_bouger_depuis_transition_map_ou_nid==True:
+                                print("exited colonie at "+str(self.tuile_debut))
+                                fourmi.in_colonie_map_coords=None
+                                fourmi.centre_x_in_map = self.tuile_debut[0]
+                                fourmi.centre_y_in_map = self.tuile_debut[1]
+                                fourmi.target_x_in_map = self.tuile_debut[0]
+                                fourmi.target_y_in_map = self.tuile_debut[1]
+                                fourmi.centre_x_in_nid = None
+                                fourmi.centre_y_in_nid = None
+                                fourmi.target_x_in_nid = None
+                                fourmi.target_y_in_nid = None
+                                fourmi.a_bouger_depuis_transition_map_ou_nid=False
+                        else:
+                            fourmi.a_bouger_depuis_transition_map_ou_nid=True
 
-    def draw(self, screen) -> None:
+
+        process_sortir_de_nid()
+
+    def draw(self, screen, liste_fourmis_jeu_complet, colonie_joueur:Colonie) -> None:
         """
         Dessine tous les éléments du nid sur l'écran incluant l'arrière-plan
         Args:
@@ -53,6 +88,7 @@ class Nid:
         Returns:
             None
         """
+
         def draw_terre() -> None:
             for x in range(0, MAP_LIMIT_X, self.TILE_SIZE):
                 for y in range(HAUTEUR_SOL, MAP_LIMIT_Y, self.TILE_SIZE):
@@ -60,15 +96,15 @@ class Nid:
                     screen.blit(self.image_terre , screen_pos)
 
         def draw_ciel() -> None:
-            print(self.SKY_TILE_SIZE,end=",")
+            #print(self.SKY_TILE_SIZE,end=",")
             for x in range(0, MAP_LIMIT_X, self.SKY_TILE_SIZE):
-                print(x, end=",")
+                #print(x, end=",")
                 screen_pos = self.camera.apply((x, 0))
                 #screen_pos = (int(screen_pos[0]/2), int(screen_pos[1]/2))
                 #screen_pos = (int(screen_pos[0]*720/screen.get_height()),int(screen_pos[1]*720/screen.get_height()))
-                print(screen_pos, end="")
+                #print(screen_pos, end="")
                 screen.blit(self.image_ciel, screen_pos)
-            print()
+            #print()
 
         def draw_nid() -> None: 
             mask_surface = pygame.Surface((MAP_LIMIT_X, MAP_LIMIT_Y), pygame.SRCALPHA)
@@ -107,11 +143,25 @@ class Nid:
             for image_et_pos in buffer_images_top_layer:
                 screen.blit(image_et_pos[0],image_et_pos[1])
 
+        def draw_fourmis() -> None:
+            for fourmi in liste_fourmis_jeu_complet:
+                #print(str(fourmi.in_colonie_map_coords)+","+str(self.tuile_debut))
+                if fourmi.in_colonie_map_coords==self.tuile_debut:
+                    fourmi.draw_in_nid(screen,self.camera)
+
         draw_terre()
         draw_nid()
         draw_ciel()
+        draw_fourmis()
+        colonie_joueur.update_menu()
+        colonie_joueur.update_menu_fourmis()
 
-    def handle_event(self, event) -> bool:
+        if colonie_joueur.menu_colonie_ouvert:
+            colonie_joueur.menu_colonie(screen)
+        if colonie_joueur.menu_fourmis_ouvert:
+            colonie_joueur.menu_fourmis(screen)
+
+    def handle_event(self, event, screen,colonie_joueur) -> bool:
         """
         Gère tous les événements liés au nid
         Args:
@@ -119,19 +169,100 @@ class Nid:
         Returns:
             bool: True si le ciel a été cliqué pour sortir du nid, False sinon
         """
+
+        def handle_click(pos):
+            for key, rect in colonie_joueur.texte_rects.items():
+                if rect.collidepoint(pos):
+                    colonie_joueur.last_tab = colonie_joueur.curr_tab
+                    if key == "Ouvrières":
+                        colonie_joueur.curr_tab = "Ouvrières"
+                    elif key == "Soldats":
+                        colonie_joueur.curr_tab = "Soldats"
+                    elif key == "Groupes":
+                        colonie_joueur.curr_tab = "Groupes"
+                    colonie_joueur.scroll_offset = 0
+                    colonie_joueur.couleur_texte = AQUA
+                    # On ferme le menu si on re clique sur le meme tab
+                    colonie_joueur.menu_fourmis_ouvert = not colonie_joueur.menu_fourmis_ouvert if key == colonie_joueur.last_tab else True
+
+                    colonie_joueur.menu_a_updater = True
+                    colonie_joueur.menu_f_a_updater = True
+                    return
+
+            if colonie_joueur.menu_fourmis_ouvert and colonie_joueur.menu_fourmis_rect.collidepoint(pos):
+                rel_x = pos[0] - colonie_joueur.menu_fourmis_rect.x
+                rel_y = pos[1] - colonie_joueur.menu_fourmis_rect.y + colonie_joueur.scroll_offset
+
+                y_offset = 40
+                if colonie_joueur.curr_tab == "Ouvrières":
+                    colonie_joueur.fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Ouvriere)]
+                elif colonie_joueur.curr_tab == "Soldats":
+                    colonie_joueur.fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Soldat)]
+
+                for fourmi in colonie_joueur.fourmis:
+                    rect = pygame.Rect(0, y_offset - 5, 250, 50)
+
+                    if rect.collidepoint((rel_x, rel_y)):
+                        if colonie_joueur.fourmis_selection == fourmi:
+                            colonie_joueur.fourmis_selection = None
+
+                        else:
+                            colonie_joueur.fourmis_selection = fourmi
+
+                        colonie_joueur.menu_f_a_updater = True
+                        return
+
+                    y_offset += 50
+            if colonie_joueur.fourmis_selection is not None:
+                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos))
+
+        def handle_hover(pos):
+            if colonie_joueur.menu_colonie_rect.collidepoint(pos):
+                for key, rect in colonie_joueur.texte_rects.items():
+                    if rect.collidepoint(pos):
+                        colonie_joueur.hover_texte = key
+                        colonie_joueur.menu_a_updater = True
+                        colonie_joueur.update_menu()
+                        return
+                    else:
+                        colonie_joueur.hover_texte = None
+                        colonie_joueur.menu_a_updater = True
+                        colonie_joueur.update_menu()
+
+        def handle_scroll(dir, pos):
+            if colonie_joueur.curr_tab == "Ouvrières":
+                max_offset = max(0, colonie_joueur.nombre_ouvrieres() * 50 - 335)
+            elif colonie_joueur.curr_tab == "Soldats":
+                max_offset = max(0, colonie_joueur.nombre_soldats() * 50 - 335)
+            elif colonie_joueur.curr_tab == "Groupes":
+                max_offset = max(0, colonie_joueur.get_vrai_nb_groupes() * 50 - 335)
+
+            if colonie_joueur.menu_fourmis_rect.collidepoint(pos):  # On scroll seulement si la souris est dans le rect du menu
+                if dir == "up":
+                    colonie_joueur.scroll_offset = max(0, colonie_joueur.scroll_offset - colonie_joueur.scroll_speed)
+                elif dir == "down":
+                    colonie_joueur.scroll_offset = min(max_offset, colonie_joueur.scroll_offset + colonie_joueur.scroll_speed)
+                colonie_joueur.scrolling = True
+                colonie_joueur.menu_f_a_updater = True
+                colonie_joueur.update_menu_fourmis()
+            else:
+                colonie_joueur.scrolling = False
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
-
             if event.button == 1:  # Clic gauche
+                handle_click(event.pos)
                 self.camera.start_drag(*event.pos)
             elif event.button == 3:  # Clic droit
                 if y < HAUTEUR_SOL:
                     return True
             elif event.button == 4:  # Molette haut
+                handle_scroll("up", event.pos)
                 old_zoom = self.camera.zoom
                 self.camera.zoom_camera(*event.pos, "in")
                 self.scale_images(self.camera.zoom / old_zoom)
             elif event.button == 5:  # Molette bas
+                handle_scroll("down", event.pos)
                 old_zoom = self.camera.zoom
                 self.camera.zoom_camera(*event.pos, "out")
                 self.scale_images(self.camera.zoom / old_zoom)
@@ -141,7 +272,13 @@ class Nid:
                 self.camera.stop_drag()
 
         elif event.type == pygame.MOUSEMOTION:
+            handle_hover(event.pos)
             self.camera.drag(*event.pos)
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                colonie_joueur.menu_colonie_ouvert = not colonie_joueur.menu_colonie_ouvert
+
 
 def chargement(screen: pygame.Surface,nb_nids) -> list:
     """

@@ -49,6 +49,11 @@ class Camera:
         new_x = point[0] * self.zoom - self.x
         new_y = point[1] * self.zoom - self.y + 50  # + 50 pour la barre du haut
         return (new_x, new_y)
+
+    def apply_inverse(self,point):
+        new_x = (point[0] + self.x) / self.zoom
+        new_y = (point[1] + self.y - 50) / self.zoom   # + 50 pour la barre du haut
+        return (new_x, new_y)
     
     def apply_rect(self, rect):
         """

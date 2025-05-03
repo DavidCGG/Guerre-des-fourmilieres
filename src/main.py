@@ -9,7 +9,7 @@ from config import trouver_font, trouver_img
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import WHITE, BLACK, YELLOW
 from config import Bouton
-from fourmi import FourmiTitleScreen, FourmiTitleScreenSprite
+from fourmi import FourmiTitleScreen, FourmiTitleScreenSprite, Fourmis
 #from src.config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 #Variables globales
@@ -40,10 +40,11 @@ fourmi_sprite: FourmiTitleScreenSprite = None
 sprites = pygame.sprite.Group()
 
 #Variables du jeu
-nb_colonies_nids: int = 1 #ne dois pas exceder le nombre de couleurs de colonies
+nb_colonies_nids: int = 3 #ne dois pas exceder le nombre de couleurs de colonies
 carte_jeu: carte.Carte = None
 nids: list[nid.Nid] =[]
 current_nid: nid.Nid = None
+liste_fourmis_jeu_complet: list[Fourmis] = []
 
 #fichier txt options
 max_framerate: int
@@ -190,7 +191,7 @@ def draw() -> None:
     elif in_carte and not in_menu_secondaire:
         carte_jeu.draw(screen)
     elif in_nid and not in_menu_secondaire:
-        current_nid.draw(screen)
+        current_nid.draw(screen, liste_fourmis_jeu_complet, carte_jeu.colonies[0])
 
     if in_carte or in_nid:
         draw_top_bar()
@@ -456,7 +457,7 @@ def gestion_evenement(event: pygame.event) -> None:
             in_nid = True
         
     elif in_nid and not in_menu_secondaire:
-        return_to_map: bool = current_nid.handle_event(event)
+        return_to_map: bool = current_nid.handle_event(event,screen,carte_jeu.colonies[0])
         if return_to_map:
             in_nid = False
             in_carte = True
@@ -466,7 +467,9 @@ def process() -> None:
     dt = clock.tick(max_framerate)
 
     if not in_menu_principal and partie_en_cours:
-        carte_jeu.colonies[0].process(clock.get_time())
+        carte_jeu.colonies[0].process(clock.get_time(),nids)
+        for nid in nids:
+            nid.process(liste_fourmis_jeu_complet)
 
     if in_menu_principal:
         fourmi.random_mouvement(dt)
@@ -485,16 +488,19 @@ def demarrer_jeu() -> None:
     global carte_jeu
     global nids
     global partie_en_cours
+    global liste_fourmis_jeu_complet
 
     in_menu_principal = False
     in_carte = True
     partie_en_cours = True
 
-    carte_jeu = carte.Carte(nb_colonies_nids,screen)
     graphes = nid.chargement(screen, nb_colonies_nids)
+    carte_jeu = carte.Carte(nb_colonies_nids, screen, graphes, liste_fourmis_jeu_complet)
+    i=0
     for graphe in graphes:
-        new_nid = nid.Nid(graphe,screen)
+        new_nid = nid.Nid(graphe,screen,carte_jeu.tuiles_debut[i])
         nids.append(new_nid)
+        i+=1
 
 def run() -> None:
     """

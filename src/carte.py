@@ -1,6 +1,8 @@
 import random
 import pygame
 import numpy as np
+from pygame.examples.grid import TILE_SIZE
+
 from colonies import Colonie
 from camera import Camera
 from tuile import Tuile
@@ -16,11 +18,20 @@ pygame.font.init()
 police = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22)
 couleurs_possibles = [BLACK, YELLOW, RED, PURPLE, BLUE, AQUA]
 
+taille_tuile = 32
+MAP_WIDTH = 100
+MAP_HEIGHT = 100
+
 class Carte:
-    def __init__(self,nb_colonies_nids,screen):
-        self.TILE_SIZE = 32
-        self.MAP_WIDTH = 100
-        self.MAP_HEIGHT = 100
+    def __init__(self,nb_colonies_nids,screen,graphes,liste_fourmis_jeu_complet):
+        global taille_tuile
+        global MAP_WIDTH
+        global MAP_HEIGHT
+        self.TILE_SIZE = taille_tuile
+        self.MAP_WIDTH = MAP_WIDTH
+        self.MAP_HEIGHT = MAP_HEIGHT
+
+        self.graphes=graphes
 
         self.grid_mode = False # option pour montrer la bordure des tuiles en noir
         self.hover_tuile = None  # la tuile qui devient couleur AQUA quand on a une fourmi selectionnee
@@ -42,13 +53,13 @@ class Carte:
         for i in range(self.nb_colonies_nids):
             self.couleurs_colonies.append(couleurs_possibles[i])
 
-        self.generation_map()
+        self.generation_map(liste_fourmis_jeu_complet)
 
         self.screen = screen
         self.camera = Camera(screen.get_width(), screen.get_height(), self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE)
         self.set_camera_tuile_debut()
 
-    def generation_map(self):
+    def generation_map(self,liste_fourmis_jeu_complet):
         def liste_tuiles() -> list:
             tuiles = [[Tuile(x, y, self.TILE_SIZE, self.TILE_SIZE) for x in range(self.MAP_WIDTH)] for y in range(self.MAP_HEIGHT)]
             return tuiles
@@ -113,10 +124,10 @@ class Carte:
                         self.tuiles_debut.append((x, y))
                         #print(len(self.tuiles_debut))
         
-        def set_tuiles_debut():
+        def set_tuiles_debut(liste_fourmis_jeu_complet):
             #self.tuile_debut_joueur = self.tuiles_debut[random.randint(0, self.nb_colonies_nids - 1)]
             for i in range(self.nb_colonies_nids):
-                self.colonies.append(Colonie(self.tuiles_debut[i], self.map_data))
+                self.colonies.append(Colonie(self.tuiles_debut[i], self.map_data,self.tuiles_debut,self.graphes[i],liste_fourmis_jeu_complet))
 
             #index_tuile_debut = self.tuiles_debut.index(self.tuile_debut_joueur)
             #temp = self.tuiles_debut[0]
@@ -126,7 +137,7 @@ class Carte:
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
         placer_colonies(region_size=20, min_dist=50)
-        set_tuiles_debut()
+        set_tuiles_debut(liste_fourmis_jeu_complet)
 
     def draw(self, screen):
         def etoile_tuile_debut():
@@ -196,11 +207,11 @@ class Carte:
 
             if event.button == 3:  #Right click
                 if self.colonies[0].fourmis_selection:
-                    self.colonies[0].fourmis_selection.set_target(tile_x, tile_y, self.map_data)
+                    self.colonies[0].fourmis_selection.set_target_in_map(tile_x, tile_y, self.map_data)
                     self.colonies[0].fourmis_selection = None
                     self.hover_tuile = None
                 elif self.colonies[0].groupe_selection:
-                    self.colonies[0].groupe_selection.set_target(tile_x, tile_y, self.map_data)
+                    self.colonies[0].groupe_selection.set_target_in_map(tile_x, tile_y, self.map_data)
                     self.colonies[0].groupe_selection = None
                     self.hover_tuile = None
 

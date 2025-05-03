@@ -16,8 +16,8 @@ dt=0
 dt_pointer=[dt]
 objets = []
 colonies = []
-liste_fourmis=[]
-liste_fourmis_pointeur=[liste_fourmis]
+liste_fourmis_jeu_complet=[]
+liste_fourmis_pointeur=[liste_fourmis_jeu_complet]
 hud=[]
 max_fps=100
 colonie_presente=[]
@@ -115,7 +115,7 @@ def menu_principal():
 
     objets.clear()
     colonies.clear()
-    liste_fourmis.clear()
+    liste_fourmis_jeu_complet.clear()
     hud.clear()
     colonie_presente.clear()
     liste_items.clear()
@@ -160,7 +160,7 @@ while running:
         if type(objet_a_dessine) is Bouton:
             objet_a_dessine.draw()
         else:
-            objet_a_dessine.draw(liste_fourmis,liste_items)
+            objet_a_dessine.draw(liste_fourmis_jeu_complet, liste_items)
     cursor_sur_bouton=False
     for element in hud:
         if type(element) is pygame.Surface and dans_menu_principal[0]:
@@ -171,7 +171,7 @@ while running:
             if element.draw():
                 cursor_sur_bouton=True
 
-    for fourmi in liste_fourmis:
+    for fourmi in liste_fourmis_jeu_complet:
         fourmi.process()
         #print(fourmi.colonie_origine.nom+" inventaire :",end="")
         #for item in fourmi.inventaire:
@@ -208,10 +208,10 @@ while running:
     #victoire
     if not au_moins_un_ennemi_en_vie and len(colonies)>0:
         print("Victoire!")
-        colonie_presente[0].draw(liste_fourmis,liste_items)
+        colonie_presente[0].draw(liste_fourmis_jeu_complet, liste_items)
         objets.clear()
         colonies.clear()
-        liste_fourmis.clear()
+        liste_fourmis_jeu_complet.clear()
         hud.clear()
         colonie_presente.clear()
         liste_items.clear()
@@ -235,7 +235,7 @@ while running:
     dt = clock.tick(max_fps) / 1000
     dt_pointer = [dt]
     screen_pointer = [screen]
-    liste_fourmis_pointeur = [liste_fourmis]
+    liste_fourmis_pointeur = [liste_fourmis_jeu_complet]
     liste_items_pointeur = [liste_items]
     #print(dt)
 

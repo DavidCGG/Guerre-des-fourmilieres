@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import pygame
+from pygame import Vector2
+
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import trouver_img
 from tuile import Tuile, Eau
@@ -22,7 +24,7 @@ class FourmiTitleScreen():
         self.target_y = y0
         self.speed = 5 * self.scale
 
-        self.moving = False
+        self.is_moving = False
         self.facing = 0 # 0 : droite, 1 : gauche
         self.pause_timer = 0
         self.screen=screen
@@ -59,14 +61,14 @@ class FourmiTitleScreen():
                 self.centre_x += self.speed * dx / distance * (dt / 1000)
                 self.centre_y += self.speed * dy / distance * (dt / 1000)
 
-                self.moving = True
+                self.is_moving = True
                 self.facing = 0 if dx > 0 else 1
 
             else:
                 self.centre_x = self.target_x
                 self.centre_y = self.target_y
 
-                self.moving = False
+                self.is_moving = False
 
 
 class FourmiTitleScreenSprite(pygame.sprite.Sprite):
@@ -101,7 +103,7 @@ class FourmiTitleScreenSprite(pygame.sprite.Sprite):
 
 
     def update(self, dt):
-        if self.fourmi.moving:
+        if self.fourmi.is_moving:
             self.timer += dt
 
             while self.timer > self.frame_duration:
@@ -123,16 +125,24 @@ class CouleurFourmi(Enum):
     ROUGE = (trouver_img("Fourmis/fourmi_rouge.png"))
 
 class Fourmis(ABC):
-    def __init__(self, hp: int, atk: int, x0, y0, size, couleur):
+    def __init__(self, colonie_origine, hp: int, atk: int, x0, y0, size, couleur):
         super().__init__()
-        self.centre_y = y0
-        self.centre_x = x0
-        self.target_x = x0
-        self.target_y = y0
+        self.centre_y_in_map = None
+        self.centre_x_in_map = None
+        self.target_x_in_map = None
+        self.target_y_in_map = None
+        #self.centre_x_in_nid = 0
+        #self.centre_y_in_nid = 0
+        self.target_x_in_nid = None
+        self.target_y_in_nid = None
+        for salle in colonie_origine.graphe.salles:
+            if salle.type.value[1]=="throne":
+                self.centre_x_in_nid = salle.noeud.coord[0]
+                self.centre_y_in_nid = salle.noeud.coord[1]
         self.base_speed = 2
         self.speed = self.base_speed
         self.path = None
-        self.moving = False
+        self.is_moving = False
         self.facing = 0 # 0 : droite, 1 : gauche
         self.hp = hp
         self.atk = atk
@@ -144,6 +154,12 @@ class Fourmis(ABC):
         self.couleur = couleur
         self.image = pygame.image.load(self.couleur.value)
         self.image = pygame.transform.scale(self.image,(self.image.get_width() * self.size, self.image.get_height() * self.size))
+        self.is_busy = False
+        self.colonie_origine = colonie_origine
+        self.in_colonie_map_coords = colonie_origine.tuile_debut
+        self.a_bouger_depuis_transition_map_ou_nid=True
+
+        self.image = pygame.image.load(trouver_img("Test64x64.png")).convert_alpha()
 
     @abstractmethod
     def attack(self, other):
@@ -155,47 +171,104 @@ class Fourmis(ABC):
 
         return
 
-    def process(self, dt, map_data):
-        #print("Pos:"+str(self.centre_x)+", "+str(self.centre_y))
-        if self.target_x != self.centre_x or self.target_y != self.centre_y:
-            self.goto_target(dt, map_data)
+    def process(self, dt, map_data,tuiles_debut_toutes_colonies,tous_les_nids):
+        print("Map Pos:" + str(self.centre_x_in_map) + ", " + str(self.centre_y_in_map))
+        print("Map Target: " + str(self.target_x_in_map) + ", " + str(self.target_y_in_map))
+        print("Nid Pos:" + str(self.centre_x_in_nid) + ", " + str(self.centre_y_in_nid))
+        print("Nid Target: " + str(self.target_x_in_nid) + ", " + str(self.target_y_in_nid))
+        print("In colonie at pos: "+str(self.in_colonie_map_coords))
+        print(str(self.a_bouger_depuis_transition_map_ou_nid))
+        if self.in_colonie_map_coords is None:#if sur la carte
+            #process sur la carte
+            if (self.target_x_in_map != self.centre_x_in_map or self.target_y_in_map != self.centre_y_in_map) and self.target_x_in_map is not None and self.target_y_in_map is not None:
+                self.a_bouger_depuis_transition_map_ou_nid=True
+                self.goto_target_in_map(dt, map_data)
+            else:
+                self.is_moving=False
+                self.is_busy=False
+                self.target_x_in_map = None
+                self.target_y_in_map = None
+                for nid in tous_les_nids:
+                    if self.centre_x_in_map == nid.tuile_debut[0] and self.centre_y_in_map == nid.tuile_debut[1] and self.a_bouger_depuis_transition_map_ou_nid==True:
+                        print("entered colonie at "+str(nid.tuile_debut))
+                        self.centre_y_in_map = None
+                        self.centre_x_in_map = None
+                        self.target_x_in_map = None
+                        self.target_y_in_map = None
+                        self.centre_x_in_nid = nid.salles_sorties[0].noeud.coord[0]
+                        self.centre_y_in_nid = nid.salles_sorties[0].noeud.coord[1]
+                        self.target_x_in_nid = None
+                        self.target_y_in_nid = None
 
-    def set_target(self, target_x, target_y, map_data):
+                        self.a_bouger_depuis_transition_map_ou_nid=False
+                        self.in_colonie_map_coords=nid.tuile_debut
+
+        else:
+            #sortir colonie
+            #if self.target_x_in_map != self.in_colonie_map_coords[0] and self.target_y_in_map != self.in_colonie_map_coords[1]:
+                #self.in_colonie_map_coords=None
+            #process dans le nid
+            if self.target_x_in_nid is not None and self.target_y_in_nid is not None:
+                self.goto_target_in_nid(dt)
+    def set_target_in_nid(self, target_pos):
+        #print("set target in nid")
+        self.target_x_in_nid=target_pos[0]
+        self.target_y_in_nid=target_pos[1]
+        self.is_busy=True
+        self.is_moving=True
+
+    def goto_target_in_nid(self,dt):
+        self.colonie_origine.menu_f_a_updater = True
+        #print("moving to target in nid")
+        pos=Vector2(self.centre_x_in_nid,self.centre_y_in_nid)
+        target=Vector2(self.target_x_in_nid,self.target_y_in_nid)
+        movement=(target-pos).normalize()*dt*self.speed
+        self.centre_x_in_nid+=movement.x
+        self.centre_y_in_nid+=movement.y
+        if self.target_x_in_nid-abs(movement.x) < self.centre_x_in_nid < self.target_x_in_nid+abs(movement.x) and self.target_y_in_nid-abs(movement.y) < self.centre_y_in_nid < self.target_y_in_nid+abs(movement.y):
+            self.centre_x_in_nid=self.target_x_in_nid
+            self.centre_y_in_nid = self.target_y_in_nid
+            self.target_x_in_nid = None
+            self.target_y_in_nid = None
+            self.is_busy = False
+            self.is_moving = False
+            print("target in nid reached")
+
+    def set_target_in_map(self, target_x, target_y, map_data):
         if isinstance(map_data[target_y][target_x], Eau):
             return
-        
-        self.target_x = target_x
-        self.target_y = target_y
+        if not self.is_busy:
+            self.target_x_in_map = target_x
+            self.target_y_in_map = target_y
+            self.is_moving = True
+            self.is_busy = True
 
-    def goto_target(self, dt, map_data):
-        if not self.path:
+    def goto_target_in_map(self, dt, map_data):
+        if not self.path and self.is_moving:
             # Calculate path if not already calculated
             self.path = self.a_star(map_data)
 
         if self.path:
             next_tile = self.path[0]
-            target_x = next_tile[0]
-            target_y = next_tile[1]
+            target_x_of_next_tile = next_tile[0]
+            target_y_of_next_tile = next_tile[1]
 
-            dx = target_x - self.centre_x
-            dy = target_y - self.centre_y
+            dx = target_x_of_next_tile - self.centre_x_in_map
+            dy = target_y_of_next_tile - self.centre_y_in_map
             distance = math.sqrt(dx ** 2 + dy ** 2)
 
             if distance > 0.1:
-                self.centre_x += self.speed * dx / distance * (dt / 1000)
-                self.centre_y += self.speed * dy / distance * (dt / 1000)
-                self.moving = True
+                self.centre_x_in_map += self.speed * dx / distance * (dt / 1000)
+                self.centre_y_in_map += self.speed * dy / distance * (dt / 1000)
+                self.is_moving = True
 
                 self.facing = 0 if dx > 0 else 1
             else:
                 # Reached the next tile
-                self.centre_x = target_x
-                self.centre_y = target_y
+                self.centre_x_in_map = target_x_of_next_tile
+                self.centre_y_in_map = target_y_of_next_tile
                 self.path.pop(0)  # Remove the reached tile
-                self.moving = len(self.path) > 0
-
-        else:
-            self.moving = False
+                self.is_moving = len(self.path) > 0
     
     def a_star(self, map_data):
         #Note: le path retourné contient des tuiles et non des coordonnées
@@ -248,7 +321,7 @@ class Fourmis(ABC):
         
 
         depart = map_data[self.get_tuile()[1]][self.get_tuile()[0]]
-        arrivee = map_data[self.target_y][self.target_x]
+        arrivee = map_data[self.target_y_in_map][self.target_x_in_map]
 
         queue: list[Tuile] = [] #queue qui permet de savoir quel noeud visiter
         distance_trajet: dict[Tuile : int] = dict() #nb de noeud à parcourir pour arriver à ce noeud
@@ -296,11 +369,17 @@ class Fourmis(ABC):
         return chemin
 
     def get_tuile(self):
-        return int(self.centre_x), int(self.centre_y)
+        return int(self.centre_x_in_map), int(self.centre_y_in_map)
+
+    def draw_in_nid(self,screen,camera):
+        #print("fourmi drawn")
+        image_scaled = pygame.transform.scale(self.image,(self.image.get_width()*camera.zoom,self.image.get_height()*camera.zoom))
+        screen_pos = camera.apply((self.centre_x_in_nid, self.centre_y_in_nid))
+        screen.blit(image_scaled, screen_pos)
 
 class Ouvriere(Fourmis):
-    def __init__(self, x0, y0, couleur):
-        super().__init__(hp=10, atk=2, x0=x0, y0=y0, size=2,couleur=couleur)
+    def __init__(self, x0, y0, couleur, colonie_origine):
+        super().__init__(colonie_origine, hp=10, atk=2, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 3
         self.speed = self.base_speed
 
@@ -309,13 +388,15 @@ class Ouvriere(Fourmis):
         other.hp -= self.atk
 
 class Soldat(Fourmis):
-    def __init__(self, x0, y0, couleur):
-        super().__init__(hp=25, atk=5, x0=x0, y0=y0, size=2,couleur=couleur)
+    def __init__(self, x0, y0, couleur,colonie_origine):
+        super().__init__(colonie_origine, hp=25, atk=5, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 1.5
         self.speed = self.base_speed
 
     def attack(self, other):
         other.hp -= self.atk
+
+
 
 class FourmisSprite(pygame.sprite.Sprite):
     def __init__(self, fourmis: Fourmis, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int):
@@ -331,7 +412,10 @@ class FourmisSprite(pygame.sprite.Sprite):
         self.frames_LEFT = self.extract_frames()
         self.frames_RIGHT = self.extract_frames(flipped=True)
         self.image = self.frames_LEFT[self.current_frame]
-        self.rect = self.image.get_rect(center=(fourmis.centre_x, fourmis.centre_y))
+        if fourmis.in_colonie_map_coords is None:
+            self.rect = self.image.get_rect(center=(fourmis.centre_x_in_map, fourmis.centre_y_in_map))
+        else:
+            self.rect = self.image.get_rect(center=(fourmis.centre_x_in_nid, fourmis.centre_y_in_nid))
 
     def extract_frames(self, flipped=False):
         frames = []
@@ -348,8 +432,8 @@ class FourmisSprite(pygame.sprite.Sprite):
         return frames
 
 
-    def update(self, dt, camera, tile_size):
-        if self.fourmis.moving:
+    def update(self, dt, camera, tile_size, in_map=True):
+        if self.fourmis.is_moving:
             self.timer += dt
 
             while self.timer > self.frame_duration:
@@ -365,9 +449,12 @@ class FourmisSprite(pygame.sprite.Sprite):
         scaled_height = int(self.image.get_height() * zoom * 2)
         self.image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
 
-        world_x = self.fourmis.centre_x * tile_size
-        world_y = self.fourmis.centre_y * tile_size
-
+        if in_map:
+            world_x = self.fourmis.centre_x_in_map * tile_size
+            world_y = self.fourmis.centre_y_in_map * tile_size
+        else:
+            world_x = self.fourmis.centre_x_in_nid
+            world_y = self.fourmis.centre_y_in_nid
         self.rect = self.image.get_rect(center=(world_x+scaled_width/2, world_y+scaled_height/2))
         self.rect = camera.apply_rect(self.rect)
 
@@ -387,6 +474,8 @@ class Groupe:
         self.moving = False
         self.path = None
         self.indexe_fourmis = 0 # indexe de la fourmi qui va collecter la ressource
+        self.is_busy=False
+        self.is_moving=False
 
     def process(self, dt):
         dern_x, dern_y = self.centre_x, self.centre_y
@@ -396,8 +485,8 @@ class Groupe:
 
             if (dern_x, dern_y) != (self.centre_x, self.centre_y):
                 for f in self.fourmis:
-                    f.centre_x = self.centre_x
-                    f.centre_y = self.centre_y
+                    f.centre_x_in_map = self.centre_x
+                    f.centre_y_in_map = self.centre_y
 
     def set_target(self, target_x, target_y):
         self.target_x = target_x

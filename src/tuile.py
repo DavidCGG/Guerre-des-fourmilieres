@@ -56,7 +56,7 @@ class Tuile:
         if self.color!=self.last_color:
             #modifie la texture noise pour donner la couleur
             surf = pygame.Surface(self.image.get_rect().size, pygame.SRCALPHA)
-            surf.fill((int(self.color[0]**2/255)*2,int(self.color[1]**2/255)*2,int(self.color[2]**2/255)*2))
+            surf.fill((int(self.color[0]**2/255),int(self.color[1]**2/255),int(self.color[2]**2/255)))
             self.image.blit(surf, (0, 0), None, pygame.BLEND_MULT)
 
             self.last_color=self.color
