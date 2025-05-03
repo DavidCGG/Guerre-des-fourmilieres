@@ -5,12 +5,12 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import pygame
-from config import SCREEN_WIDTH, SCREEN_HEIGHT
+#from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import trouver_img
 from tuile import Tuile, Eau
 
 class FourmiTitleScreen():
-    def __init__(self, x0, y0, scale=1.0):
+    def __init__(self, x0, y0, screen, scale=1.0):
         self.width = 16
         self.height = 16
         self.scale = scale
@@ -25,6 +25,7 @@ class FourmiTitleScreen():
         self.moving = False
         self.facing = 0 # 0 : droite, 1 : gauche
         self.pause_timer = 0
+        self.screen=screen
 
     def random_mouvement(self, dt):
         if self.pause_timer > 0:
@@ -46,8 +47,8 @@ class FourmiTitleScreen():
         self.target_y = self.centre_y + distance*math.sin(angle)
 
         # On s'assure que la cible est dans les limites de l'écran
-        self.target_x = max(0+self.width * self.scale, min(SCREEN_WIDTH-self.width * self.scale, self.target_x))
-        self.target_y = max(0+self.height * self.scale, min(SCREEN_HEIGHT-self.height * self.scale, self.target_y))
+        self.target_x = max(0+self.width * self.scale, min(self.screen.get_width()-self.width * self.scale, self.target_x))
+        self.target_y = max(0+self.height * self.scale, min(self.screen.get_height()-self.height * self.scale, self.target_y))
 
     def goto_target(self, dt):
             dx = self.target_x - self.centre_x

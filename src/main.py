@@ -6,10 +6,11 @@ import pygame
 import carte as carte
 import affichage_nid as nid
 from config import trouver_font, trouver_img
-from config import SCREEN_WIDTH, SCREEN_HEIGHT
+#from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import WHITE, BLACK, YELLOW
 from config import Bouton
 from fourmi import FourmiTitleScreen, FourmiTitleScreenSprite
+#from src.config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 #Variables globales
 screen: pygame.Surface = None
@@ -47,15 +48,20 @@ current_nid: nid.Nid = None
 #fichier txt options
 max_framerate: int
 fullscreen: bool
+SCREEN_WIDTH: int
+SCREEN_HEIGHT: int
 
 if not os.path.isfile(os.path.join(os.path.dirname(__file__), "..", "options.txt")):
     with open(os.path.join(os.path.dirname(__file__), "..", "options.txt"),"x") as fichier_options:
-        fichier_options.write("max_framerate=60\nfullscreen=False\n")
+        fichier_options.write("max_framerate=60\nfullscreen=False\nSCREEN_WIDTH=1280\nSCREEN_HEIGHT=720")
     fichier_options.close()
 
 with open(os.path.join(os.path.dirname(__file__), "..", "options.txt"),"r") as fichier_options:
     max_framerate=int(fichier_options.readline().removeprefix("max_framerate="))
     fullscreen = ast.literal_eval(fichier_options.readline().removeprefix("fullscreen="))
+    SCREEN_WIDTH = int(fichier_options.readline().removeprefix("SCREEN_WIDTH="))
+    SCREEN_HEIGHT = int(fichier_options.readline().removeprefix("SCREEN_HEIGHT="))
+
 
 fichier_options.close()
 liste_options_menu_options[0]+=str(max_framerate)
@@ -63,6 +69,8 @@ liste_options_menu_options[1]+=str(fullscreen)
 
 gestion_en_pause_pour_text_input: bool = False
 text_input: str = ""
+
+test=""
 
 def initialiser() -> None:
     """
@@ -89,7 +97,7 @@ def initialiser() -> None:
     if fullscreen:
         pygame.display.toggle_fullscreen()
 
-    fourmi = FourmiTitleScreen(3 * SCREEN_WIDTH // 5, 3 * SCREEN_HEIGHT // 5, 8)
+    fourmi = FourmiTitleScreen(3 * screen.get_width() // 5, 3 * screen.get_height() // 5, screen,8)
     fourmi_sprite = FourmiTitleScreenSprite(fourmi, spritesheet, 32, 32, 8, 300)
     sprites.add(fourmi_sprite)
 
@@ -113,7 +121,7 @@ def draw() -> None:
 
         for i in range(len(liste_options)):
             #print(liste_options[i])
-            y = SCREEN_HEIGHT // 2 - (150 * (len(liste_options) - 1)) // 2 - small_font.get_height() // 2 + i * 150
+            y = screen.get_height() // 2 - (150 * (len(liste_options) - 1)) // 2 - small_font.get_height() // 2 + i * 150
 
             if i == selected_option:
                 draw_text_fullscreen_menu(liste_options[i], font, 100, y)
@@ -149,10 +157,10 @@ def draw() -> None:
         camera = carte_jeu.camera if in_carte else current_nid.camera
 
         if  not any(isinstance(bouton, Bouton) and bouton.texte == "Options" for bouton in liste_boutons):
-            bouton = Bouton(screen, SCREEN_WIDTH - 100, 25, 100, 30, "Options", menu_options_overlay, pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22))
+            bouton = Bouton(screen, screen.get_width() - 100, 25, 100, 30, "Options", menu_options_overlay, pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22))
             liste_boutons.append(bouton)
 
-        pygame.draw.rect(screen, BLACK, (0, 0, SCREEN_WIDTH, 50))
+        pygame.draw.rect(screen, BLACK, (0, 0, screen.get_width(), 50))
 
         fps_info = tiny_font.render(f'FPS: {clock.get_fps():.0f}', True, YELLOW)
         zoom_info = tiny_font.render(f'Zoom: {camera.zoom * 100:.2f}%', True, YELLOW)
@@ -169,7 +177,7 @@ def draw() -> None:
             titre_message = f"Nid ennemi {nids.index(current_nid)}"
 
         titre = small_font.render(titre_message, True, WHITE)
-        screen.blit(titre, (SCREEN_WIDTH / 2 - titre.get_width() / 2, 10))
+        screen.blit(titre, (screen.get_width() / 2 - titre.get_width() / 2, 10))
 
     global liste_options_menu_options
     global liste_options_menu_principal
@@ -216,15 +224,15 @@ def menu_options_overlay() -> None:
     police_boutons = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
 
     surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
-    screen.blit(surface, (SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 - 250))
+    screen.blit(surface, (screen.get_width() / 2 - 150, screen.get_height() / 2 - 250))
 
     grid_mode_str = "ON" if carte_jeu.grid_mode else "OFF"
 
-    liste_boutons.append(Bouton(screen, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 100, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 15,
+    liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() / 2 - 100, screen.get_width() / 8, screen.get_height() / 15,
                             'Retour', retour, police_boutons))
-    liste_boutons.append(Bouton(screen,SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 15,
+    liste_boutons.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 2, screen.get_width() / 8, screen.get_height() / 15,
                                   f'Grids: {grid_mode_str}', toggle_grid, police_boutons))
-    liste_boutons.append(Bouton(screen, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 100, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 15,
+    liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() / 2 + 100, screen.get_width() / 8, screen.get_height() / 15,
                             'Quitter', quitter, police_boutons))
 
 def toggle_grid() -> None:
@@ -341,21 +349,33 @@ def gestion_evenement(event: pygame.event) -> None:
 
 
         def write_option(option,value):
+            #print("write to "+option+" option")
             string_nouveau_fichier=""
-            with open(os.path.join(os.path.dirname(__file__), "..", "options.txt"), "r") as fichier_options:
-                ligne=fichier_options.readline()
-                while ligne:
+            with open(os.path.join(os.path.dirname(__file__), "..", "options.txt"), "r") as fichier_options_temp:
+                ligne_temp=fichier_options_temp.readline()
+                lignes=[]
+                while ligne_temp:
+                    lignes.append(ligne_temp)
+                    ligne_temp = fichier_options_temp.readline()
+                #for ligne in lignes:
+                    #print(ligne,end="")
+                #print("/fin de read")
+
+                for ligne in lignes:
                     if ligne.startswith(option):
-                        string_nouveau_fichier+=(option+"="+str(value)+"\n")
+                        string_nouveau_fichier+=(option+"="+str(value))
                     else:
-                        string_nouveau_fichier+=ligne+"\n"
-                    ligne=fichier_options.readline()
+                        string_nouveau_fichier+=ligne
+                    ligne=fichier_options_temp.readline()
+                    string_nouveau_fichier = string_nouveau_fichier.rstrip()+"\n"
+                    #print(string_nouveau_fichier+"fin")
 
-            fichier_options.close()
+            string_nouveau_fichier=string_nouveau_fichier.rstrip()
+            fichier_options_temp.close()
 
-            with open(os.path.join(os.path.dirname(__file__), "..", "options.txt"), "w") as fichier_options:
-                fichier_options.write(string_nouveau_fichier)
-            fichier_options.close()
+            with open(os.path.join(os.path.dirname(__file__), "..", "options.txt"), "w") as fichier_options_temp:
+                fichier_options_temp.write(string_nouveau_fichier)
+            fichier_options_temp.close()
 
         global gestion_en_pause_pour_text_input
         global text_input
@@ -379,6 +399,8 @@ def gestion_evenement(event: pygame.event) -> None:
                         write_option("fullscreen",fullscreen)
                         liste_options_menu_options[1]="Fullscreen: "+str(fullscreen)
                         pygame.display.toggle_fullscreen()
+                        if not fullscreen:
+                            pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
                     elif selected_option == 2:
                         quitter()
         else:
@@ -468,10 +490,10 @@ def demarrer_jeu() -> None:
     in_carte = True
     partie_en_cours = True
 
-    carte_jeu = carte.Carte(nb_colonies_nids)
+    carte_jeu = carte.Carte(nb_colonies_nids,screen)
     graphes = nid.chargement(screen, nb_colonies_nids)
     for graphe in graphes:
-        new_nid = nid.Nid(graphe)
+        new_nid = nid.Nid(graphe,screen)
         nids.append(new_nid)
 
 def run() -> None:
@@ -483,7 +505,6 @@ def run() -> None:
         None
     """
     initialiser()
-
     while running:
         for event in pygame.event.get():
             gestion_evenement(event)

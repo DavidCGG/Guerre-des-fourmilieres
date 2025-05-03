@@ -33,8 +33,10 @@ class Camera:
 
         self.dragging = False
 
-        self.zoom = 1.0
+        self.zoom = 1.0 * height / 720
         self.zoom_levels = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5]
+        for l in range(len(self.zoom_levels)):
+            self.zoom_levels[l]*=height / 720
 
     def apply(self, point):
         """

@@ -2,7 +2,7 @@ import pygame
 from camera import Camera
 from generation_graphe import generer_graphe
 from config import trouver_font,trouver_img
-from config import SCREEN_WIDTH, SCREEN_HEIGHT
+#from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 #Variables globales
 MAP_LIMIT_X: int = 4000
@@ -17,14 +17,19 @@ class Nid:
         camera (Camera): Caméra pour le zoom et le déplacement
     """
 
-    def __init__(self, graphe):
+    def __init__(self, graphe,screen):
         self.graphe = graphe
-        self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, MAP_LIMIT_X, MAP_LIMIT_Y)
+        #print(str(screen.get_width()) + str(screen.get_height()))
+        self.camera = Camera(screen.get_width(), screen.get_height(), MAP_LIMIT_X, MAP_LIMIT_Y)
 
         self.image_terre = pygame.image.load(trouver_img("Monde/terre.png"))
+        #self.image_terre = pygame.transform.scale(self.image_terre,(self.image_terre.get_width()*screen.get_height()/720,self.image_terre.get_height()*screen.get_height()/720))
         self.image_terre_sombre = pygame.image.load(trouver_img("Monde/terre_sombre.png"))
+        #self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (self.image_terre_sombre.get_width() * screen.get_height() / 720,self.image_terre_sombre.get_height() * screen.get_height() / 720))
         self.image_ciel = pygame.image.load(trouver_img("Monde/ciel32x32.png"))
-        self.scale=4
+        #self.image_ciel = pygame.transform.scale(self.image_ciel, (self.image_ciel.get_width() * screen.get_height() / 720,self.image_ciel.get_height() * screen.get_height() / 720))
+        self.scale=4*screen.get_height()/720
+
         self.scale_images(self.scale)
 
         self.TILE_SIZE = self.image_terre.get_width()
@@ -55,9 +60,15 @@ class Nid:
                     screen.blit(self.image_terre , screen_pos)
 
         def draw_ciel() -> None:
+            print(self.SKY_TILE_SIZE,end=",")
             for x in range(0, MAP_LIMIT_X, self.SKY_TILE_SIZE):
+                print(x, end=",")
                 screen_pos = self.camera.apply((x, 0))
+                #screen_pos = (int(screen_pos[0]/2), int(screen_pos[1]/2))
+                #screen_pos = (int(screen_pos[0]*720/screen.get_height()),int(screen_pos[1]*720/screen.get_height()))
+                print(screen_pos, end="")
                 screen.blit(self.image_ciel, screen_pos)
+            print()
 
         def draw_nid() -> None: 
             mask_surface = pygame.Surface((MAP_LIMIT_X, MAP_LIMIT_Y), pygame.SRCALPHA)
@@ -140,6 +151,12 @@ def chargement(screen: pygame.Surface,nb_nids) -> list:
     Returns:
         list: Liste des graphes générés
     """
+    #global MAP_LIMIT_X
+    #global MAP_LIMIT_Y
+    #global HAUTEUR_SOL
+    #MAP_LIMIT_X = int(MAP_LIMIT_X * screen.get_height() / 720)
+    #MAP_LIMIT_Y = int(MAP_LIMIT_Y * screen.get_height() / 720)
+    #HAUTEUR_SOL = int(HAUTEUR_SOL * screen.get_height() / 720)
     def afficher_chargement(nb_genere, total):
         """
         Affiche l'écran de chargement
@@ -154,8 +171,8 @@ def chargement(screen: pygame.Surface,nb_nids) -> list:
         titre = font.render("Création des nids", True, (255, 255, 255))
         progression = small_font.render(f"{nb_genere} sur {total}", True, (200, 200, 200))
 
-        screen.blit(titre, (SCREEN_WIDTH//2 - titre.get_width()//2, SCREEN_HEIGHT//2 - 100))
-        screen.blit(progression, (screen.get_width()//2 - progression.get_width()//2, SCREEN_HEIGHT//2))
+        screen.blit(titre, (screen.get_width()//2 - titre.get_width()//2, screen.get_height()//2 - 100))
+        screen.blit(progression, (screen.get_width()//2 - progression.get_width()//2, screen.get_height()//2))
 
         pygame.display.update()
 
@@ -167,7 +184,6 @@ def chargement(screen: pygame.Surface,nb_nids) -> list:
 
     for i in range(total):
         afficher_chargement(i+1, total)
-
         graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X)
         graphes.append(graphe)
 

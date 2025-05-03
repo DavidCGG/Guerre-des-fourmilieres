@@ -10,14 +10,14 @@ from tuile import Terre, Sable, Eau, Montagne
 from config import trouver_img, GREEN
 from config import trouver_font
 from config import BLACK, YELLOW, RED, PURPLE, BLUE, AQUA
-from config import SCREEN_WIDTH, SCREEN_HEIGHT
+#from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 pygame.font.init()
 police = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 22)
 couleurs_possibles = [BLACK, YELLOW, RED, PURPLE, BLUE, AQUA]
 
 class Carte:
-    def __init__(self,nb_colonies_nids):
+    def __init__(self,nb_colonies_nids,screen):
         self.TILE_SIZE = 32
         self.MAP_WIDTH = 100
         self.MAP_HEIGHT = 100
@@ -44,7 +44,8 @@ class Carte:
 
         self.generation_map()
 
-        self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE)
+        self.screen = screen
+        self.camera = Camera(screen.get_width(), screen.get_height(), self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE)
         self.set_camera_tuile_debut()
 
     def generation_map(self):
@@ -232,8 +233,8 @@ class Carte:
         """Place la camera sur la tuile de debut de la colonie"""
         x, y = self.colonies[0].tuile_debut
         tile_size = (self.TILE_SIZE * self.camera.zoom)
-        self.camera.x = x * tile_size - SCREEN_WIDTH / 2 + tile_size/2
-        self.camera.y = y * tile_size - SCREEN_HEIGHT / 2 + tile_size/2
+        self.camera.x = x * tile_size - self.screen.get_width() / 2 + tile_size/2
+        self.camera.y = y * tile_size - self.screen.get_height() / 2 + tile_size/2
 
     def decouvrir_tuiles(self, x_tuile, y_tuile):
         for y in range(y_tuile - 2, y_tuile+3):
@@ -259,7 +260,7 @@ class Carte:
         start_y = max(0, int(self.camera.y // tile_size))
 
         # On s'assure que la tuile se retrouve dans les limites de la carte
-        end_x = min(int((self.camera.x + SCREEN_WIDTH) // tile_size + 1), self.MAP_WIDTH)
-        end_y = min(int((self.camera.y + SCREEN_HEIGHT) // tile_size + 1), self.MAP_HEIGHT)
+        end_x = min(int((self.camera.x + self.screen.get_width()) // tile_size + 1), self.MAP_WIDTH)
+        end_y = min(int((self.camera.y + self.screen.get_height()) // tile_size + 1), self.MAP_HEIGHT)
 
         return start_x, start_y, end_x, end_y
