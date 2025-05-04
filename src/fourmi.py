@@ -172,15 +172,16 @@ class Fourmis(ABC):
         return
 
     def process(self, dt, map_data,tuiles_debut_toutes_colonies,tous_les_nids):
-        print("Map Pos:" + str(self.centre_x_in_map) + ", " + str(self.centre_y_in_map))
-        print("Map Target: " + str(self.target_x_in_map) + ", " + str(self.target_y_in_map))
-        print("Nid Pos:" + str(self.centre_x_in_nid) + ", " + str(self.centre_y_in_nid))
-        print("Nid Target: " + str(self.target_x_in_nid) + ", " + str(self.target_y_in_nid))
-        print("In colonie at pos: "+str(self.in_colonie_map_coords))
-        print(str(self.a_bouger_depuis_transition_map_ou_nid))
+        #print("Map Pos:" + str(self.centre_x_in_map) + ", " + str(self.centre_y_in_map))
+        #print("Map Target: " + str(self.target_x_in_map) + ", " + str(self.target_y_in_map))
+        #print("Nid Pos:" + str(self.centre_x_in_nid) + ", " + str(self.centre_y_in_nid))
+        #print("Nid Target: " + str(self.target_x_in_nid) + ", " + str(self.target_y_in_nid))
+        #print("In colonie at pos: "+str(self.in_colonie_map_coords))
+        #print(str(self.a_bouger_depuis_transition_map_ou_nid))
         if self.in_colonie_map_coords is None:#if sur la carte
             #process sur la carte
             if (self.target_x_in_map != self.centre_x_in_map or self.target_y_in_map != self.centre_y_in_map) and self.target_x_in_map is not None and self.target_y_in_map is not None:
+                #print("fourmi bouge")
                 self.a_bouger_depuis_transition_map_ou_nid=True
                 self.goto_target_in_map(dt, map_data)
             else:
@@ -222,7 +223,9 @@ class Fourmis(ABC):
         #print("moving to target in nid")
         pos=Vector2(self.centre_x_in_nid,self.centre_y_in_nid)
         target=Vector2(self.target_x_in_nid,self.target_y_in_nid)
-        movement=(target-pos).normalize()*dt*self.speed
+        movement=0
+        if target!=pos:
+            movement=(target-pos).normalize()*dt*self.speed
         self.centre_x_in_nid+=movement.x
         self.centre_y_in_nid+=movement.y
         if self.target_x_in_nid-abs(movement.x) < self.centre_x_in_nid < self.target_x_in_nid+abs(movement.x) and self.target_y_in_nid-abs(movement.y) < self.centre_y_in_nid < self.target_y_in_nid+abs(movement.y):
@@ -232,7 +235,7 @@ class Fourmis(ABC):
             self.target_y_in_nid = None
             self.is_busy = False
             self.is_moving = False
-            print("target in nid reached")
+            #print("target in nid reached")
 
     def set_target_in_map(self, target_x, target_y, map_data):
         if isinstance(map_data[target_y][target_x], Eau):

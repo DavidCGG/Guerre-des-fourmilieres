@@ -166,7 +166,7 @@ class Carte:
                     tile = self.map_data[y][x]
                     tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
                     tile.draw(screen, self.camera.apply_rect(tile_rect), self.grid_mode)
-                    if self.colonies[0].fourmis_selection:
+                    if self.colonies[0].fourmis_selection and self.colonies[0].fourmis_selection.centre_x_in_map is not None and self.colonies[0].fourmis_selection.centre_y_in_map is not None:
                         if self.hover_tuile == (x, y):
                             pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
                         if self.colonies[0].fourmis_selection.get_tuile() == (x, y):

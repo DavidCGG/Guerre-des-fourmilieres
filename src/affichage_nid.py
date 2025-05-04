@@ -57,11 +57,17 @@ class Nid:
     
     def process(self,liste_fourmis_jeu_complet):
         def process_sortir_de_nid():
-            for salle in self.salles_sorties:
-                print(salle.noeud.coord)
-                for fourmi in liste_fourmis_jeu_complet:
-                    if fourmi.in_colonie_map_coords is not None:
-                        if fourmi.in_colonie_map_coords==self.tuile_debut and salle.noeud.coord[0]-40 < fourmi.centre_x_in_nid < salle.noeud.coord[0]+40 and salle.noeud.coord[1]-40 < fourmi.centre_y_in_nid < salle.noeud.coord[1]+40:
+            for fourmi in liste_fourmis_jeu_complet:
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==self.tuile_debut:
+                    for salle in self.salles_sorties:
+                        #print("Nid: "+str(self.tuile_debut)+"----------------------")
+                        #print("fourmi in colonie map coords"+str(fourmi.in_colonie_map_coords))
+                        #print("tuile debut nid:"+str(self.tuile_debut))
+                        #print("salle noeud x: "+str(salle.noeud.coord[0]-40)+","+str(salle.noeud.coord[0]+40))
+                        #print("salle noeud y: " + str(salle.noeud.coord[1] - 40) + "," + str(salle.noeud.coord[1] + 40))
+                        #print("fourmi in nid pos: "+str(fourmi.centre_x_in_nid)+", "+str(fourmi.centre_y_in_nid))
+                        if salle.noeud.coord[0]-40 < fourmi.centre_x_in_nid < salle.noeud.coord[0]+40 and salle.noeud.coord[1]-40 < fourmi.centre_y_in_nid < salle.noeud.coord[1]+40:
+                            #print("fourmi sur salle exit")
                             if fourmi.a_bouger_depuis_transition_map_ou_nid==True:
                                 print("exited colonie at "+str(self.tuile_debut))
                                 fourmi.in_colonie_map_coords=None
@@ -75,7 +81,9 @@ class Nid:
                                 fourmi.target_y_in_nid = None
                                 fourmi.a_bouger_depuis_transition_map_ou_nid=False
                         else:
+                            #print("fourmi a bouger dans nid")
                             fourmi.a_bouger_depuis_transition_map_ou_nid=True
+                            pass
 
 
         process_sortir_de_nid()
