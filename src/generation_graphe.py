@@ -1,5 +1,7 @@
 import math
 
+from pygame import Vector2
+
 import classes_graphe as cg
 import random
 from numpy.random import normal
@@ -323,7 +325,7 @@ def bfs(start, action=None) -> None:
             nb_restants = nb_next_niv
             nb_next_niv = 0
 
-def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
+def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X,nb_salles_initiales) -> cg.Graphe:
     """
     Génère un graphe à partir d'un arbre de noeuds en utilisant des paramètres de génération.
     Args:
@@ -343,7 +345,7 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
         """
         noeuds.append(root)
 
-    def convertir_coord(graphe: cg.Graphe, scale) -> None:
+    def convertir_coord(graphe: cg.Graphe, scale,nb_salles_initiales) -> None:
         """
         Convertit les coordonnées des noeuds du graphe en fonction de l'échelle et ajuste la position de la salle de sortie.
         Args:
@@ -392,12 +394,12 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
 
         graphe = cg.Graphe()
         graphe.initialiser_graphe(noeuds)
-        convertir_coord(graphe, scale)
+        convertir_coord(graphe, scale,nb_salles_initiales)
         
-        valide = graphe.verifier_graphe(scale, HAUTEUR_SOL)
+        valide = graphe.verifier_graphe(scale, HAUTEUR_SOL,nb_salles_initiales)
 
     #assigner rôle des permières salles
-    coords_sortie=0
+    coords_sortie=(0,0)
     salles_salle=[]
     for salle in graphe.salles: #trouver sortie et liste de toutes les salles de type salle
         if salle.type == cg.TypeSalle.SORTIE:
@@ -406,14 +408,20 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
             salles_salle.append(salle)
 
     def distance_sortie(salle):
-        return math.sqrt((salle.noeud.coord[0]-coords_sortie[0])**2+(salle.noeud.coord[0]-coords_sortie[0])**2)
+        return (Vector2(salle.noeud.coord)-Vector2(coords_sortie)).magnitude()
 
     for i in range(len(salles_salle)): # sort selon distance
         for j in range(len(salles_salle) - 1 - i):
             if distance_sortie(salles_salle[j]) > distance_sortie(salles_salle[j + 1]):
                 salles_salle[j], salles_salle[j + 1] = salles_salle[j + 1], salles_salle[j]
 
-    salles_salle[0].type=cg.TypeSalle.THRONE
-    salles_salle[2].type=cg.TypeSalle.BANQUE
+    #donner rôle selon distance
+    salles_salle[-1].type=cg.TypeSalle.THRONE
+    if nb_salles_initiales > 2 :
+        salles_salle[0].type=cg.TypeSalle.BANQUE
+        if nb_salles_initiales > 3 :
+            salles_salle[1].type=cg.TypeSalle.MEULE
+            if nb_salles_initiales > 4:
+                salles_salle[2].type = cg.TypeSalle.ENCLUME
 
     return graphe

@@ -1,5 +1,6 @@
 import ast
 import os
+import random
 from curses.ascii import isdigit
 
 import pygame
@@ -93,16 +94,20 @@ def initialiser() -> None:
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
     spritesheet = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
-    icon = spritesheet.subsurface(pygame.Rect(32, 0, 32, 32))
+    if random.random() > 0.5:
+        spritesheet.blit(pygame.image.load(trouver_img("Fourmis/habit_ouvriere.png")).convert_alpha(),(0,0))
+    else:
+        spritesheet.blit(pygame.image.load(trouver_img("Fourmis/habit_soldat.png")).convert_alpha(), (0, 0))
+    icon = spritesheet.subsurface(pygame.Rect(0, 0, 32, 32))
     pygame.display.set_icon(icon)
     if fullscreen:
-        pygame.display.toggle_fullscreen()
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),pygame.SCALED,pygame.FULLSCREEN)
 
     fourmi = FourmiTitleScreen(3 * screen.get_width() // 5, 3 * screen.get_height() // 5, screen,8)
     fourmi_sprite = FourmiTitleScreenSprite(fourmi, spritesheet, 32, 32, 8, 300)
     sprites.add(fourmi_sprite)
 
-def draw() -> None:
+def draw(dt) -> None:
     """
     Dessine l'écran de jeu ou le menu principal
     Args:
@@ -191,7 +196,7 @@ def draw() -> None:
     elif in_carte and not in_menu_secondaire:
         carte_jeu.draw(screen)
     elif in_nid and not in_menu_secondaire:
-        current_nid.draw(screen, liste_fourmis_jeu_complet, carte_jeu.colonies[0])
+        current_nid.draw(dt,screen, liste_fourmis_jeu_complet, carte_jeu.colonies[0])
 
     if in_carte or in_nid:
         draw_top_bar()
@@ -463,8 +468,7 @@ def gestion_evenement(event: pygame.event) -> None:
             in_carte = True
             current_nid = None
 
-def process() -> None:
-    dt = clock.tick(max_framerate)
+def process(dt) -> None:
 
     if not in_menu_principal and partie_en_cours:
         for colonie in carte_jeu.colonies:
@@ -513,9 +517,9 @@ def run() -> None:
     while running:
         for event in pygame.event.get():
             gestion_evenement(event)
-
-        process()
-        draw()
+        dt = clock.tick(max_framerate)
+        process(dt)
+        draw(dt)
 
 if __name__ == "__main__":
     run()   

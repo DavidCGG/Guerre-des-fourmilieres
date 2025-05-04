@@ -4,13 +4,12 @@ from fourmi import Ouvriere, Soldat, Groupe, Fourmis
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN, RED
 from fourmi import FourmisSprite
 from fourmi import CouleurFourmi
-#from src.classes_graphe import TypeSalle
 
 class Colonie:
     def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,listes_fourmis_jeu_complet):
         #self.graphe = graphe
         #print("a")
-        self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/ouvriere_sheet.png")).convert_alpha()
+        self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/4-frame-ant.png")).convert_alpha()
         self.map_data = map_data # la carte de jeu
         self.tuile_debut = tuile_debut
@@ -175,8 +174,8 @@ class Colonie:
             elif isinstance(fourmi, Soldat):
                 sprite_sheet = self.sprite_sheet_sold
 
-            sprite = FourmisSprite(fourmi, sprite_sheet, 16, 16, 4, 500).extract_frames()[0]
-            sprite = pygame.transform.scale(sprite, (32, 32))
+            sprite = FourmisSprite(fourmi, sprite_sheet, 32, 32, 8, 250, 1/2).extract_frames()[0]
+            #sprite = pygame.transform.scale(sprite, (32, 32))
             list_surface.blit(sprite, (10, y_offset - 10))
             #ant_info=""
             if fourmi.in_colonie_map_coords is not None:
@@ -215,7 +214,7 @@ class Colonie:
 
     def load_sprites(self):
         for f in self.fourmis:
-            sprite = FourmisSprite(f, self.sprite_sheets[type(f)], 16, 16, 4, 300)
+            sprite = FourmisSprite(f, self.sprite_sheets[type(f)], 32, 32, 8, 100,1/2)
             self.sprite_dict[f] = sprite
             self.sprites.append(sprite)
 

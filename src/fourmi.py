@@ -159,8 +159,11 @@ class Fourmis(ABC):
         self.in_colonie_map_coords = colonie_origine.tuile_debut
         self.a_bouger_depuis_transition_map_ou_nid=True
 
-        self.image = pygame.image.load(trouver_img("Test64x64.png")).convert_alpha()
+        #self.image = pygame.image.load(trouver_img("Test64x64.png")).convert_alpha()
+        self.image_armure = pygame.image.load(trouver_img("Items/epee.png"))
 
+        self.sprite: FourmisSprite
+        self.type = "default"
     @abstractmethod
     def attack(self, other):
         pass
@@ -213,10 +216,11 @@ class Fourmis(ABC):
                 self.goto_target_in_nid(dt)
     def set_target_in_nid(self, target_pos):
         #print("set target in nid")
-        self.target_x_in_nid=target_pos[0]
-        self.target_y_in_nid=target_pos[1]
-        self.is_busy=True
-        self.is_moving=True
+        if not self.is_busy:
+            self.target_x_in_nid=target_pos[0]
+            self.target_y_in_nid=target_pos[1]
+            self.is_busy=True
+            self.is_moving=True
 
     def goto_target_in_nid(self,dt):
         self.colonie_origine.menu_f_a_updater = True
@@ -225,9 +229,14 @@ class Fourmis(ABC):
         target=Vector2(self.target_x_in_nid,self.target_y_in_nid)
         movement=Vector2(0,0)
         if target!=pos:
-            movement=(target-pos).normalize()*dt*self.speed
+            movement=(target-pos).normalize()*dt*self.speed/10
         self.centre_x_in_nid+=movement.x
         self.centre_y_in_nid+=movement.y
+        #check if movement is to the right
+        if movement.x/abs(movement.x) > 0:
+            self.facing=0
+        elif movement.x/abs(movement.x) < 0:
+            self.facing = 1
         if self.target_x_in_nid-abs(movement.x) < self.centre_x_in_nid < self.target_x_in_nid+abs(movement.x) and self.target_y_in_nid-abs(movement.y) < self.centre_y_in_nid < self.target_y_in_nid+abs(movement.y):
             self.centre_x_in_nid=self.target_x_in_nid
             self.centre_y_in_nid = self.target_y_in_nid
@@ -374,17 +383,22 @@ class Fourmis(ABC):
     def get_tuile(self):
         return int(self.centre_x_in_map), int(self.centre_y_in_map)
 
-    def draw_in_nid(self,screen,camera):
+    def draw_in_nid(self,dt,screen,camera):
         #print("fourmi drawn")
-        image_scaled = pygame.transform.scale(self.image,(self.image.get_width()*camera.zoom,self.image.get_height()*camera.zoom))
+        #image_scaled = pygame.transform.scale(self.image,(self.image.get_width()*camera.zoom,self.image.get_height()*camera.zoom))
+        self.sprite.update(dt,camera,None,False)
         screen_pos = camera.apply((self.centre_x_in_nid, self.centre_y_in_nid))
-        screen.blit(image_scaled, screen_pos)
+        screen.blit(self.sprite.image,(screen_pos[0]-self.sprite.image.get_width()/2,screen_pos[1]-self.sprite.image.get_height()/2))
+
 
 class Ouvriere(Fourmis):
     def __init__(self, x0, y0, couleur, colonie_origine):
         super().__init__(colonie_origine, hp=10, atk=2, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 3
         self.speed = self.base_speed
+        sprite_sheet_image=pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
+        self.type="ouvriere"
+        self.sprite = FourmisSprite(self,sprite_sheet_image,32,32,8,100,1)
 
 
     def attack(self, other):
@@ -395,15 +409,26 @@ class Soldat(Fourmis):
         super().__init__(colonie_origine, hp=25, atk=5, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 1.5
         self.speed = self.base_speed
+        sprite_sheet_image = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
+        self.type="soldat"
+        self.sprite = FourmisSprite(self, sprite_sheet_image, 32, 32, 8, 100, 1)
+
 
     def attack(self, other):
         other.hp -= self.atk
 
 class FourmisSprite(pygame.sprite.Sprite):
-    def __init__(self, fourmis: Fourmis, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int):
+    def __init__(self, fourmis: Fourmis, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int, scale):
         super().__init__()
         self.fourmis = fourmis
         self.spritesheet = spritesheet
+        if self.fourmis.type == "ouvriere":
+            #print("fourmi is ouvirere")
+            self.spritesheet.blit(pygame.image.load(trouver_img("Fourmis/habit_ouvriere.png")).convert_alpha(),(0, 0))
+        elif self.fourmis.type == "soldat":
+            self.spritesheet.blit(pygame.image.load(trouver_img("Fourmis/habit_soldat.png")).convert_alpha(), (0, 0))
+        #self.spritesheet = pygame.transform.flip(self.spritesheet,True,False)
+        self.scale=scale
         self.frame_width = frame_width
         self.frame_height = frame_height
         self.num_frames = num_frames
@@ -444,10 +469,11 @@ class FourmisSprite(pygame.sprite.Sprite):
             self.image = self.frames_RIGHT[self.current_frame]
         else:
             self.image = self.frames_LEFT[self.current_frame]
-
+        #flip image for sprite that goes to the left
+        self.image=pygame.transform.flip(self.image,True,False)
         zoom = camera.zoom
-        scaled_width = int(self.image.get_width() * zoom * 2)
-        scaled_height = int(self.image.get_height() * zoom * 2)
+        scaled_width = int(self.image.get_width() * zoom * 2 * self.scale)
+        scaled_height = int(self.image.get_height() * zoom * 2 * self.scale)
         self.image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
 
         if in_map:

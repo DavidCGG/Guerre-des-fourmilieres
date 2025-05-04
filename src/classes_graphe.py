@@ -357,7 +357,7 @@ class Graphe:
         initialiser_salles(self, noeuds, lien_noeud_salle)
         initialiser_tunnels(self, noeuds, lien_noeud_salle)
 
-    def verifier_graphe(self, scale, HAUTEUR_SOL) -> bool:
+    def verifier_graphe(self, scale, HAUTEUR_SOL,nb_salles_initiles) -> bool:
         """
         Vérifie si le graphe respecte les contraintes de superposition et de nombre de salles.
         Args:
@@ -365,7 +365,7 @@ class Graphe:
         Returns:
             bool: True si le graphe est valide, False sinon.
         """
-        def verifier_nombre_salles() -> bool:
+        def verifier_nombre_salles(nb_salles_initiales) -> bool:
             """
             Vérifie si le nombre de salles autre que des intersections ou des sorties est compris entre 2 et 5.
             Args:
@@ -380,7 +380,7 @@ class Graphe:
                     continue
                 nb_salles += 1
 
-            return nb_salles == 3
+            return nb_salles == nb_salles_initiales
         
         def verifier_longueur_tunnels(scale) -> bool:
             """
@@ -477,7 +477,7 @@ class Graphe:
             return True
         
         valide: bool = True
-        valide = valide and verifier_nombre_salles()
+        valide = valide and verifier_nombre_salles(nb_salles_initiles)
         valide = valide and verifier_longueur_tunnels(scale)
         valide = valide and verifier_angle_tunnels()
         valide = valide and verifier_sous_terre(HAUTEUR_SOL)

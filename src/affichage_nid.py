@@ -13,6 +13,7 @@ from src.colonies import Colonie
 MAP_LIMIT_X: int = 4000
 MAP_LIMIT_Y: int = 2250
 HAUTEUR_SOL: int = 128
+NB_SALLES_INITIALES: int = 5
 
 class Nid:
     """
@@ -55,7 +56,7 @@ class Nid:
         self.image_terre = pygame.transform.scale(self.image_terre, (int(self.image_terre.get_width() * scale), int(self.image_terre.get_height() * scale)))
         self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (int(self.image_terre_sombre.get_width() * scale), int(self.image_terre_sombre.get_height() * scale)))
 
-    def draw(self, screen, liste_fourmis_jeu_complet, colonie_joueur:Colonie) -> None:
+    def draw(self, dt, screen, liste_fourmis_jeu_complet, colonie_joueur:Colonie) -> None:
         """
         Dessine tous les éléments du nid sur l'écran incluant l'arrière-plan
         Args:
@@ -122,7 +123,7 @@ class Nid:
             for fourmi in liste_fourmis_jeu_complet:
                 #print(str(fourmi.in_colonie_map_coords)+","+str(self.tuile_debut))
                 if fourmi.in_colonie_map_coords==self.tuile_debut:
-                    fourmi.draw_in_nid(screen,self.camera)
+                    fourmi.draw_in_nid(dt,screen,self.camera)
 
         draw_terre()
         draw_nid()
@@ -296,7 +297,7 @@ def chargement(screen: pygame.Surface,nb_nids) -> list:
 
     for i in range(total):
         afficher_chargement(i+1, total)
-        graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X)
+        graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X,NB_SALLES_INITIALES)
         graphes.append(graphe)
 
     return graphes
