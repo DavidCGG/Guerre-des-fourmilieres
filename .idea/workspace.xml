@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="scale selon resolution mais broken dans le nid">
+    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="mouvment fourmi fixed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/affichage_nid.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/affichage_nid.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/carte.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/carte.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/classes_graphe.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/classes_graphe.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/colonies.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/colonies.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/fourmi.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/fourmi.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
@@ -308,7 +308,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746308651219</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="mouvment fourmi fixed">
+      <option name="closed" value="true" />
+      <created>1746370337840</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1746370337840</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -378,7 +386,8 @@
     <MESSAGE value="Création du menu option (max framerate &amp; fullscreen), sauvgarde des options sur un fichier txt" />
     <MESSAGE value="mouvement fourmis dans nid et transition (rentrer dans nid est brisé parce que la pos sur la map et le target sur la map semblent utiliser d'autre variables que ceux donnés)" />
     <MESSAGE value="mouvement fourmis dans nid et transition (rentrer dans nid est brisé parce que la pos sur la map et le target sur la map semblent utiliser d'autre variables que ceux donnés)" />
-    <option name="LAST_COMMIT_MESSAGE" value="mouvement fourmis dans nid et transition (rentrer dans nid est brisé parce que la pos sur la map et le target sur la map semblent utiliser d'autre variables que ceux donnés)" />
+    <MESSAGE value="mouvment fourmi fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="mouvment fourmi fixed" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/jeu_py$main.coverage" NAME="main Coverage Results" MODIFIED="1746044225913" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />

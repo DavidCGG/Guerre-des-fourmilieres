@@ -223,7 +223,7 @@ class Fourmis(ABC):
         #print("moving to target in nid")
         pos=Vector2(self.centre_x_in_nid,self.centre_y_in_nid)
         target=Vector2(self.target_x_in_nid,self.target_y_in_nid)
-        movement=0
+        movement=Vector2(0,0)
         if target!=pos:
             movement=(target-pos).normalize()*dt*self.speed
         self.centre_x_in_nid+=movement.x
@@ -398,8 +398,6 @@ class Soldat(Fourmis):
 
     def attack(self, other):
         other.hp -= self.atk
-
-
 
 class FourmisSprite(pygame.sprite.Sprite):
     def __init__(self, fourmis: Fourmis, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int):

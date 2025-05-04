@@ -2,6 +2,7 @@ from enum import Enum
 from pygame import Vector2
 
 from config import trouver_img
+from src.colonies import Colonie
 
 
 class NoeudGeneration:
@@ -152,6 +153,50 @@ class Salle:
         rayon = self.type.value[0] + tunnel.largeur / 2
 
         return distance <= rayon
+
+    def process(self,listes_fourmis_jeu_complet,colonie_owner:Colonie):
+        if self.type==TypeSalle.BANQUE:
+            for fourmi in listes_fourmis_jeu_complet:
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine==colonie_owner:
+                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.BANQUE.value[0]:
+                        #print("Fourmi dépose")
+                        ress=fourmi.depot()
+                        colonie_owner.nourriture += 1 if ress == "pomme" else 0
+                        colonie_owner.metal += 1 if ress == "metal" else 0
+                        fourmi.tient_ressource = None
+        elif self.type==TypeSalle.SORTIE:
+            for fourmi in listes_fourmis_jeu_complet:
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut:
+                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.SORTIE.value[0]:
+                        # print("Nid: "+str(self.tuile_debut)+"----------------------")
+                        # print("fourmi in colonie map coords"+str(fourmi.in_colonie_map_coords))
+                        # print("tuile debut nid:"+str(self.tuile_debut))
+                        # print("salle noeud x: "+str(salle.noeud.coord[0]-40)+","+str(salle.noeud.coord[0]+40))
+                        # print("salle noeud y: " + str(salle.noeud.coord[1] - 40) + "," + str(salle.noeud.coord[1] + 40))
+                        # print("fourmi in nid pos: "+str(fourmi.centre_x_in_nid)+", "+str(fourmi.centre_y_in_nid))
+                        # print("fourmi sur salle exit")
+                        if fourmi.a_bouger_depuis_transition_map_ou_nid == True:
+                            print("exited colonie at " + str(colonie_owner.tuile_debut))
+                            fourmi.in_colonie_map_coords = None
+                            fourmi.centre_x_in_map = colonie_owner.tuile_debut[0]
+                            fourmi.centre_y_in_map = colonie_owner.tuile_debut[1]
+                            fourmi.target_x_in_map = colonie_owner.tuile_debut[0]
+                            fourmi.target_y_in_map = colonie_owner.tuile_debut[1]
+                            fourmi.centre_x_in_nid = None
+                            fourmi.centre_y_in_nid = None
+                            fourmi.target_x_in_nid = None
+                            fourmi.target_y_in_nid = None
+                            fourmi.a_bouger_depuis_transition_map_ou_nid = False
+                    else:
+                        #print("fourmi a bouger dans nid")
+                        fourmi.a_bouger_depuis_transition_map_ou_nid = True
+                        pass
+        elif self.type==TypeSalle.THRONE:
+            for fourmi in listes_fourmis_jeu_complet:
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine!=colonie_owner:
+                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
+                        print("attaque reine")
+
    
 class Tunnel:
     """

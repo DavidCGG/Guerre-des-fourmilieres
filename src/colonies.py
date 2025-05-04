@@ -4,7 +4,7 @@ from fourmi import Ouvriere, Soldat, Groupe, Fourmis
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN, RED
 from fourmi import FourmisSprite
 from fourmi import CouleurFourmi
-from src.classes_graphe import TypeSalle
+#from src.classes_graphe import TypeSalle
 
 class Colonie:
     def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,listes_fourmis_jeu_complet):
@@ -17,6 +17,8 @@ class Colonie:
         self.vie = 1 # 1 = 100% (vie de la reine)
         self.nourriture = 0
         self.metal = 0
+        self.armure = 0
+        self.epee = 0
 
         self.graphe=graphe
 
@@ -77,7 +79,7 @@ class Colonie:
         self.tuiles_debut=tuiles_debut_toutes_colonies
 
 
-    def process(self,dt,tous_les_nids):
+    def process(self,dt,tous_les_nids,listes_fourmis_jeu_complet):
         groupe_bouge = False
         for _, groupe in self.groupes_cache.items():
             if groupe.get_nb_fourmis() > 1 and not groupe.est_vide():
@@ -87,26 +89,30 @@ class Colonie:
                     groupe_bouge = True
 
         fourmis_bouge = False
+
         for f in self.fourmis:
             if not self.fourmi_dans_groupe(f):
                 dern_x, dern_y = f.centre_x_in_map, f.centre_y_in_map
                 f.process(dt, self.map_data,self.tuiles_debut,tous_les_nids)
                 if (dern_x, dern_y) != (f.centre_x_in_map, f.centre_y_in_map):
                     fourmis_bouge = True
+                """
                 if f.in_colonie_map_coords is None and f.get_tuile() == self.tuile_debut:
                     ress = f.depot()
                     self.nourriture += 1 if ress == "pomme" else 0
                     self.metal += 1 if ress == "metal" else 0
                     f.tient_ressource = None
+                """
 
-
+        for salle in self.graphe.salles:
+            salle.process(listes_fourmis_jeu_complet,self)
 
         if fourmis_bouge or groupe_bouge:
             self.cache_groupes_a_updater = True
-            if self.menu_fourmis_ouvert:
-                self.menu_f_a_updater = True
-            if self.menu_colonie_ouvert:
-                self.menu_a_updater = True
+        if self.menu_fourmis_ouvert:
+           self.menu_f_a_updater = True
+        if self.menu_colonie_ouvert:
+            self.menu_a_updater = True
 
     def nombre_ouvrieres(self):
         return len([f for f in self.fourmis if isinstance(f, Ouvriere)])
@@ -312,6 +318,7 @@ class Colonie:
             self.menu_a_updater = True
             self.update_menu()
             print(self.nourriture, self.metal)
+
     def fourmi_dans_groupe(self, fourmi):
         for _, groupe in self.groupes_cache.items():
             if groupe.get_nb_fourmis() >1 and fourmi in groupe.fourmis:
