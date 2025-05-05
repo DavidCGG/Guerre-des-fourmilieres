@@ -1,5 +1,7 @@
 ## Fichier pour declarer les variables de configuration
 ## et les constantes du jeu
+from enum import Enum
+
 import pygame
 import os
 
@@ -15,6 +17,7 @@ RED = pygame.Color("red")
 PURPLE = pygame.Color("purple")
 ORANGE = pygame.Color("orange")
 AQUA = pygame.Color("aqua")
+BROWN = pygame.Color("saddlebrown")
 SKY_BLUE= pygame.Color(110, 180, 235)
 
 def trouver_img(nom: str) -> str:
@@ -64,3 +67,9 @@ class Bouton():
         pygame.draw.rect(self.surface_self, pygame.Color("black"), self.surface_self.get_rect(), 3)
         self.screen.blit(self.surface_self, (self.x, self.y))
         return cursor_sur_bouton
+
+class TypeItem(Enum):
+    POMME=(1,trouver_img("Items/pomme.png"))
+    METAL=(2,trouver_img("Items/metal.png"))
+    ARMURE=(2,trouver_img("Items/armure.png"))
+    EPEE=(1,trouver_img("Items/epee.png"))

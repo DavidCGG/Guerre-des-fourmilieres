@@ -7,13 +7,14 @@ from config import trouver_font, trouver_img, AQUA
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from fourmi import FourmisSprite, CouleurFourmi
 from fourmi import Fourmis,Ouvriere,Soldat
+from src.classes_graphe import TypeSalle
 from src.colonies import Colonie
 
 #Variables globales
 MAP_LIMIT_X: int = 4000
 MAP_LIMIT_Y: int = 2250
 HAUTEUR_SOL: int = 128
-NB_SALLES_INITIALES: int = 5
+NB_SALLES_INITIALES: int = 3
 
 class Nid:
     """
@@ -23,8 +24,9 @@ class Nid:
         camera (Camera): Caméra pour le zoom et le déplacement
     """
 
-    def __init__(self, graphe,screen,tuile_debut):
-        self.tuile_debut=tuile_debut
+    def __init__(self, graphe,screen,colonie_owner: Colonie):
+        self.colonie_owner=colonie_owner
+        self.tuile_debut=colonie_owner.tuile_debut
         self.graphe = graphe
         #print(str(screen.get_width()) + str(screen.get_height()))
         self.camera = Camera(screen.get_width(), screen.get_height(), MAP_LIMIT_X, MAP_LIMIT_Y)
@@ -125,10 +127,16 @@ class Nid:
                 if fourmi.in_colonie_map_coords==self.tuile_debut:
                     fourmi.draw_in_nid(dt,screen,self.camera)
 
+        def draw_menu_salles():
+            for salle in self.graphe.salles:
+                if salle.menu_is_ouvert:
+                    salle.draw_menu(screen,self.camera,self.colonie_owner)
+
         draw_terre()
         draw_nid()
         draw_ciel()
         draw_fourmis()
+        draw_menu_salles()
         colonie_joueur.update_menu()
         colonie_joueur.update_menu_fourmis()
 
@@ -137,7 +145,7 @@ class Nid:
         if colonie_joueur.menu_fourmis_ouvert:
             colonie_joueur.menu_fourmis(screen)
 
-    def handle_event(self, event, screen,colonie_joueur) -> bool:
+    def handle_event(self, event, screen,colonie_joueur,liste_fourmis_jeu_complet) -> bool:
         """
         Gère tous les événements liés au nid
         Args:
@@ -146,7 +154,8 @@ class Nid:
             bool: True si le ciel a été cliqué pour sortir du nid, False sinon
         """
 
-        def handle_click(pos):
+        def handle_left_click(pos):
+            #menu colonie
             for key, rect in colonie_joueur.texte_rects.items():
                 if rect.collidepoint(pos):
                     colonie_joueur.last_tab = colonie_joueur.curr_tab
@@ -165,6 +174,7 @@ class Nid:
                     colonie_joueur.menu_f_a_updater = True
                     return
 
+            #menu fourmis
             if colonie_joueur.menu_fourmis_ouvert and colonie_joueur.menu_fourmis_rect.collidepoint(pos):
                 rel_x = pos[0] - colonie_joueur.menu_fourmis_rect.x
                 rel_y = pos[1] - colonie_joueur.menu_fourmis_rect.y + colonie_joueur.scroll_offset
@@ -189,8 +199,26 @@ class Nid:
                         return
 
                     y_offset += 50
-            if colonie_joueur.fourmis_selection is not None and colonie_joueur.fourmis_selection.in_colonie_map_coords==self.tuile_debut:
+                return
+
+            #ouvrir/fermer menu fourmi
+            for fourmi in liste_fourmis_jeu_complet:
+                if fourmi.in_colonie_map_coords==self.tuile_debut:
+                    if (Vector2(pos)-Vector2(self.camera.apply((fourmi.centre_x_in_nid,fourmi.centre_y_in_nid)))).magnitude() < 32*self.camera.zoom:
+                        #print("toggle menu de la fourmi")
+                        fourmi.menu_is_ouvert = not fourmi.menu_is_ouvert
+                        return
+
+            for salle in self.graphe.salles:
+                if (event.pos-Vector2(self.camera.apply(salle.noeud.coord))).magnitude() < salle.type.value[0]*self.camera.zoom and salle.type.value[1]!="salle" and salle.type.value[1]!="sortie" and salle.type.value[1]!="intersection" and salle.type.value[1]!="indéfini":
+                    #print("salle "+salle.type.value[1]+" clické")
+                    salle.menu_is_ouvert=not salle.menu_is_ouvert
+
+        def handle_right_click(pos):
+            # set target of fourmi
+            if colonie_joueur.fourmis_selection is not None and colonie_joueur.fourmis_selection.in_colonie_map_coords == self.tuile_debut:
                 colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos))
+                return
 
         def handle_hover(pos):
             if colonie_joueur.menu_colonie_rect.collidepoint(pos):
@@ -227,9 +255,10 @@ class Nid:
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
             if event.button == 1:  # Clic gauche
-                handle_click(event.pos)
+                handle_left_click(event.pos)
                 self.camera.start_drag(*event.pos)
             elif event.button == 3:  # Clic droit
+                handle_right_click(event.pos)
                 if y < HAUTEUR_SOL:
                     return True
             elif event.button == 4:  # Molette haut

@@ -1,7 +1,9 @@
 from enum import Enum
+
+import pygame
 from pygame import Vector2
 
-from config import trouver_img
+from config import trouver_img, trouver_font, WHITE, TypeItem
 from src.colonies import Colonie
 
 
@@ -105,6 +107,9 @@ class Salle:
         self.noeud: NoeudPondere = noeud
         self.tunnels: set[Tunnel] = set(tunnels) if tunnels is not None else set()
         self.type: TypeSalle = type
+        self.menu_is_ouvert: bool=False
+        self.menu = pygame.image.load(trouver_img("Test64x64.png"))
+        self.font_menu = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
 
     def intersecte_salle(self, autre) -> bool:
         """
@@ -156,14 +161,37 @@ class Salle:
 
     def process(self,listes_fourmis_jeu_complet,colonie_owner:Colonie):
         if self.type==TypeSalle.BANQUE:
+            if self.menu_is_ouvert:
+                #updates menu
+                self.menu=pygame.Surface((300,150))
+                nb_metal = 0
+                nb_nourriture = 0
+                nb_armure = 0
+                nb_epee = 0
+                for item in colonie_owner.inventaire:
+                    if item.name=="POMME":
+                        nb_nourriture += 1
+                    elif item.name=="METAL":
+                        nb_metal += 1
+                    elif item.name=="EPEE":
+                        nb_epee += 1
+                    elif item.name=="ARMURE":
+                        nb_armure += 1
+
+                texte= [self.font_menu.render("Nourriture: " + str(nb_nourriture), False, WHITE),
+                        self.font_menu.render("Metal: " + str(nb_metal), False, WHITE),
+                        self.font_menu.render("Armures: " + str(nb_armure), False, WHITE),
+                        self.font_menu.render("Epees: " + str(nb_epee), False, WHITE),
+                        self.font_menu.render("Max ressources: " + str(colonie_owner.taille_inventaire_max), False, WHITE)]
+                for i in range(len(texte)):
+                    self.menu.blit(texte[i],(10,30*i))
             for fourmi in listes_fourmis_jeu_complet:
                 if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine==colonie_owner:
                     if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.BANQUE.value[0]:
                         #print("Fourmi dépose")
-                        ress=fourmi.depot()
-                        colonie_owner.nourriture += 1 if ress == "pomme" else 0
-                        colonie_owner.metal += 1 if ress == "metal" else 0
-                        fourmi.tient_ressource = None
+                        if len(colonie_owner.inventaire) < colonie_owner.taille_inventaire_max:
+                            if len(fourmi.inventaire)>0:
+                                colonie_owner.inventaire.append(fourmi.inventaire.pop(0))
         elif self.type==TypeSalle.SORTIE:
             for fourmi in listes_fourmis_jeu_complet:
                 if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut:
@@ -192,11 +220,22 @@ class Salle:
                         fourmi.a_bouger_depuis_transition_map_ou_nid = True
                         pass
         elif self.type==TypeSalle.THRONE:
+            if self.menu_is_ouvert:
+                #updates menu
+                self.menu=pygame.Surface((125,50))
+                text_surface=self.font_menu.render("HP: "+str(colonie_owner.hp),False,WHITE)
+                self.menu.blit(text_surface,(self.menu.get_height()/2-text_surface.get_height()/2,self.menu.get_height()/2-text_surface.get_height()/2))
             for fourmi in listes_fourmis_jeu_complet:
                 if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine!=colonie_owner:
                     if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
                         print("attaque reine")
 
+    def on_click_action(self):
+        self.menu_is_ouvert = not self.menu_is_ouvert
+
+    def draw_menu(self,screen,camera,colonie_owner: Colonie):
+        menu_transformed=pygame.transform.scale(self.menu,(self.menu.get_width()*camera.zoom,self.menu.get_height()*camera.zoom))
+        screen.blit(menu_transformed,camera.apply((self.noeud.coord[0]-self.menu.get_width()/2,self.noeud.coord[1]-self.type.value[0]-self.menu.get_height())))
    
 class Tunnel:
     """

@@ -1,7 +1,7 @@
 import tkinter as tk
 import pygame
 from fourmi import Ouvriere, Soldat, Groupe, Fourmis
-from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN, RED
+from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN, RED, TypeItem
 from fourmi import FourmisSprite
 from fourmi import CouleurFourmi
 
@@ -14,12 +14,12 @@ class Colonie:
         self.map_data = map_data # la carte de jeu
         self.tuile_debut = tuile_debut
         self.vie = 1 # 1 = 100% (vie de la reine)
-        self.nourriture = 0
-        self.metal = 0
-        self.armure = 0
-        self.epee = 0
+        self.inventaire=[]
+        self.taille_inventaire_max=10
 
         self.graphe=graphe
+
+        self.hp=1000
 
         #debug only pour voir si graphe est avec la bonne tuile debut/ colonie
         #self.sortie_coords=None
@@ -126,12 +126,20 @@ class Colonie:
         self.menu_colonie_surface.fill(BLACK)
 
         y_offset = 40
+        nb_metal=0
+        nb_nourriture=0
+        for item in self.inventaire:
+            if item.name=="POMME":
+                nb_nourriture+=1
+            elif item.name=="METAL":
+                nb_metal+=1
+
         info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
         info_sold = f"Soldats ({self.nombre_soldats()})"
         info_groupes = f"Groupes ({self.get_vrai_nb_groupes()})"
         info_vie = f"Vie: {self.vie * 100}%"
-        info_nourr = f"Nourriture: {self.nourriture}"
-        info_metal = f"Métal: {self.metal}"
+        info_nourr = "Nourriture: "+str(nb_nourriture)
+        info_metal = "Métal: "+str(nb_metal)
 
         menu_x = 1280 - self.menu_colonie_surface.get_width()
         menu_y = 720 / 2 - self.menu_colonie_surface.get_height() / 2
@@ -288,9 +296,9 @@ class Colonie:
         if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
             ress = self.map_data[y][x].get_ressource()
             groupe = self.get_fourmis_de_groupe(_groupe)
-            if isinstance(groupe, Fourmis) and groupe.tient_ressource is None:
+            if isinstance(groupe, Fourmis) and len(groupe.inventaire) <groupe.inventaire_taille_max:
                 print("fourmi collecte")
-                groupe.tient_ressource = ress
+                groupe.inventaire.append(ress)
                 self.map_data[y][x].collectee = True
             elif isinstance(groupe, Groupe):
                 if groupe.collecter_ressource(ress):

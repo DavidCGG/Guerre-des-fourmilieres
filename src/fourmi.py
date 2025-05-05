@@ -2,13 +2,15 @@ import math
 import random
 import uuid
 from abc import ABC, abstractmethod
+from curses.textpad import rectangle
 from enum import Enum
 
 import pygame
 from pygame import Vector2
 
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
-from config import trouver_img
+from config import trouver_img, AQUA, BLACK, BROWN
+from src.config import GREEN, TypeItem
 from tuile import Tuile, Eau
 
 class FourmiTitleScreen():
@@ -149,7 +151,8 @@ class Fourmis(ABC):
         self.width = 0
         self.height = 0
         self.pause_timer = 0
-        self.tient_ressource = None
+        self.inventaire: list[TypeItem] = []
+        self.inventaire_taille_max = 1
         self.size = size
         self.couleur = couleur
         self.image = pygame.image.load(self.couleur.value)
@@ -164,15 +167,14 @@ class Fourmis(ABC):
 
         self.sprite: FourmisSprite
         self.type = "default"
+        self.menu_is_ouvert: bool = True
+        self.is_selected: bool = False
+
+        self.menu: pygame.Surface=pygame.Surface((100,100))
+
     @abstractmethod
     def attack(self, other):
         pass
-
-    def depot(self):
-        if self.tient_ressource is not None:
-            return self.tient_ressource
-
-        return
 
     def process(self, dt, map_data,tuiles_debut_toutes_colonies,tous_les_nids):
         #print("Map Pos:" + str(self.centre_x_in_map) + ", " + str(self.centre_y_in_map))
@@ -216,7 +218,7 @@ class Fourmis(ABC):
                 self.goto_target_in_nid(dt)
     def set_target_in_nid(self, target_pos):
         #print("set target in nid")
-        if not self.is_busy:
+        if not self.is_busy and self.centre_x_in_nid!=target_pos[0] and self.centre_y_in_nid!=target_pos[1]:
             self.target_x_in_nid=target_pos[0]
             self.target_y_in_nid=target_pos[1]
             self.is_busy=True
@@ -233,7 +235,9 @@ class Fourmis(ABC):
         self.centre_x_in_nid+=movement.x
         self.centre_y_in_nid+=movement.y
         #check if movement is to the right
-        if movement.x/abs(movement.x) > 0:
+        if movement.x==0:
+            pass
+        elif movement.x/abs(movement.x) > 0:
             self.facing=0
         elif movement.x/abs(movement.x) < 0:
             self.facing = 1
@@ -388,7 +392,22 @@ class Fourmis(ABC):
         #image_scaled = pygame.transform.scale(self.image,(self.image.get_width()*camera.zoom,self.image.get_height()*camera.zoom))
         self.sprite.update(dt,camera,None,False)
         screen_pos = camera.apply((self.centre_x_in_nid, self.centre_y_in_nid))
-        screen.blit(self.sprite.image,(screen_pos[0]-self.sprite.image.get_width()/2,screen_pos[1]-self.sprite.image.get_height()/2))
+        if self.is_selected:
+            pygame.draw.rect(self.sprite.image,GREEN,(0,0,self.sprite.image.get_width(),self.sprite.image.get_height()),int(5*camera.zoom))
+        screen.blit(self.sprite.image, (screen_pos[0] - self.sprite.image.get_width() / 2, screen_pos[1] - self.sprite.image.get_height() / 2))
+
+        if self.menu_is_ouvert:
+            self.menu=pygame.Surface((15+self.inventaire_taille_max * (100 + 15),15+100+15))
+            self.menu.fill(BLACK)
+            case_inventaire = pygame.Surface((100, 100))
+            case_inventaire.fill(BROWN)
+            for i in range(self.inventaire_taille_max):
+                self.menu.blit(case_inventaire,(15+i*100,15))
+            for i in range(len(self.inventaire)):
+                image_item=pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]),(100,100))
+                self.menu.blit(image_item,(15+i*100,15))
+            menu_transformed = pygame.transform.scale(self.menu, (self.menu.get_width() * camera.zoom, self.menu.get_height() * camera.zoom))
+            screen.blit(menu_transformed, camera.apply((self.centre_x_in_nid - self.menu.get_width() / 2,self.centre_y_in_nid - self.sprite.image.get_height()/2/camera.zoom - self.menu.get_height())))
 
 
 class Ouvriere(Fourmis):

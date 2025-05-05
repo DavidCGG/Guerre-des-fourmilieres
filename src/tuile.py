@@ -4,6 +4,7 @@ from config import WHITE, BLACK, BLUE
 import pygame
 
 from config import trouver_img
+from src.config import TypeItem
 
 
 class Tuile:
@@ -83,9 +84,9 @@ class Tuile:
 
     def get_ressource(self):
         if isinstance(self, Sable):
-            return "metal"
+            return TypeItem.METAL
         elif isinstance(self, Terre):
-            return "pomme"
+            return TypeItem.POMME
 
 class Eau(Tuile):
     def __init__(self, x, y, width, height):

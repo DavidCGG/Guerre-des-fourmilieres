@@ -41,7 +41,7 @@ fourmi_sprite: FourmiTitleScreenSprite = None
 sprites = pygame.sprite.Group()
 
 #Variables du jeu
-nb_colonies_nids: int = 2 #ne dois pas exceder le nombre de couleurs de colonies
+nb_colonies_nids: int = 1 #ne dois pas exceder le nombre de couleurs de colonies
 carte_jeu: carte.Carte = None
 nids: list[nid.Nid] =[]
 current_nid: nid.Nid = None
@@ -159,6 +159,7 @@ def draw(dt) -> None:
             None
         """
         global liste_boutons
+        global current_zoom
 
         camera = carte_jeu.camera if in_carte else current_nid.camera
 
@@ -170,7 +171,7 @@ def draw(dt) -> None:
 
         fps_info = tiny_font.render(f'FPS: {clock.get_fps():.0f}', True, YELLOW)
         zoom_info = tiny_font.render(f'Zoom: {camera.zoom * 100:.2f}%', True, YELLOW)
-
+        current_zoom=camera.zoom
         screen.blit(fps_info, (10, 5))
         screen.blit(zoom_info, (10, 25))
 
@@ -462,7 +463,7 @@ def gestion_evenement(event: pygame.event) -> None:
             in_nid = True
         
     elif in_nid and not in_menu_secondaire:
-        return_to_map: bool = current_nid.handle_event(event,screen,carte_jeu.colonies[0])
+        return_to_map: bool = current_nid.handle_event(event,screen,carte_jeu.colonies[0],liste_fourmis_jeu_complet)
         if return_to_map:
             in_nid = False
             in_carte = True
@@ -501,7 +502,7 @@ def demarrer_jeu() -> None:
     carte_jeu = carte.Carte(nb_colonies_nids, screen, graphes, liste_fourmis_jeu_complet)
     i=0
     for graphe in graphes:
-        new_nid = nid.Nid(graphe,screen,carte_jeu.tuiles_debut[i])
+        new_nid = nid.Nid(graphe,screen,carte_jeu.colonies[i])
         nids.append(new_nid)
         i+=1
 
