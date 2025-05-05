@@ -172,6 +172,9 @@ class Fourmis(ABC):
 
         self.menu: pygame.Surface=pygame.Surface((100,100))
 
+        self.target_x_in_nid_queued=None
+        self.target_y_in_nid_queued = None
+
     @abstractmethod
     def attack(self, other):
         pass
@@ -185,7 +188,7 @@ class Fourmis(ABC):
         #print(str(self.a_bouger_depuis_transition_map_ou_nid))
         if self.in_colonie_map_coords is None:#if sur la carte
             #process sur la carte
-            if (self.target_x_in_map != self.centre_x_in_map or self.target_y_in_map != self.centre_y_in_map) and self.target_x_in_map is not None and self.target_y_in_map is not None:
+            if (self.target_x_in_map != self.centre_x_in_map or self.target_y_in_map != self.centre_y_in_map) and self.target_x_in_map is not None and self.target_y_in_map is not None and self.in_colonie_map_coords is None:
                 #print("fourmi bouge")
                 self.a_bouger_depuis_transition_map_ou_nid=True
                 self.goto_target_in_map(dt, map_data)
@@ -203,9 +206,13 @@ class Fourmis(ABC):
                         self.target_y_in_map = None
                         self.centre_x_in_nid = nid.salles_sorties[0].noeud.coord[0]
                         self.centre_y_in_nid = nid.salles_sorties[0].noeud.coord[1]
-                        self.target_x_in_nid = None
-                        self.target_y_in_nid = None
-
+                        #self.target_x_in_nid = None
+                        #self.target_y_in_nid = None
+                        if self.target_x_in_nid_queued is not None and self.target_y_in_nid_queued is not None:
+                            self.target_x_in_nid=self.target_x_in_nid_queued
+                            self.target_y_in_nid=self.target_y_in_nid_queued
+                            self.target_x_in_nid_queued=None
+                            self.target_y_in_nid_queued=None
                         self.a_bouger_depuis_transition_map_ou_nid=False
                         self.in_colonie_map_coords=nid.tuile_debut
 
@@ -216,13 +223,25 @@ class Fourmis(ABC):
             #process dans le nid
             if self.target_x_in_nid is not None and self.target_y_in_nid is not None:
                 self.goto_target_in_nid(dt)
-    def set_target_in_nid(self, target_pos):
+    def set_target_in_nid(self, target_pos, in_nid_target_set_map_coords,map_data,liste_toutes_colonies):
         #print("set target in nid")
-        if not self.is_busy and self.centre_x_in_nid!=target_pos[0] and self.centre_y_in_nid!=target_pos[1]:
-            self.target_x_in_nid=target_pos[0]
-            self.target_y_in_nid=target_pos[1]
-            self.is_busy=True
-            self.is_moving=True
+        if not self.is_busy:
+            if self.in_colonie_map_coords is None:#set target in nid from map
+                self.set_target_in_map(in_nid_target_set_map_coords[0],in_nid_target_set_map_coords[1],map_data,liste_toutes_colonies)
+                self.target_x_in_nid = target_pos[0]
+                self.target_y_in_nid = target_pos[1]
+                self.is_busy = True
+                self.is_moving = True
+            elif self.in_colonie_map_coords==in_nid_target_set_map_coords:#set target in nid from nid
+                if self.centre_x_in_nid!=target_pos[0] and self.centre_y_in_nid!=target_pos[1]:
+                    self.target_x_in_nid=target_pos[0]
+                    self.target_y_in_nid=target_pos[1]
+                    self.is_busy=True
+                    self.is_moving=True
+            else: #set target in nid from other nid
+                self.set_target_in_map(in_nid_target_set_map_coords[0],in_nid_target_set_map_coords[1],map_data,liste_toutes_colonies)
+                self.target_x_in_nid_queued=target_pos[0]
+                self.target_y_in_nid_queued=target_pos[1]
 
     def goto_target_in_nid(self,dt):
         self.colonie_origine.menu_f_a_updater = True
@@ -250,14 +269,28 @@ class Fourmis(ABC):
             self.is_moving = False
             #print("target in nid reached")
 
-    def set_target_in_map(self, target_x, target_y, map_data):
+    def set_target_in_map(self, target_x, target_y, map_data,liste_toutes_colonies):
         if isinstance(map_data[target_y][target_x], Eau):
             return
         if not self.is_busy:
-            self.target_x_in_map = target_x
-            self.target_y_in_map = target_y
-            self.is_moving = True
-            self.is_busy = True
+            if self.in_colonie_map_coords is None: #set target in map if in map
+                self.target_x_in_map = target_x
+                self.target_y_in_map = target_y
+                self.is_moving = True
+                self.is_busy = True
+            else: #set target sortie in nid + set target in map
+                #print("set target in map while in nid")
+                sorite=None
+                for colonie in liste_toutes_colonies:
+                    if colonie.tuile_debut == self.in_colonie_map_coords:
+                        for salle in colonie.graphe.salles:
+                            if salle.type.value[1]=="sortie":
+                                #print("set target in nid while in nid to go to map")
+                                self.set_target_in_nid(salle.noeud.coord,colonie.tuile_debut,map_data,liste_toutes_colonies)
+                                self.target_x_in_map = target_x
+                                self.target_y_in_map = target_y
+                                self.is_moving = True
+                                self.is_busy = True
 
     def goto_target_in_map(self, dt, map_data):
         if not self.path and self.is_moving:

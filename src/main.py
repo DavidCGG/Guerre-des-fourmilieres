@@ -41,7 +41,7 @@ fourmi_sprite: FourmiTitleScreenSprite = None
 sprites = pygame.sprite.Group()
 
 #Variables du jeu
-nb_colonies_nids: int = 1 #ne dois pas exceder le nombre de couleurs de colonies
+nb_colonies_nids: int = 2 #ne dois pas exceder le nombre de couleurs de colonies
 carte_jeu: carte.Carte = None
 nids: list[nid.Nid] =[]
 current_nid: nid.Nid = None
@@ -463,7 +463,7 @@ def gestion_evenement(event: pygame.event) -> None:
             in_nid = True
         
     elif in_nid and not in_menu_secondaire:
-        return_to_map: bool = current_nid.handle_event(event,screen,carte_jeu.colonies[0],liste_fourmis_jeu_complet)
+        return_to_map: bool = current_nid.handle_event(event,screen,carte_jeu.colonies[0],liste_fourmis_jeu_complet,carte_jeu.map_data,carte_jeu.colonies)
         if return_to_map:
             in_nid = False
             in_carte = True
@@ -516,9 +516,9 @@ def run() -> None:
     """
     initialiser()
     while running:
+        dt = clock.tick(max_framerate)
         for event in pygame.event.get():
             gestion_evenement(event)
-        dt = clock.tick(max_framerate)
         process(dt)
         draw(dt)
 

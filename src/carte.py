@@ -207,11 +207,11 @@ class Carte:
 
             if event.button == 3:  #Right click
                 if self.colonies[0].fourmis_selection:
-                    self.colonies[0].fourmis_selection.set_target_in_map(tile_x, tile_y, self.map_data)
+                    self.colonies[0].fourmis_selection.set_target_in_map(tile_x, tile_y, self.map_data,self.colonies)
                     self.colonies[0].fourmis_selection = None
                     self.hover_tuile = None
                 elif self.colonies[0].groupe_selection:
-                    self.colonies[0].groupe_selection.set_target_in_map(tile_x, tile_y, self.map_data)
+                    self.colonies[0].groupe_selection.set_target_in_map(tile_x, tile_y, self.map_data,self.colonies)
                     self.colonies[0].groupe_selection = None
                     self.hover_tuile = None
 

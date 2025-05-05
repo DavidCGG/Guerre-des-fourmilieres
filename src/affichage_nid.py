@@ -58,7 +58,7 @@ class Nid:
         self.image_terre = pygame.transform.scale(self.image_terre, (int(self.image_terre.get_width() * scale), int(self.image_terre.get_height() * scale)))
         self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (int(self.image_terre_sombre.get_width() * scale), int(self.image_terre_sombre.get_height() * scale)))
 
-    def draw(self, dt, screen, liste_fourmis_jeu_complet, colonie_joueur:Colonie) -> None:
+    def draw(self, dt, screen, liste_fourmis_jeu_complet, colonie_joueur) -> None:
         """
         Dessine tous les éléments du nid sur l'écran incluant l'arrière-plan
         Args:
@@ -145,7 +145,7 @@ class Nid:
         if colonie_joueur.menu_fourmis_ouvert:
             colonie_joueur.menu_fourmis(screen)
 
-    def handle_event(self, event, screen,colonie_joueur,liste_fourmis_jeu_complet) -> bool:
+    def handle_event(self, event, screen,colonie_joueur,liste_fourmis_jeu_complet,map_data,liste_toutes_colonies) -> bool:
         """
         Gère tous les événements liés au nid
         Args:
@@ -214,10 +214,10 @@ class Nid:
                     #print("salle "+salle.type.value[1]+" clické")
                     salle.menu_is_ouvert=not salle.menu_is_ouvert
 
-        def handle_right_click(pos):
+        def handle_right_click(pos,map_data,liste_toutes_colonies):
             # set target of fourmi
-            if colonie_joueur.fourmis_selection is not None and colonie_joueur.fourmis_selection.in_colonie_map_coords == self.tuile_debut:
-                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos))
+            if colonie_joueur.fourmis_selection is not None:
+                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos),self.tuile_debut,map_data,liste_toutes_colonies)
                 return
 
         def handle_hover(pos):
@@ -258,7 +258,7 @@ class Nid:
                 handle_left_click(event.pos)
                 self.camera.start_drag(*event.pos)
             elif event.button == 3:  # Clic droit
-                handle_right_click(event.pos)
+                handle_right_click(event.pos,map_data,liste_toutes_colonies)
                 if y < HAUTEUR_SOL:
                     return True
             elif event.button == 4:  # Molette haut

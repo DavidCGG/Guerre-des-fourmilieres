@@ -208,8 +208,8 @@ class Salle:
                             fourmi.in_colonie_map_coords = None
                             fourmi.centre_x_in_map = colonie_owner.tuile_debut[0]
                             fourmi.centre_y_in_map = colonie_owner.tuile_debut[1]
-                            fourmi.target_x_in_map = colonie_owner.tuile_debut[0]
-                            fourmi.target_y_in_map = colonie_owner.tuile_debut[1]
+                            #fourmi.target_x_in_map = colonie_owner.tuile_debut[0]
+                            #fourmi.target_y_in_map = colonie_owner.tuile_debut[1]
                             fourmi.centre_x_in_nid = None
                             fourmi.centre_y_in_nid = None
                             fourmi.target_x_in_nid = None
