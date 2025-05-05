@@ -14,7 +14,7 @@ from src.colonies import Colonie
 MAP_LIMIT_X: int = 4000
 MAP_LIMIT_Y: int = 2250
 HAUTEUR_SOL: int = 128
-NB_SALLES_INITIALES: int = 3
+NB_SALLES_INITIALES: int = 4
 
 class Nid:
     """
@@ -96,7 +96,7 @@ class Nid:
                 pygame.draw.circle(mask_surface, (255, 255, 255, 255), pos, radius)
 
                 #ajout de la texture spécifique au type au buffer
-                if len(salle.type.value) > 2:
+                if len(salle.type.value) > 2 and salle.type.value[2] is not None:
                     image_salle = pygame.image.load(salle.type.value[2])
                     image_salle = pygame.transform.scale(image_salle,(int(image_salle.get_width()*self.scale*self.camera.zoom),int(image_salle.get_height()*self.scale*self.camera.zoom)))
                     buffer_images_top_layer.append((image_salle, (pos[0]-image_salle.get_width()/2,pos[1]-image_salle.get_height()/2)))

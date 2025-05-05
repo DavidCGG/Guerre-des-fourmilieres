@@ -422,9 +422,11 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X,nb_salles_initiales) -> cg.Graphe:
     salles_salle[-1].type=cg.TypeSalle.THRONE
     if nb_salles_initiales > 2 :
         salles_salle[0].type=cg.TypeSalle.BANQUE
-        if nb_salles_initiales > 3 :
+        if nb_salles_initiales > 2 :
             salles_salle[1].type=cg.TypeSalle.MEULE
-            if nb_salles_initiales > 4:
+            if nb_salles_initiales > 3:
                 salles_salle[2].type = cg.TypeSalle.ENCLUME
 
+    for salle_a_updater in salles_salle:
+        salle_a_updater.type_specific_stats_update()
     return graphe

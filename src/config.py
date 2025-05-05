@@ -18,6 +18,7 @@ PURPLE = pygame.Color("purple")
 ORANGE = pygame.Color("orange")
 AQUA = pygame.Color("aqua")
 BROWN = pygame.Color("saddlebrown")
+GRAY = pygame.Color("gray40")
 SKY_BLUE= pygame.Color(110, 180, 235)
 
 def trouver_img(nom: str) -> str:

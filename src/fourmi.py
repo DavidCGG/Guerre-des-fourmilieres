@@ -167,7 +167,7 @@ class Fourmis(ABC):
 
         self.sprite: FourmisSprite
         self.type = "default"
-        self.menu_is_ouvert: bool = True
+        self.menu_is_ouvert: bool = False
         self.is_selected: bool = False
 
         self.menu: pygame.Surface=pygame.Surface((100,100))
@@ -430,15 +430,15 @@ class Fourmis(ABC):
         screen.blit(self.sprite.image, (screen_pos[0] - self.sprite.image.get_width() / 2, screen_pos[1] - self.sprite.image.get_height() / 2))
 
         if self.menu_is_ouvert:
-            self.menu=pygame.Surface((15+self.inventaire_taille_max * (100 + 15),15+100+15))
+            self.menu=pygame.Surface((5+self.inventaire_taille_max * (100 + 5),5+100+5))
             self.menu.fill(BLACK)
             case_inventaire = pygame.Surface((100, 100))
             case_inventaire.fill(BROWN)
             for i in range(self.inventaire_taille_max):
-                self.menu.blit(case_inventaire,(15+i*100,15))
+                self.menu.blit(case_inventaire,(5+i*100,5))
             for i in range(len(self.inventaire)):
                 image_item=pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]),(100,100))
-                self.menu.blit(image_item,(15+i*100,15))
+                self.menu.blit(image_item,(5+i*100,5))
             menu_transformed = pygame.transform.scale(self.menu, (self.menu.get_width() * camera.zoom, self.menu.get_height() * camera.zoom))
             screen.blit(menu_transformed, camera.apply((self.centre_x_in_nid - self.menu.get_width() / 2,self.centre_y_in_nid - self.sprite.image.get_height()/2/camera.zoom - self.menu.get_height())))
 
@@ -462,7 +462,7 @@ class Soldat(Fourmis):
         self.base_speed = 1.5
         self.speed = self.base_speed
         sprite_sheet_image = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
-        self.type="soldat"
+        self.type = "soldat"
         self.sprite = FourmisSprite(self, sprite_sheet_image, 32, 32, 8, 100, 1)
 
 

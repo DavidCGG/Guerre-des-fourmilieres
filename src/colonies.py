@@ -10,7 +10,7 @@ class Colonie:
         #self.graphe = graphe
         #print("a")
         self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
-        self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/4-frame-ant.png")).convert_alpha()
+        self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.map_data = map_data # la carte de jeu
         self.tuile_debut = tuile_debut
         self.vie = 1 # 1 = 100% (vie de la reine)
@@ -32,7 +32,7 @@ class Colonie:
         self.fourmis_selection = None # fourmi selectionnée dans le menu de fourmis
         self.groupe_selection = None
 
-        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE, self) for _ in range(1)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE,self) for _ in range(0)]
+        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE, self) for _ in range(2)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE,self) for _ in range(2)]
         for fourmi in self.fourmis:
             listes_fourmis_jeu_complet.append(fourmi)
         self.groupes = {}
@@ -104,7 +104,7 @@ class Colonie:
                 """
 
         for salle in self.graphe.salles:
-            salle.process(listes_fourmis_jeu_complet,self)
+            salle.process(listes_fourmis_jeu_complet,self,dt)
 
         if fourmis_bouge or groupe_bouge:
             self.cache_groupes_a_updater = True
@@ -212,12 +212,12 @@ class Colonie:
     def menu_colonie(self, screen):
         #print("menu colonie drawn")
         self.update_menu()
-        screen.blit(self.menu_colonie_surface, (1280 - self.menu_colonie_surface.get_width(), 720 / 2 - self.menu_colonie_surface.get_height() / 2))
+        screen.blit(self.menu_colonie_surface, (screen.get_width() - self.menu_colonie_surface.get_width(), screen.get_height() / 2 - self.menu_colonie_surface.get_height() / 2))
 
     def menu_fourmis(self, screen):
         #print("menu fourmi drawn")
         self.update_menu_fourmis()
-        screen.blit(self.menu_fourmis_surface, (0, 720 / 2 - self.menu_fourmis_surface.get_height() / 2))
+        screen.blit(self.menu_fourmis_surface, (0, screen.get_height() / 2 - self.menu_fourmis_surface.get_height() / 2))
 
 
     def load_sprites(self):

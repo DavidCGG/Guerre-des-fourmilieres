@@ -3,7 +3,7 @@ from enum import Enum
 import pygame
 from pygame import Vector2
 
-from config import trouver_img, trouver_font, WHITE, TypeItem
+from config import trouver_img, trouver_font, WHITE, TypeItem, BLACK, BROWN, GRAY
 from src.colonies import Colonie
 
 
@@ -85,14 +85,15 @@ class TypeSalle(Enum):
         SORTIE : Sortie du nid.
     """
 
-    INDEFINI = (40, "indéfini")
-    INTERSECTION = (40, "intersection")
-    SALLE = (128, "salle")
-    SORTIE = (40, "sortie")
-    ENCLUME = (128, "enclume",trouver_img("Salles/enclume.png"))
-    MEULE = (128, "meule", trouver_img("Salles/meule.png"))
-    BANQUE = (128, "banque", trouver_img("Salles/banque.png"))
-    THRONE = (128, "throne", trouver_img("Salles/throne.png"))
+    INDEFINI = (40, "indéfini",None,None)
+    INTERSECTION = (40, "intersection",None,None)
+    SALLE = (128, "salle",None,None)
+    SORTIE = (40, "sortie",None,None)
+    #Nom = (taille, nom, image, temps en milliseconde pour action, nb ressources pour action)
+    ENCLUME = (128, "enclume",trouver_img("Salles/enclume.png"),10000,2)
+    MEULE = (128, "meule", trouver_img("Salles/meule.png"),5000,1)
+    BANQUE = (128, "banque", trouver_img("Salles/banque.png"),0,0)
+    THRONE = (128, "throne", trouver_img("Salles/throne.png"),0,0)
 
 class Salle:
     """
@@ -110,6 +111,12 @@ class Salle:
         self.menu_is_ouvert: bool=False
         self.menu = pygame.image.load(trouver_img("Test64x64.png"))
         self.font_menu = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
+        self.temps_pour_action=None
+        self.temps_ecoule_depuis_debut_action=0
+        self.nb_ressources_pour_action=None
+        self.nb_ressources_prises=0
+        #self.is_busy: bool = False
+        self.fourmi_qui_fait_action = None
 
     def intersecte_salle(self, autre) -> bool:
         """
@@ -159,7 +166,7 @@ class Salle:
 
         return distance <= rayon
 
-    def process(self,listes_fourmis_jeu_complet,colonie_owner:Colonie):
+    def process(self,listes_fourmis_jeu_complet,colonie_owner:Colonie,dt):
         if self.type==TypeSalle.BANQUE:
             if self.menu_is_ouvert:
                 #updates menu
@@ -229,6 +236,87 @@ class Salle:
                 if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine!=colonie_owner:
                     if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
                         print("attaque reine")
+        elif self.type==TypeSalle.MEULE:
+            # print("Process meule")
+            if self.menu_is_ouvert:
+                # updates menu
+                self.menu = pygame.Surface((5 + self.nb_ressources_pour_action * (100 + 5), 5 + 100 + 5))
+                self.menu.fill(BLACK)
+                case_inventaire = pygame.Surface((100, 100))
+                case_inventaire.fill(GRAY)
+                for i in range(self.nb_ressources_pour_action):
+                    self.menu.blit(case_inventaire, (5 + i * (100 + 5), 5))
+                for i in range(self.nb_ressources_prises):
+                    image_item = pygame.transform.scale(pygame.image.load(trouver_img("Items/metal.png")), (100, 100))
+                    self.menu.blit(image_item, (5 + i * (100 + 5), 5))
+
+            for fourmi in listes_fourmis_jeu_complet:  # action selon fourmi dessus
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords == colonie_owner.tuile_debut and fourmi.colonie_origine == colonie_owner:
+                    if (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid,fourmi.centre_y_in_nid)).magnitude() < TypeSalle.MEULE.value[0]:
+                        # print("Fourmi sur meule")
+                        for item in fourmi.inventaire:
+                            # print("item "+item.name)
+                            if item.name == "METAL" and self.nb_ressources_prises < self.nb_ressources_pour_action:
+                                #print("metal enlevé")
+                                fourmi.inventaire.remove(item)
+                                self.nb_ressources_prises += 1
+                        if self.nb_ressources_prises == self.nb_ressources_pour_action and self.fourmi_qui_fait_action is None and not fourmi.is_busy:
+                            #print("fourmi qui fat action set to busy")
+                            self.fourmi_qui_fait_action = fourmi
+                            fourmi.is_busy = True
+            # print(self.fourmi_qui_fait_action)
+            if self.fourmi_qui_fait_action is not None:  # process action
+                self.temps_ecoule_depuis_debut_action += dt
+                if self.temps_ecoule_depuis_debut_action >= self.temps_pour_action:
+                    print("epee cree")
+                    self.fourmi_qui_fait_action.is_busy = False
+                    self.fourmi_qui_fait_action.inventaire.append(TypeItem.EPEE)
+                    self.fourmi_qui_fait_action = None
+                    self.nb_ressources_prises = 0
+                    self.temps_ecoule_depuis_debut_action = 0
+
+        elif self.type==TypeSalle.ENCLUME:
+            #print("Process enclume")
+            if self.menu_is_ouvert:
+                #updates menu
+                self.menu = pygame.Surface((5 + self.nb_ressources_pour_action * (100 + 5), 5 + 100 + 5))
+                self.menu.fill(BLACK)
+                case_inventaire = pygame.Surface((100, 100))
+                case_inventaire.fill(GRAY)
+                for i in range(self.nb_ressources_pour_action):
+                    self.menu.blit(case_inventaire, (5 + i * (100 + 5), 5))
+                for i in range(self.nb_ressources_prises):
+                    image_item = pygame.transform.scale(pygame.image.load(trouver_img("Items/metal.png")), (100, 100))
+                    self.menu.blit(image_item, (5 + i * (100 + 5), 5))
+
+            for fourmi in listes_fourmis_jeu_complet: #action selon fourmi dessus
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine==colonie_owner:
+                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.ENCLUME.value[0]:
+                        #print("Fourmi sur meule")
+                        for item in fourmi.inventaire:
+                            #print("item "+item.name)
+                            if item.name=="METAL" and self.nb_ressources_prises<self.nb_ressources_pour_action:
+                                print("metal enlevé")
+                                fourmi.inventaire.remove(item)
+                                self.nb_ressources_prises+=1
+                        if self.nb_ressources_prises==self.nb_ressources_pour_action and self.fourmi_qui_fait_action is None and not fourmi.is_busy:
+                            print("fourmi qui fat action set to busy")
+                            self.fourmi_qui_fait_action=fourmi
+                            fourmi.is_busy=True
+            #print(self.fourmi_qui_fait_action)
+            if self.fourmi_qui_fait_action is not None: #process action
+                self.temps_ecoule_depuis_debut_action+=dt
+                if self.temps_ecoule_depuis_debut_action >= self.temps_pour_action:
+                    print("armure cree")
+                    self.fourmi_qui_fait_action.is_busy = False
+                    self.fourmi_qui_fait_action.inventaire.append(TypeItem.ARMURE)
+                    self.fourmi_qui_fait_action = None
+                    self.nb_ressources_prises=0
+                    self.temps_ecoule_depuis_debut_action=0
+
+    def type_specific_stats_update(self):
+        self.temps_pour_action=self.type.value[3]
+        self.nb_ressources_pour_action=self.type.value[4]
 
     def on_click_action(self):
         self.menu_is_ouvert = not self.menu_is_ouvert
