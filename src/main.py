@@ -491,8 +491,12 @@ def check_for_colonie_deaths():
     global in_menu_secondaire
     # check for dead colonies
     fourmis_ennemies_morte_index=[]
+    fourmis_have_been_generated=False
     for i in range(len(carte_jeu.colonies)):
+        if len(carte_jeu.colonies[i].fourmis) and fourmis_have_been_generated:
+            carte_jeu.colonies[i].hp=0
         if carte_jeu.colonies[i].hp <= 0:
+            fourmis_have_been_generated=True
             if i == 0:  # if colonie joueur is dead
                 in_menu_secondaire = True
                 if in_carte:

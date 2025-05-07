@@ -174,7 +174,7 @@ class Colonie:
         info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
         info_sold = f"Soldats ({self.nombre_soldats()})"
         info_groupes = f"Groupes ({self.get_vrai_nb_groupes()})"
-        info_vie = f"Vie: {self.vie * 100}%"
+        info_vie = "Vie: "+str(self.hp)
         info_nourr = "Nourriture: "+str(nb_nourriture)
         info_metal = "Métal: "+str(nb_metal)
 
@@ -224,9 +224,9 @@ class Colonie:
             list_surface.blit(sprite, (10, y_offset - 10))
             #ant_info=""
             if fourmi.in_colonie_map_coords is not None:
-                ant_info = f"HP: {fourmi.hp} Nid Pos: ({int(fourmi.centre_x_in_nid)}, {int(fourmi.centre_y_in_nid)})"
+                ant_info = f"HP: {int(fourmi.hp)} Nid Pos: ({int(fourmi.centre_x_in_nid)}, {int(fourmi.centre_y_in_nid)})"
             else:
-                ant_info = f"HP: {fourmi.hp} Map Pos: ({int(fourmi.centre_x_in_map)}, {int(fourmi.centre_y_in_map)})"
+                ant_info = f"HP: {int(fourmi.hp)} Map Pos: ({int(fourmi.centre_x_in_map)}, {int(fourmi.centre_y_in_map)})"
             if fourmi.is_busy:
                 _texte = self.font_menu.render(ant_info, False, RED)
             else:

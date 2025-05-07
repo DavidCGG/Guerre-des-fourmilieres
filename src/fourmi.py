@@ -149,7 +149,7 @@ class Fourmis(ABC):
         self.width = 0
         self.height = 0
         self.inventaire: list[TypeItem] = []
-        self.inventaire_taille_max = 1
+        self.inventaire_taille_max = 2
         self.size = size
         self.couleur = couleur
         self.image = pygame.image.load(self.couleur.value)
@@ -160,7 +160,7 @@ class Fourmis(ABC):
         self.a_bouger_depuis_transition_map_ou_nid=True
 
         #self.image = pygame.image.load(trouver_img("Test64x64.png")).convert_alpha()
-        self.image_armure = pygame.image.load(trouver_img("Items/epee.png"))
+        #self.image_armure = pygame.image.load(trouver_img("Items/epee.png"))
 
         self.sprite: FourmisSprite
         self.type = "default"
@@ -368,12 +368,18 @@ class Fourmis(ABC):
             if map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].tuile_ressource and not map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].collectee:
                #print("on ressource")
                #print(len(self.inventaire))
-               if len(self.inventaire)<self.inventaire_taille_max:
+               if len(self.inventaire)<self.inventaire_taille_max and self.target_y_in_map is None and self.target_x_in_map is None:
                    #print(map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].get_ressource())
                    self.inventaire.append(map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].get_ressource())
                    map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].collectee=True
                    print("item collecte")
-
+        if self.hp<=self.hp_max:
+            self.hp+=dt/1000
+        for item in self.inventaire:
+            if item==TypeItem.EPEE:
+                self.atk_result=self.atk_result_with_epee
+            elif item==TypeItem.ARMURE:
+                self.hp_max=self.hp_max_with_armor
         if self.in_colonie_map_coords is None:
             #print("in map")
             process_pickup()
@@ -648,6 +654,17 @@ class Fourmis(ABC):
         screen_pos = camera.apply((self.centre_x_in_nid, self.centre_y_in_nid))
         if self.is_selected:
             pygame.draw.rect(self.sprite.image,GREEN,(0,0,self.sprite.image.get_width(),self.sprite.image.get_height()),int(5*camera.zoom))
+        for item in self.inventaire:
+            if item == TypeItem.ARMURE:
+                image_armure_temp=pygame.transform.scale(pygame.image.load(trouver_img("Items/armure.png")),(64*camera.zoom,64*camera.zoom))
+                if self.facing==1:
+                    image_armure_temp=pygame.transform.flip(image_armure_temp,True,False)
+                self.sprite.image.blit(image_armure_temp,(0,0))
+            elif item == TypeItem.EPEE:
+                image_armure_temp = pygame.transform.scale(pygame.image.load(trouver_img("Items/epee.png")),(64 * camera.zoom, 64 * camera.zoom))
+                if self.facing == 1:
+                    image_armure_temp = pygame.transform.flip(image_armure_temp, True, False)
+                self.sprite.image.blit(image_armure_temp, (0, 0))
         screen.blit(self.sprite.image, (screen_pos[0] - self.sprite.image.get_width() / 2, screen_pos[1] - self.sprite.image.get_height() / 2))
 
         if self.menu_is_ouvert:
@@ -696,15 +713,21 @@ class Ouvriere(Fourmis):
         sprite_sheet_image=pygame.image.load(trouver_img(f"Fourmis/sprite_sheet_fourmi_{couleur.name.lower()}.png")).convert_alpha()
         self.type="ouvriere"
         self.sprite = FourmisSprite(self,sprite_sheet_image,32,32,8,100,1)
+        self.inventaire_taille_max=1
+        self.atk_result_with_epee = 70
+        self.hp_max_with_armor = 150
 
 class Soldat(Fourmis):
     def __init__(self, x0, y0, couleur,colonie_origine):
-        super().__init__(colonie_origine, hp=200, hp_max=200,atk=50, x0=x0, y0=y0, size=2,couleur=couleur)
+        super().__init__(colonie_origine, hp=150, hp_max=150,atk=60, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 1.5
         self.speed = self.base_speed
         sprite_sheet_image = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.type = "soldat"
         self.sprite = FourmisSprite(self, sprite_sheet_image, 32, 32, 8, 100, 1)
+        self.inventaire_taille_max=2
+        self.atk_result_with_epee=90
+        self.hp_max_with_armor=200
 
 class FourmisSprite(pygame.sprite.Sprite):
     def __init__(self, fourmis: Fourmis, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int, scale):
