@@ -74,7 +74,7 @@ gestion_en_pause_pour_text_input: bool = False
 text_input: str = ""
 
 test=""
-
+bool_temp=False
 """
 pygame.init()
 pygame.mixer.init()
@@ -538,6 +538,11 @@ def run() -> None:
             gestion_evenement(event)
         process(dt)
         draw(dt)
+        global bool_temp
+        bool_temp=False
+        if bool_temp:
+            liste_fourmis_jeu_complet[0].set_attack(liste_fourmis_jeu_complet[1],carte_jeu.map_data,carte_jeu.colonies)
+            bool_temp=False
 
 if __name__ == "__main__":
     run()   

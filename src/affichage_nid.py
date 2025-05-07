@@ -217,7 +217,7 @@ class Nid:
         def handle_right_click(pos,map_data,liste_toutes_colonies):
             # set target of fourmi
             if colonie_joueur.fourmis_selection is not None:
-                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos),self.tuile_debut,map_data,liste_toutes_colonies)
+                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos),self,map_data,liste_toutes_colonies)
                 return
 
         def handle_hover(pos):

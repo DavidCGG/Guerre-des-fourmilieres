@@ -93,7 +93,8 @@ class Colonie:
         for f in self.fourmis:
             if not self.fourmi_dans_groupe(f):
                 dern_x, dern_y = f.centre_x_in_map, f.centre_y_in_map
-                f.process(dt, self.map_data,self.tuiles_debut,tous_les_nids,liste_toutes_colonies,liste_fourmis_jeu_complet)
+                #f.process(dt, self.map_data,tous_les_nids)
+                f.process(dt, self.map_data,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies)
                 if (dern_x, dern_y) != (f.centre_x_in_map, f.centre_y_in_map):
                     fourmis_bouge = True
                 """

@@ -4,14 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="Fourmi peut set target de colonie a map, map a colonie, ou colonie a autre colonie">
+    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="fourmi fonction attaque">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/affichage_nid.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/affichage_nid.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/carte.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/carte.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/classes_graphe.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/classes_graphe.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/colonies.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/colonies.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/fourmi.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/fourmi.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/generation_graphe.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/generation_graphe.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,38 +63,38 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Python.Fourmis.executor&quot;: &quot;Run&quot;,
-    &quot;Python.__init__.executor&quot;: &quot;Run&quot;,
-    &quot;Python.affichage_nid.executor&quot;: &quot;Run&quot;,
-    &quot;Python.camera.executor&quot;: &quot;Run&quot;,
-    &quot;Python.carte.executor&quot;: &quot;Run&quot;,
-    &quot;Python.classes.executor&quot;: &quot;Run&quot;,
-    &quot;Python.classes_graphe.executor&quot;: &quot;Run&quot;,
-    &quot;Python.colonies.executor&quot;: &quot;Run&quot;,
-    &quot;Python.fenetre.executor&quot;: &quot;Run&quot;,
-    &quot;Python.jeu.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.setup.executor&quot;: &quot;Run&quot;,
-    &quot;Python.testGenerationNid.executor&quot;: &quot;Run&quot;,
-    &quot;Python.tester.executor&quot;: &quot;Run&quot;,
-    &quot;Python.tuile.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/david/Guerre-des-fourmilieres/assets/images/aseprites/Fourmis&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Python.Fourmis.executor": "Run",
+    "Python.__init__.executor": "Run",
+    "Python.affichage_nid.executor": "Run",
+    "Python.camera.executor": "Run",
+    "Python.carte.executor": "Run",
+    "Python.classes.executor": "Run",
+    "Python.classes_graphe.executor": "Run",
+    "Python.colonies.executor": "Run",
+    "Python.fenetre.executor": "Run",
+    "Python.jeu.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.setup.executor": "Run",
+    "Python.testGenerationNid.executor": "Run",
+    "Python.tester.executor": "Run",
+    "Python.tuile.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "/home/david/Guerre-des-fourmilieres/assets/images/aseprites/Fourmis",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/assets/images/aseprites/Fourmis" />
@@ -349,7 +349,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746456110857</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="fourmi fonction attaque">
+      <option name="closed" value="true" />
+      <created>1746583410471</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1746583410471</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -424,7 +432,8 @@
     <MESSAGE value="Habits fourmis, sprites dans nid, nb salles initiles est une variable de affichage_nid.py" />
     <MESSAGE value="Inventaires (fourmis et colonies), menu de fourmi individuelle (montre l'inventaire), menu de salles individuelles (throne et banque)" />
     <MESSAGE value="Fourmi peut set target de colonie a map, map a colonie, ou colonie a autre colonie" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fourmi peut set target de colonie a map, map a colonie, ou colonie a autre colonie" />
+    <MESSAGE value="fourmi fonction attaque" />
+    <option name="LAST_COMMIT_MESSAGE" value="fourmi fonction attaque" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/jeu_py$main.coverage" NAME="main Coverage Results" MODIFIED="1746044225913" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />

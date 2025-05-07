@@ -185,16 +185,9 @@ class Fourmis(ABC):
         if fourmi_target.in_colonie_map_coords is None:
             self.set_target_in_map(fourmi_target.centre_x_in_map,fourmi_target.centre_y_in_map,map_data,liste_toutes_colonies)
         else:
-            self.set_target_in_nid((fourmi_target.centre_x_in_nid,fourmi_target.centre_y_in_nid),fourmi_target.in_colonie_map_coords,map_data,liste_toutes_colonies)
+            self.set_target_in_nid((fourmi_target.centre_x_in_nid,fourmi_target.centre_y_in_nid),fourmi_target.colonie_origine,map_data,liste_toutes_colonies)
         self.fourmi_attacking = None
 
-    def set_attack(self, fourmi_target,map_data,liste_toutes_colonies):
-        print("fourmi attack set")
-        self.fourmi_attacking = fourmi_target
-        if fourmi_target.in_colonie_map_coords is None:
-            self.set_target_in_map(fourmi_target.centre_x_in_map,fourmi_target.centre_y_in_map,map_data,liste_toutes_colonies)
-        else:
-            self.set_target_in_nid((fourmi_target.centre_x_in_nid,fourmi_target.centre_y_in_nid),fourmi_target.in_colonie_map_coords,map_data,liste_toutes_colonies)
     def in_map(self):
         if self.in_colonie_map_coords is None:
             in_map = True
@@ -216,11 +209,7 @@ class Fourmis(ABC):
     def get_tuile(self):
         return int(self.centre_x_in_map), int(self.centre_y_in_map)
 
-    @abstractmethod
-    def attack(self, other):
-        pass
-
-    def process(self, dt, map_data, nids):
+    def process(self, dt, map_data, nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
         def process_map():
             not_at_target = (self.target_x_in_map != self.centre_x_in_map or self.target_y_in_map != self.centre_y_in_map)
             if not_at_target and self.target_x_in_map is not None and self.target_y_in_map is not None:
@@ -228,7 +217,7 @@ class Fourmis(ABC):
                 self.goto_target(dt, map_data, nids)
             else:
                 self.is_moving = False
-                self.is_busy = False
+                #self.is_busy = False
                 self.target_x_in_map = None
                 self.target_y_in_map = None
 
@@ -264,6 +253,71 @@ class Fourmis(ABC):
                 self.target_x_in_nid = None
                 self.target_y_in_nid = None
 
+        def process_attaque():
+            if self.hp <= 0:
+                liste_fourmis_jeu_complet.remove(self)
+                self.colonie_origine.fourmis.remove(self)
+                print("fourmi morte")
+            if self.fourmi_attacking is not None:  # attack fourmi
+                if self.fourmi_attacking.in_colonie_map_coords is None and self.in_colonie_map_coords is None:  # if both in map
+                    if (Vector2(self.fourmi_attacking.centre_x_in_map, self.fourmi_attacking.centre_y_in_map) - Vector2(
+                            self.centre_x_in_map, self.centre_y_in_map)).magnitude() <= 1:  # if closer or equal to 1
+                        # set all targets to none
+                        self.target_x_in_nid = None
+                        self.target_y_in_nid = None
+                        self.target_x_in_nid_queued = None
+                        self.target_x_in_nid_queued = None
+                        self.target_x_in_map = None
+                        self.target_y_in_map = None
+                        # set target fourmi attacking to none
+                        self.fourmi_attacking.target_x_in_nid = None
+                        self.fourmi_attacking.target_y_in_nid = None
+                        self.fourmi_attacking.target_x_in_nid_queued = None
+                        self.fourmi_attacking.target_x_in_nid_queued = None
+                        self.fourmi_attacking.target_x_in_map = None
+                        self.fourmi_attacking.target_y_in_map = None
+                        # fight
+                        self.is_busy = True
+                        self.fourmi_attacking.is_busy = True
+                        self.fourmi_attacking.hp -= (self.atk_result * dt) / 1000
+                        if self.fourmi_attacking.fourmi_attacking is None:  # if ant i am attacking is not attacking me remove its attack from my healt
+                            self.hp -= (self.fourmi_attacking.atk_result * dt) / 1000
+
+                elif self.fourmi_attacking.in_colonie_map_coords == self.in_colonie_map_coords:  # if both in same nid
+                    if (Vector2(self.fourmi_attacking.centre_x_in_nid, self.fourmi_attacking.centre_y_in_nid) - Vector2(
+                            self.centre_x_in_nid, self.centre_y_in_nid)).magnitude() <= 32:  # if closer or equal to 32
+                        # set all targets to none
+                        self.target_x_in_nid = None
+                        self.target_y_in_nid = None
+                        self.target_x_in_nid_queued = None
+                        self.target_x_in_nid_queued = None
+                        self.target_x_in_map = None
+                        self.target_y_in_map = None
+                        # set target fourmi attacking to none
+                        self.fourmi_attacking.target_x_in_nid = None
+                        self.fourmi_attacking.target_y_in_nid = None
+                        self.fourmi_attacking.target_x_in_nid_queued = None
+                        self.fourmi_attacking.target_x_in_nid_queued = None
+                        self.fourmi_attacking.target_x_in_map = None
+                        self.fourmi_attacking.target_y_in_map = None
+                        # fight
+                        self.is_busy = True
+                        self.fourmi_attacking.is_busy = True
+                        self.fourmi_attacking.hp -= (self.atk_result * dt) / 1000
+                        if self.fourmi_attacking.fourmi_attacking is None:  # if ant i am attacking is not attacking me remove its attack from my healt
+                            self.hp -= (self.fourmi_attacking.atk_result * dt) / 1000
+
+                if not self.is_busy:  # if self has stopped moving but is not busy=is not attacking
+                    # set target to fourmi attacking
+                    if self.fourmi_attacking.in_colonie_map_coords is None:
+                        self.set_target_in_map(self.fourmi_attacking.centre_x_in_map,
+                                               self.fourmi_attacking.centre_y_in_map, map_data, liste_toutes_colonies)
+                    else:
+                        self.set_target_in_nid(
+                            (self.fourmi_attacking.centre_x_in_nid, self.fourmi_attacking.centre_y_in_nid),
+                            self.fourmi_attacking.in_colonie_map_coords, map_data, liste_toutes_colonies)
+
+        process_attaque()
         in_map = self.in_map()
         if in_map:
             process_map()
@@ -277,21 +331,21 @@ class Fourmis(ABC):
         self.is_busy = True
         self.is_moving = True
 
-        if in_map: #set target in nid from map
+        if in_map:  # set target in nid from map
             self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
 
             noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
-            if noeud is  not None:
+            if noeud is not None:
                 self.target_x_in_nid = noeud.coord[0]
                 self.target_y_in_nid = noeud.coord[1]
 
-        elif current_colonie.graphe == target_nid.graphe: #set target in nid from same nid
+        elif current_colonie.graphe == target_nid.graphe:  # set target in nid from same nid
             noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
-            if noeud is  not None:
+            if noeud is not None:
                 self.target_x_in_nid = noeud.coord[0]
                 self.target_y_in_nid = noeud.coord[1]
 
-        else: #set target in nid from other nid
+        else:  # set target in nid from other nid
             current_colonie = self.get_colonie_actuelle(colonies)
             for salle in current_colonie.graphe.salles:
                 if salle.type.value[1] == "sortie":
@@ -300,7 +354,7 @@ class Fourmis(ABC):
             self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
 
             noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
-            if noeud is  not None:
+            if noeud is not None:
                 self.target_x_in_nid_queued = noeud.coord[0]
                 self.target_y_in_nid_queued = noeud.coord[1]
 
@@ -316,7 +370,7 @@ class Fourmis(ABC):
             self.is_moving = True
             self.is_busy = True
         else:
-            #set target vers la sortie du nid
+            # set target vers la sortie du nid
             current_colonie = self.get_colonie_actuelle(colonies)
             for salle in current_colonie.graphe.salles:
                 if salle.type.value[1] == "sortie":

@@ -136,7 +136,7 @@ class Carte:
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(min_dist=5,region_size=90)
+        placer_colonies(min_dist=5,region_size=10)
         set_tuiles_debut(liste_fourmis_jeu_complet)
 
     def draw(self, screen):
