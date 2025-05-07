@@ -199,6 +199,7 @@ def draw(dt) -> None:
     global liste_options_menu_options
     global liste_options_menu_principal
 
+
     if in_menu_principal:
         draw_fullscreen_menu(liste_options_menu_principal)
         sprites.draw(screen)
@@ -206,6 +207,10 @@ def draw(dt) -> None:
         draw_fullscreen_menu(liste_options_menu_options)
     elif in_carte and not in_menu_secondaire:
         carte_jeu.draw(screen)
+        for colonie in carte_jeu.colonies:
+            for fourmi_to_draw_in_map in colonie.fourmis:
+                if fourmi_to_draw_in_map.in_colonie_map_coords is None:
+                    fourmi_to_draw_in_map.draw_in_map(dt,screen,carte_jeu.camera)
     elif in_nid and not in_menu_secondaire:
         current_nid.draw(dt,screen, liste_fourmis_jeu_complet, carte_jeu.colonies[0])
 
@@ -245,12 +250,9 @@ def menu_options_overlay() -> None:
 
     grid_mode_str = "ON" if carte_jeu.grid_mode else "OFF"
 
-    liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() / 2 - 100, screen.get_width() / 8, screen.get_height() / 15,
-                            'Retour', retour, police_boutons))
-    liste_boutons.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 2, screen.get_width() / 8, screen.get_height() / 15,
-                                  f'Grids: {grid_mode_str}', toggle_grid, police_boutons))
-    liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() / 2 + 100, screen.get_width() / 8, screen.get_height() / 15,
-                            'Quitter', quitter, police_boutons))
+    liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() / 2 - 100, screen.get_width() / 8, screen.get_height() / 15,'Retour', retour, police_boutons))
+    liste_boutons.append(Bouton(screen,screen.get_width() / 2, screen.get_height() / 2, screen.get_width() / 8, screen.get_height() / 15,f'Grids: {grid_mode_str}', toggle_grid, police_boutons))
+    liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() / 2 + 100, screen.get_width() / 8, screen.get_height() / 15,'Quitter', quitter, police_boutons))
 
 def toggle_grid() -> None:
     """
@@ -481,11 +483,70 @@ def gestion_evenement(event: pygame.event) -> None:
             in_carte = True
             current_nid = None
 
+def check_for_colonie_deaths():
+    global carte_jeu
+    global nb_colonies_nids
+    global liste_fourmis_jeu_complet
+    global liste_boutons
+    global in_menu_secondaire
+    # check for dead colonies
+    fourmis_ennemies_morte_index=[]
+    fourmis_have_been_generated=False
+    for i in range(len(carte_jeu.colonies)):
+        if len(carte_jeu.colonies[i].fourmis) and fourmis_have_been_generated:
+            carte_jeu.colonies[i].hp=0
+        if carte_jeu.colonies[i].hp <= 0:
+            fourmis_have_been_generated=True
+            if i == 0:  # if colonie joueur is dead
+                in_menu_secondaire = True
+                if in_carte:
+                    carte_jeu.camera.stop_drag()
+                elif in_nid:
+                    current_nid.camera.stop_drag()
+
+                texte_render = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 48).render("Vous avez perdu!",False, WHITE)
+                police_boutons = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
+
+                surface = pygame.Surface((int(texte_render.get_width()*1.5), int(texte_render.get_height()*1.5)))
+                surface.fill(BLACK)
+
+                surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
+                screen.blit(surface, (screen.get_width() / 2 - surface.get_width()/2, screen.get_height() / 2 - 250))
+
+                liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() * 2 / 3 - 100, screen.get_width() / 8,screen.get_height() / 15, 'Quitter', quitter, police_boutons))
+            else:
+                fourmis_ennemies_morte_index.append(i)
+                for fourmi_in_dead_colonie in carte_jeu.colonies[i].fourmis:
+                    for fourmi_in_jeu in liste_fourmis_jeu_complet:
+                        if fourmi_in_dead_colonie==fourmi_in_jeu:
+                            liste_fourmis_jeu_complet.remove(fourmi_in_jeu)
+                carte_jeu.colonies[i].fourmis=[]
+                carte_jeu.colonies[i].stop_processing_salles_other_than_sortie_when_dead=True
+    if len(fourmis_ennemies_morte_index) == (nb_colonies_nids-1):#if all enemie colonies are dead
+
+        in_menu_secondaire = True
+        if in_carte:
+            carte_jeu.camera.stop_drag()
+        elif in_nid:
+            current_nid.camera.stop_drag()
+
+        texte_render = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 48).render("Vous avez gagné!", False,WHITE)
+        police_boutons = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
+
+        surface = pygame.Surface((int(texte_render.get_width() * 1.5), int(texte_render.get_height() * 1.5)))
+        surface.fill(BLACK)
+
+        surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
+        screen.blit(surface, (screen.get_width() / 2 - surface.get_width() / 2, screen.get_height() / 2 - 250))
+
+        liste_boutons.append(Bouton(screen, screen.get_width() / 2, screen.get_height() * 2 / 3 - 100, screen.get_width() / 8,screen.get_height() / 15, 'Quitter', quitter, police_boutons))
+
 def process(dt) -> None:
 
     if not in_menu_principal and partie_en_cours:
+        check_for_colonie_deaths()
         for colonie in carte_jeu.colonies:
-            colonie.process(clock.get_time(),nids,liste_fourmis_jeu_complet,carte_jeu.colonies)
+            colonie.process(clock.get_time(),nids,liste_fourmis_jeu_complet,carte_jeu.colonies,carte_jeu.map_data)
 
     if in_menu_principal:
         fourmi.random_mouvement(dt)

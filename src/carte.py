@@ -187,8 +187,8 @@ class Carte:
         etoile_tuile_debut()
 
         tile_size = int(self.TILE_SIZE * self.camera.zoom)
-        self.colonies[0].render_ants(tile_size, screen, self.camera)
-        self.colonies[1].render_ants(tile_size, screen, self.camera)
+
+
 
         if self.colonies[0].menu_colonie_ouvert:
             self.colonies[0].menu_colonie()

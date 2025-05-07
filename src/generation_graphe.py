@@ -423,7 +423,7 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X,nb_salles_initiales) -> cg.Graphe:
     if nb_salles_initiales > 2 :
         salles_salle[-2].type=cg.TypeSalle.BANQUE
         if nb_salles_initiales > 2 :
-            salles_salle[-3].type=cg.TypeSalle.TRAINING_OUVRIERE
+            salles_salle[-3].type=cg.TypeSalle.MEULE
             if nb_salles_initiales > 3:
                 salles_salle[-4].type = cg.TypeSalle.ENCLUME
 
