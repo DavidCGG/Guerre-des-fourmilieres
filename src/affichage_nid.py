@@ -182,11 +182,11 @@ class Nid:
 
                 y_offset = 40
                 if colonie_joueur.curr_tab == "Ouvrières":
-                    fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Ouvriere)]
+                    fourmis_temp = [f for f in colonie_joueur.fourmis if isinstance(f, Ouvriere)]
                 elif colonie_joueur.curr_tab == "Soldats":
-                    fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Soldat)]
+                    fourmis_temp = [f for f in colonie_joueur.fourmis if isinstance(f, Soldat)]
 
-                for fourmi in fourmis:
+                for fourmi in fourmis_temp:
                     rect = pygame.Rect(0, y_offset - 5, 250, 50)
 
                     if rect.collidepoint((rel_x, rel_y)):
@@ -215,7 +215,7 @@ class Nid:
                 if keys[pygame.K_d]:
                     fourmi.digging = not fourmi.digging
                     print(f"{fourmi.digging=}")
-                
+
                 return
 
             for salle in self.graphe.salles:

@@ -4,16 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="merge">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="9a1dc5d2-0af4-445e-9be9-4319cb7826f3" name="Changes" comment="fourmi défence automatique et attaque">
       <change beforePath="$PROJECT_DIR$/.idea/main-branch-projet.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/main-branch-projet.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/affichage_nid.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/affichage_nid.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/carte.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/carte.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/colonies.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/colonies.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/fourmi.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/fourmi.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/tuile.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/tuile.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -124,6 +117,7 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.13 (Guerre-des-fourmilieres)" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
@@ -368,7 +362,23 @@
       <option name="project" value="LOCAL" />
       <updated>1746585485808</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="mise a jour et restructure des salles (seules fonctions manquantes: retrait de banque, possiblement upgrades de fourmi, possiblement plus d'outils)">
+      <option name="closed" value="true" />
+      <created>1746601383954</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1746601383954</updated>
+    </task>
+    <task id="LOCAL-00022" summary="fourmi défence automatique et attaque">
+      <option name="closed" value="true" />
+      <created>1746636864468</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1746636864468</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -445,7 +455,9 @@
     <MESSAGE value="Fourmi peut set target de colonie a map, map a colonie, ou colonie a autre colonie" />
     <MESSAGE value="fourmi fonction attaque" />
     <MESSAGE value="merge" />
-    <option name="LAST_COMMIT_MESSAGE" value="merge" />
+    <MESSAGE value="mise a jour et restructure des salles (seules fonctions manquantes: retrait de banque, possiblement upgrades de fourmi, possiblement plus d'outils)" />
+    <MESSAGE value="fourmi défence automatique et attaque" />
+    <option name="LAST_COMMIT_MESSAGE" value="fourmi défence automatique et attaque" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/jeu_py$jeu.coverage" NAME="jeu Coverage Results" MODIFIED="1743516529075" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
