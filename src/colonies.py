@@ -1,3 +1,4 @@
+import random
 import tkinter as tk
 import pygame
 from fourmi import Ouvriere, Soldat, Groupe, Fourmis
@@ -78,6 +79,7 @@ class Colonie:
         self.groupes_cache = {}
 
         self.tuiles_debut=tuiles_debut_toutes_colonies
+        self.liste_fourmis_jeu_complet=listes_fourmis_jeu_complet
 
 
     def process(self,dt,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
@@ -93,7 +95,6 @@ class Colonie:
 
         for f in self.fourmis:
             if f.hp <= 0:
-                print("removed")
                 self.fourmis.remove(f)
                 liste_fourmis_jeu_complet.remove(f)
                 # print("fourmi morte")
@@ -590,24 +591,205 @@ class PrototypeIA:
         self.ai_state_label.config(text=f"État: {self.colonie_ia.state}")
 
 class ColonieIA:
-    def __init__(self, colony_id, position):
-        self.colony_id = colony_id
-        self.position = position
-        self.state = "EXPLORATION"
+    def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,listes_fourmis_jeu_complet):
+        self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_rouge.png")).convert_alpha()
+        self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_rouge.png")).convert_alpha()
+        self.map_data = map_data  # la carte de jeu
+        self.tuile_debut = tuile_debut
+        self.screen = None
+        self.vie = 1  # 1 = 100% (vie de la reine)
+        self.nourriture = 0
+        self.choix_timer = 0
 
-    def check_state_transition(self, player_data, ia_data):
-        if int(ia_data["ai_nourr"]) < int(ia_data["ai_ouvr"]) / 2:
-            self.state = "COLLECTE"
+        self.graphe = graphe
 
-        elif int(player_data["player_sold"]) > (int(ia_data["ai_sold"]) * 1.5):
-            self.state = "DÉFENCE"
+        self.hp = 1000
 
-        elif int(player_data["player_nourr"]) != 0:
-            if  int(player_data["player_ouvr"]) / int(player_data["player_nourr"]) < 5 or 1.25 < int(ia_data["ai_sold"]) / int(player_data["player_sold"]):
-                self.state = "ATTAQUE"
+        # debug only pour voir si graphe est avec la bonne tuile debut/ colonie
+        # self.sortie_coords=None
+        for salle in self.graphe.salles:
+            # print(salle.type.value[1])
+            if salle.type.value[1] == "sortie":
+                self.sortie_coords = salle.noeud.coord
+            elif salle.type.value[1] == "throne":
+                self.throne_coords = salle.noeud.coord
 
+        self.fourmis = [Ouvriere(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.ROUGE, self) for _ in
+                        range(2)] + [Soldat(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.ROUGE, self) for
+                                     _ in range(2)]
+        for fourmi in self.fourmis:
+            listes_fourmis_jeu_complet.append(fourmi)
+
+        self.sprite_sheets = {
+            Ouvriere: self.sprite_sheet_ouvr,
+            Soldat: self.sprite_sheet_sold
+        }
+        self.sprite_dict = {}
+        self.sprites = []
+        self.load_sprites()
+
+        self.tuiles_debut = tuiles_debut_toutes_colonies
+        self.liste_fourmis_jeu_complet = listes_fourmis_jeu_complet
+        self.toutes_colonies = None
+
+
+    def process(self, dt, tous_les_nids, liste_fourmis_jeu_complet, liste_toutes_colonies):
+        self.toutes_colonies = liste_toutes_colonies
+        # Processus de l'IA
+        fourmis_bouge = False
+        self.choix_timer += dt
+        if self.choix_timer >= 3000:
+
+            # Choisir une action pour l'IA
+            self.choix()
+            self.choix_timer = 0
+
+
+        for f in self.fourmis:
+            if f.hp <= 0:
+                self.fourmis.remove(f)
+                liste_fourmis_jeu_complet.remove(f)
+                # print("fourmi morte")
+            dern_x, dern_y = f.centre_x_in_map, f.centre_y_in_map
+            # f.process(dt, self.map_data,tous_les_nids)
+            f.process(dt, self.map_data, tous_les_nids, liste_fourmis_jeu_complet, liste_toutes_colonies)
+            if (dern_x, dern_y) != (f.centre_x_in_map, f.centre_y_in_map):
+                fourmis_bouge = True
+                if f.dans_carte():
+
+                    self.collecte_fourmi(f)
+
+        for salle in self.graphe.salles:
+            salle.process(liste_fourmis_jeu_complet,self,dt)
+
+    def choix(self):
+        print("CHOIX")
+        if self.en_danger():
+            print("EN DANGER")
+            self.envoyer_fourmis_dans_nid()
         else:
-            self.state = "EXPLORATION"
+            print("MEILLEURE ACTIOn")
+            self.meilleure_action()
+
+    def meilleure_action(self):
+        if self.check_nourriture():
+            self.chercher_nourriture()
+
+    def check_nourriture(self):
+        if self.nourriture < len(self.get_fourmis_type()[0]):
+            print("TRUE")
+            return True
+        return False
+
+    def en_danger(self):
+        if self.ennemis_dans_nid() == 0: return False
+        else:
+            if self.fourmis_dans_nid()[0] / self.ennemis_dans_nid() < 0.8:
+                return True
+        return False
+
+
+
+    def chercher_nourriture(self):
+        tuiles = self.trouver_tuiles_ressources()
+        print(len(tuiles))
+        partie = int(len(self.get_fourmis_type()[0]) * 0.65)
+        ouvr_a_envoyer = random.sample(self.get_fourmis_type()[0], partie)
+        for f in ouvr_a_envoyer:
+            if (f.target_x_in_map is None and f.target_y_in_map is None) and len(f.inventaire) < f.inventaire_taille_max:
+                tuile = random.choice(tuiles)
+                f.set_target_in_map(tuile[0], tuile[1], self.map_data, self.toutes_colonies)
+                print("target set")
+
+
+
+
+    def trouver_tuiles_ressources(self):
+        tuiles = []
+        for y in range(self.tuile_debut[1]-20, self.tuile_debut[1]+20):
+            for x in range(self.tuile_debut[0]-20, self.tuile_debut[0]+20):
+                if 0 <= y < 100 and 0 <= x < 100:
+                    if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
+                        tuiles.append((x, y))
+        return tuiles
+
+    def envoyer_fourmis_dans_nid(self):
+        pass
+
+
+
+    def fourmis_dans_nid(self):
+        tot = 0
+        f_dans_nid = []
+        for f in self.fourmis:
+            if f.in_colonie_map_coords is not None:
+                tot += 1
+                f_dans_nid.append(f)
+        return (tot, f_dans_nid)
+
+    def get_fourmis_type(self):
+        ouvr = []
+        sold = []
+        for f in self.fourmis:
+            if isinstance(f, Ouvriere):
+                ouvr.append(f)
+            if isinstance(f, Soldat):
+                sold.append(f)
+        return ouvr, sold
+
+    def ennemis_dans_nid(self):
+        ennemis = [
+        f for f in self.liste_fourmis_jeu_complet
+            if f not in self.fourmis
+        ]
+
+        return len(ennemis)
+
+    def collecte_fourmi(self, f):
+        x, y = f.get_tuile()
+        if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee and (x, y) == (f.target_x_in_map, f.target_y_in_map):
+            ress = self.map_data[y][x].get_ressource()
+            if len(f.inventaire) < f.inventaire_taille_max:
+                f.inventaire.append(ress)
+                self.map_data[y][x].collectee = True
+                print("collected")
+                f.set_target_in_nid(self.throne_coords, self, self.map_data, self.toutes_colonies)
+
+    def load_sprites(self):
+        for f in self.fourmis:
+            sprite = FourmisSprite(f, self.sprite_sheets[type(f)], 32, 32, 8, 100,1/2)
+            self.sprite_dict[f] = sprite
+            self.sprites.append(sprite)
+    def render_ants(self, tile_size, screen, camera):
+        # if self.cache_groupes_a_updater:
+        #     self.update_cache_groupes()
+        #
+        # for tuile, groupe in self.groupes_cache.items():
+        #     if groupe.get_nb_fourmis() > 1:
+        #         groupe.update(camera, tile_size)
+        #         screen.blit(groupe.image, groupe.rect)
+        #     elif not groupe.est_vide():
+        #         f = groupe.fourmis[0]
+        #         if f.in_colonie_map_coords is None:
+        #             sprite = self.sprite_dict[f]
+        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
+        #             if screen.get_rect().colliderect(sprite.rect):
+        #                 #print("fourmi drawn outside")
+        #                 screen.blit(sprite.image, sprite.rect)
+        #         else:
+        #             sprite = self.sprite_dict[f]
+        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
+        #             if screen.get_rect().colliderect(sprite.rect):
+        #                 screen.blit(sprite.image, sprite.rect)
+        for fourmi in self.fourmis:
+            if fourmi.in_colonie_map_coords is None:
+                sprite = self.sprite_dict[fourmi]
+                sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
+                if screen.get_rect().colliderect(sprite.rect):
+                    screen.blit(sprite.image, sprite.rect)
+
+
+
 
 
 if __name__ == "__main__":

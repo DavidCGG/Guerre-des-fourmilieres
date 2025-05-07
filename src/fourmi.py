@@ -660,7 +660,7 @@ class Soldat(Fourmis):
         super().__init__(colonie_origine, hp=200, hp_max=200,atk=50, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 1.5
         self.speed = self.base_speed
-        sprite_sheet_image = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
+        sprite_sheet_image = pygame.image.load(trouver_img(f"Fourmis/sprite_sheet_fourmi_{couleur.name.lower()}.png")).convert_alpha()
         self.type = "soldat"
         self.sprite = FourmisSprite(self, sprite_sheet_image, 32, 32, 8, 100, 1)
 

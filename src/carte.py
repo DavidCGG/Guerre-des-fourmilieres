@@ -3,7 +3,7 @@ import pygame
 import numpy as np
 from pygame.examples.grid import TILE_SIZE
 
-from colonies import Colonie
+from colonies import Colonie, ColonieIA
 from camera import Camera
 #from src.colonie_ia import ColonieIA
 from tuile import Tuile
@@ -128,8 +128,9 @@ class Carte:
         
         def set_tuiles_debut(liste_fourmis_jeu_complet):
             #self.tuile_debut_joueur = self.tuiles_debut[random.randint(0, self.nb_colonies_nids - 1)]
-            for i in range(self.nb_colonies_nids):
-                self.colonies.append(Colonie(self.tuiles_debut[i], self.map_data,self.tuiles_debut,self.graphes[i],liste_fourmis_jeu_complet))
+
+            self.colonies.append(Colonie(self.tuiles_debut[0], self.map_data,self.tuiles_debut,self.graphes[0],liste_fourmis_jeu_complet))
+            self.colonies.append(ColonieIA(self.tuiles_debut[1], self.map_data,self.tuiles_debut,self.graphes[1],liste_fourmis_jeu_complet))
 
             #index_tuile_debut = self.tuiles_debut.index(self.tuile_debut_joueur)
             #temp = self.tuiles_debut[0]
@@ -138,7 +139,7 @@ class Carte:
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(min_dist=17,region_size=10)
+        placer_colonies(min_dist=20,region_size=15)
         set_tuiles_debut(liste_fourmis_jeu_complet)
         self.colonies[0].screen = self.screen
 
@@ -187,6 +188,7 @@ class Carte:
 
         tile_size = int(self.TILE_SIZE * self.camera.zoom)
         self.colonies[0].render_ants(tile_size, screen, self.camera)
+        self.colonies[1].render_ants(tile_size, screen, self.camera)
 
         if self.colonies[0].menu_colonie_ouvert:
             self.colonies[0].menu_colonie()
