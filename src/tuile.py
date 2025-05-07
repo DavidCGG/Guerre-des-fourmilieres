@@ -36,6 +36,7 @@ class Tuile:
 
 
     def rand_ressource(self):
+        if self.tuile_debut: return False
         if isinstance(self, Sable):
             rand = random.randint(0, 8)
             if rand == 5:

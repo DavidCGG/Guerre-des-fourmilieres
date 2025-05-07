@@ -2,7 +2,6 @@ import math
 import random
 import uuid
 from abc import ABC, abstractmethod
-from curses.textpad import rectangle
 from enum import Enum
 
 import pygame
@@ -201,9 +200,6 @@ class Fourmis(ABC):
                 return colonie
 
         return None
-
-    def get_tuile(self):
-        return int(self.centre_x_in_map), int(self.centre_y_in_map)
 
     def process(self, dt, map_data, nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
         def process_map():
@@ -523,6 +519,14 @@ class Fourmis(ABC):
         chemin.reverse()
         self.path = chemin
 
+    def dans_carte(self):
+        return self.centre_x_in_map is not None and self.centre_y_in_map is not None
+    def get_tuile(self):
+        return int(self.centre_x_in_map), int(self.centre_y_in_map)
+
+    def get_colonie_pos(self):
+        return self.centre_x_in_nid, self.centre_y_in_nid
+
     def draw_in_nid(self,dt,screen,camera):
         #print("fourmi drawn")
         #image_scaled = pygame.transform.scale(self.image,(self.image.get_width()*camera.zoom,self.image.get_height()*camera.zoom))
@@ -551,7 +555,7 @@ class Ouvriere(Fourmis):
         super().__init__(colonie_origine, hp=100, hp_max=100,atk=40, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 3
         self.speed = self.base_speed
-        sprite_sheet_image=pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
+        sprite_sheet_image=pygame.image.load(trouver_img(f"Fourmis/sprite_sheet_fourmi_{couleur.name.lower()}.png")).convert_alpha()
         self.type="ouvriere"
         self.sprite = FourmisSprite(self,sprite_sheet_image,32,32,8,100,1)
 
@@ -623,7 +627,7 @@ class FourmisSprite(pygame.sprite.Sprite):
         scaled_height = int(self.image.get_height() * zoom * 2 * self.scale)
         self.image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
 
-        if in_map:
+        if in_map and self.fourmis.centre_x_in_map is not None and self.fourmis.centre_y_in_map is not None:
             world_x = self.fourmis.centre_x_in_map * tile_size
             world_y = self.fourmis.centre_y_in_map * tile_size
         else:

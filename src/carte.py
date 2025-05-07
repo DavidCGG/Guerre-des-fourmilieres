@@ -5,6 +5,7 @@ from pygame.examples.grid import TILE_SIZE
 
 from colonies import Colonie
 from camera import Camera
+#from src.colonie_ia import ColonieIA
 from tuile import Tuile
 from random_noise import RandomNoise
 from tuile import Terre, Sable, Eau, Montagne
@@ -49,13 +50,14 @@ class Carte:
         self.image_etoile = pygame.transform.scale(self.image_etoile, (self.TILE_SIZE, self.TILE_SIZE))
 
         self.nb_colonies_nids = nb_colonies_nids
+        self.liste_fourmis_jeu_complet = liste_fourmis_jeu_complet
         self.couleurs_colonies=[]
         for i in range(self.nb_colonies_nids):
             self.couleurs_colonies.append(couleurs_possibles[i])
-
+        self.screen = screen
         self.generation_map(liste_fourmis_jeu_complet)
 
-        self.screen = screen
+
         self.camera = Camera(screen.get_width(), screen.get_height(), self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE)
         self.set_camera_tuile_debut()
 
@@ -136,8 +138,9 @@ class Carte:
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(min_dist=5,region_size=10)
+        placer_colonies(min_dist=17,region_size=10)
         set_tuiles_debut(liste_fourmis_jeu_complet)
+        self.colonies[0].screen = self.screen
 
     def draw(self, screen):
         def etoile_tuile_debut():
@@ -186,10 +189,10 @@ class Carte:
         self.colonies[0].render_ants(tile_size, screen, self.camera)
 
         if self.colonies[0].menu_colonie_ouvert:
-            self.colonies[0].menu_colonie(screen)
+            self.colonies[0].menu_colonie()
 
         if self.colonies[0].menu_fourmis_ouvert and self.colonies[0].menu_colonie_ouvert:
-            self.colonies[0].menu_fourmis(screen)
+            self.colonies[0].menu_fourmis()
 
     #retourne l'index de la colonie cliquée avec un right click
     def handle_event(self, event, screen) -> int:

@@ -141,9 +141,9 @@ class Nid:
         colonie_joueur.update_menu_fourmis()
 
         if colonie_joueur.menu_colonie_ouvert:
-            colonie_joueur.menu_colonie(screen)
+            colonie_joueur.menu_colonie()
         if colonie_joueur.menu_fourmis_ouvert:
-            colonie_joueur.menu_fourmis(screen)
+            colonie_joueur.menu_fourmis()
 
     def handle_event(self, event, screen,colonie_joueur,liste_fourmis_jeu_complet,map_data,liste_toutes_colonies) -> bool:
         """
@@ -181,11 +181,11 @@ class Nid:
 
                 y_offset = 40
                 if colonie_joueur.curr_tab == "Ouvrières":
-                    colonie_joueur.fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Ouvriere)]
+                    fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Ouvriere)]
                 elif colonie_joueur.curr_tab == "Soldats":
-                    colonie_joueur.fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Soldat)]
+                    fourmis = [f for f in colonie_joueur.fourmis if isinstance(f, Soldat)]
 
-                for fourmi in colonie_joueur.fourmis:
+                for fourmi in fourmis:
                     rect = pygame.Rect(0, y_offset - 5, 250, 50)
 
                     if rect.collidepoint((rel_x, rel_y)):

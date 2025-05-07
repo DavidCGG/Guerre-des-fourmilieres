@@ -1,7 +1,6 @@
 import ast
 import os
 import random
-from curses.ascii import isdigit
 
 import pygame
 import carte as carte
@@ -18,7 +17,7 @@ from fourmi import FourmiTitleScreen, FourmiTitleScreenSprite, Fourmis
 screen: pygame.Surface = None
 clock: pygame.time.Clock = pygame.time.Clock()
 
-font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74,)
+font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74)
 small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
 tiny_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 18)
 liste_boutons: list[Bouton] = []
@@ -428,7 +427,7 @@ def gestion_evenement(event: pygame.event) -> None:
             #print("gestion en pause")
             if event.type == pygame.TEXTINPUT:
                 #print(event.text)
-                if isdigit(event.text):
+                if event.text.isdigit():
                     text_input += event.text
                     liste_options_menu_options[0] = "Maximum framerate: " + text_input
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
