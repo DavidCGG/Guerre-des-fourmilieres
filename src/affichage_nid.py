@@ -231,12 +231,14 @@ class Nid:
                         and (pos_noeud[1] - hauteur_menu < event.pos[1] and pos_noeud[1] + hauteur_menu > event.pos[1])):
                         hauteur_case = hauteur_menu / len(salle.liste_types_salles)
                         index = 0
-                        while salle.noeud.coord[1] - hauteur_menu / 2 + index * hauteur_case < event.pos[1]:
+                        while pos_noeud[1] - hauteur_menu / 2 + index * hauteur_case < event.pos[1]:
                             index += 1
 
                         salle.type = salle.liste_types_salles[index - 1]
                         salle.type_specific_stats_update()
+                        salle.menu_centre = None
 
+                        print(index)
                         print(salle.type.name)
 
         def handle_right_click(pos,map_data,liste_toutes_colonies):
