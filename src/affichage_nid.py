@@ -48,6 +48,7 @@ class Nid:
         for salle in self.graphe.salles:
             if salle.type.value[1] == "sortie":
                 self.salles_sorties.append(salle)
+                               
     def scale_images(self, scale, initial_sky_scaling = False) -> None:
         if initial_sky_scaling:
             facteur_ciel = HAUTEUR_SOL / self.image_ciel.get_height()
@@ -220,7 +221,23 @@ class Nid:
             for salle in self.graphe.salles:
                 if (event.pos-Vector2(self.camera.apply(salle.noeud.coord))).magnitude() < salle.type.value[0]*self.camera.zoom and salle.type.value[1]!="salle" and salle.type.value[1]!="sortie" and salle.type.value[1]!="intersection" and salle.type.value[1]!="indéfini":
                     #print("salle "+salle.type.value[1]+" clické")
-                    salle.menu_is_ouvert=not salle.menu_is_ouvert
+                    salle.menu_is_ouvert = not salle.menu_is_ouvert
+
+                if salle.type == TypeSalle.INDEFINI and salle.menu_is_ouvert and salle.menu_centre is not None:
+                    pos_noeud = self.camera.apply(salle.noeud.coord)
+                    largeur_menu = salle.menu_centre.get_width() * self.camera.zoom
+                    hauteur_menu = salle.menu_centre.get_width() * self.camera.zoom
+                    if ((pos_noeud[0] - largeur_menu < event.pos[0] and pos_noeud[0] + largeur_menu > event.pos[0])
+                        and (pos_noeud[1] - hauteur_menu < event.pos[1] and pos_noeud[1] + hauteur_menu > event.pos[1])):
+                        hauteur_case = hauteur_menu / len(salle.liste_types_salles)
+                        index = 0
+                        while salle.noeud.coord[1] - hauteur_menu / 2 + index * hauteur_case < event.pos[1]:
+                            index += 1
+
+                        salle.type = salle.liste_types_salles[index - 1]
+                        salle.type_specific_stats_update()
+
+                        print(salle.type.name)
 
         def handle_right_click(pos,map_data,liste_toutes_colonies):
             # set target of fourmi

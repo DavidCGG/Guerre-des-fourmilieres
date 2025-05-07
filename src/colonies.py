@@ -25,9 +25,9 @@ class Colonie:
         #self.sortie_coords=None
         for salle in self.graphe.salles:
             #print(salle.type.value[1])
-            if salle.type.value[1] == "sortie":
+            if salle.type.value[1] == "Sortie":
                 self.sortie_coords=salle.noeud.coord
-            elif salle.type.value[1] == "throne":
+            elif salle.type.value[1] == "Throne":
                 self.throne_coords=salle.noeud.coord
         #print("Tuile debut: "+str(tuile_debut)+" Sortie debut: "+str(self.sortie_coords))
 

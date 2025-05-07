@@ -88,16 +88,16 @@ class TypeSalle(Enum):
     """
 
     #Nom = (taille, nom, image)
-    INDEFINI = (40, "indéfini",None)
-    INTERSECTION = (40, "intersection",None)
-    SALLE = (128, "salle",None)
-    SORTIE = (40, "sortie",None)
-    BANQUE = (128, "banque", trouver_img("Salles/banque.png"))
-    THRONE = (128, "throne", trouver_img("Salles/throne.png"))
-    ENCLUME = (128, "enclume", trouver_img("Salles/enclume.png"))
-    MEULE = (128, "meule", trouver_img("Salles/meule.png"))
-    TRAINING_OUVRIERE = (128,"training_ouvriere",trouver_img("Salles/training_ouvriere.png"))
-    TRAINING_SOLDAT = (128,"training_soldat",trouver_img("Salles/training_soldat.png"))
+    INDEFINI = (40, "Indéfini",None)
+    INTERSECTION = (40, "Intersection",None)
+    SALLE = (128, "Salle",None)
+    SORTIE = (40, "Sortie",None)
+    BANQUE = (128, "Banque", trouver_img("Salles/banque.png"))
+    THRONE = (128, "Throne", trouver_img("Salles/throne.png"))
+    ENCLUME = (128, "Enclume", trouver_img("Salles/enclume.png"))
+    MEULE = (128, "Meule", trouver_img("Salles/meule.png"))
+    TRAINING_OUVRIERE = (128,"Training_ouvriere",trouver_img("Salles/training_ouvriere.png"))
+    TRAINING_SOLDAT = (128,"Training_soldat",trouver_img("Salles/training_soldat.png"))
 
 class Salle:
     """
@@ -115,6 +115,7 @@ class Salle:
         self.menu_is_ouvert: bool=False
         self.menu_top = None
         self.menu_bottom = None
+        self.menu_centre = None
         self.font_menu = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
         self.temps_pour_action=None
         self.temps_ecoule_depuis_debut_action=0
@@ -127,6 +128,15 @@ class Salle:
         self.inventaire_necessaire=None
         self.liste_images_cases_vides=[]
         self.liste_images_items=[]
+
+        self.liste_types_salles = [
+                    TypeSalle.INTERSECTION,
+                    TypeSalle.BANQUE,
+                    TypeSalle.ENCLUME,
+                    TypeSalle.MEULE,
+                    TypeSalle.TRAINING_OUVRIERE,
+                    TypeSalle.TRAINING_SOLDAT
+                ]
 
     def intersecte_salle(self, autre) -> bool:
         """
@@ -177,7 +187,32 @@ class Salle:
         return distance <= rayon
 
     def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self:Colonie, dt):
-        if self.type!=TypeSalle.INDEFINI and self.type!=TypeSalle.INTERSECTION:
+        if self.type!=TypeSalle.INTERSECTION:
+            def update_menu_centre():
+                # Menu settings
+                button_width = 150
+                button_height = 40
+                padding = 5
+
+                menu_height = len(self.liste_types_salles) * (button_height + padding) + padding
+                menu_width = button_width + 2 * padding
+
+                # Create the menu surface
+                self.menu_centre = pygame.Surface((menu_width, menu_height), pygame.SRCALPHA)
+                self.menu_centre.fill(WHITE)
+
+                font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 16)
+
+                for i, salle_type in enumerate(self.liste_types_salles):
+                    btn_x = padding
+                    btn_y = padding + i * (button_height + padding)
+                    btn_rect = pygame.Rect(btn_x, btn_y, button_width, button_height)
+
+                    # Render label
+                    label = font.render(salle_type.value[1], True, (0, 0, 0))
+                    label_rect = label.get_rect(center=btn_rect.center)
+                    self.menu_centre.blit(label, label_rect)
+
             def update_menu_top():
                 if self.inventaire_taille_max is not None:
                     case_inventaire = pygame.Surface((100, 100))
@@ -333,9 +368,13 @@ class Salle:
                     self.temps_ecoule_depuis_debut_action = 0
 
             if self.menu_is_ouvert:
-                update_menu_top()
                 if self.type==TypeSalle.THRONE:
                     update_menu_bottom()
+                if self.type == TypeSalle.INDEFINI:
+                    update_menu_centre()
+                    return
+
+                update_menu_top()
 
     def type_specific_stats_update(self):
         if self.type==TypeSalle.BANQUE:
@@ -376,10 +415,16 @@ class Salle:
         def draw_menu_bottom():
             menu_transformed = pygame.transform.scale(self.menu_bottom, (self.menu_bottom.get_width() * camera.zoom, self.menu_bottom.get_height() * camera.zoom))
             screen.blit(menu_transformed, camera.apply((self.noeud.coord[0] - self.menu_bottom.get_width() / 2,self.noeud.coord[1] + self.type.value[0])))
+        def draw_menu_centre():
+            menu_transformed = pygame.transform.scale(self.menu_centre, (self.menu_centre.get_width() * camera.zoom, self.menu_centre.get_height() * camera.zoom))
+            screen.blit(menu_transformed, camera.apply((self.noeud.coord[0] - self.menu_centre.get_width() / 2,self.noeud.coord[1] - self.menu_centre.get_height()/2)))
+        
         if self.menu_top is not None:
             draw_menu_top()
         if self.menu_bottom is not None:
             draw_menu_bottom()
+        if self.menu_centre is not None:
+            draw_menu_centre()
 
     def draw_process_bar(self,screen,camera):
         process_bar_transformed=pygame.transform.scale(self.process_bar, (self.menu_top.get_width() * camera.zoom, self.menu_top.get_height() * camera.zoom))
