@@ -471,7 +471,6 @@ def gestion_evenement(event: pygame.event) -> None:
     if in_carte and not in_menu_secondaire:
         index_nid: int = carte_jeu.handle_event(event, screen)
         if index_nid != None:
-            #print(index_nid)
             current_nid = nids[index_nid]
             in_carte = False
             in_nid = True

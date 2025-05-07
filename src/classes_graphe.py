@@ -87,11 +87,11 @@ class TypeSalle(Enum):
         SORTIE : Sortie du nid.
     """
 
-    INDEFINI = (40, "indéfini",None,None)
-    INTERSECTION = (40, "intersection",None,None)
-    SALLE = (128, "salle",None,None)
-    SORTIE = (40, "sortie",None,None)
     #Nom = (taille, nom, image)
+    INDEFINI = (40, "indéfini",None)
+    INTERSECTION = (40, "intersection",None)
+    SALLE = (128, "salle",None)
+    SORTIE = (40, "sortie",None)
     BANQUE = (128, "banque", trouver_img("Salles/banque.png"))
     THRONE = (128, "throne", trouver_img("Salles/throne.png"))
     ENCLUME = (128, "enclume", trouver_img("Salles/enclume.png"))
@@ -227,10 +227,12 @@ class Salle:
                         if self.inventaire[i] is not None:
                             if self.inventaire[i]==self.inventaire_necessaire[i]:
                                 self.menu_top.blit(pygame.transform.scale(pygame.image.load(self.inventaire_necessaire[i].value[1]),(100, 100)), (5 + i * (100 + 5), 5))
+            
             def update_menu_bottom():#only colonie hp for throne
                 self.menu_bottom = pygame.Surface((125, 50))
                 text_surface = self.font_menu.render("HP: " + str(colonie_owner_of_self.hp), False, WHITE)
                 self.menu_bottom.blit(text_surface, (self.menu_bottom.get_height() / 2 - text_surface.get_height() / 2,self.menu_bottom.get_height() / 2 - text_surface.get_height() / 2))
+            
             def collecte_item_selon_inventaire_necessaire(fourmi_temp):
                 item_collecte_index_in_inventaire_fourmi = None
                 item_collecte_index_in_inventaire_salle = None
@@ -242,6 +244,7 @@ class Salle:
                                 item_collecte_index_in_inventaire_salle=i
                 if item_collecte_index_in_inventaire_fourmi is not None and item_collecte_index_in_inventaire_salle is not None:
                     self.inventaire[item_collecte_index_in_inventaire_salle]=fourmi_temp.inventaire.pop(item_collecte_index_in_inventaire_fourmi)
+            
             def commencer_action(fourmi_temp):
                 if self.inventaire==self.inventaire_necessaire and not fourmi_temp.is_busy and self.fourmi_qui_fait_action is None:
                     #print("action start")
@@ -499,6 +502,35 @@ class Graphe:
                 return salle.noeud
 
         return None
+    
+    def get_coord_in_tunnel_at_coord(self, coord: list[float, float]) -> tuple[Tunnel, list[float, float]]:
+        cx, cy = coord
+
+        for tunnel in self.tunnels:
+            x1, y1 = tunnel.depart.noeud.coord
+            x2, y2 = tunnel.arrivee.noeud.coord
+
+            #Vecteur directeur de la droite
+            droite = Vector2(x2 - x1, y2 - y1)
+
+            #Vecteur entre le centre de la salle et le point de départ du tunnel
+            droite_cercle = Vector2(cx - x1, cy - y1)
+
+            #Rapport entre le vecteur directeur et
+            #la projection du vecteur entre le centre de la salle et le point de départ du tunnel sur celui-ci
+            t = max(0, min(1, (droite.x * droite_cercle.x + droite.y * droite_cercle.y) / (droite.x ** 2 + droite.y ** 2)))
+
+            #Point le plus proche de la salle sur la droite
+            closest_x = x1 + t * droite.x
+            closest_y = y1 + t * droite.y
+
+            #Distance au centre
+            distance = ((closest_x - cx) ** 2 + (closest_y - cy) ** 2) ** 0.5
+
+            if distance <= tunnel.largeur / 2:
+                return tunnel, (closest_x, closest_y)
+            
+        return None
 
     def initialiser_graphe(self, noeuds: list[NoeudPondere]) -> None:
         """
@@ -714,6 +746,9 @@ class Graphe:
         Returns:
             None
         """
+        if salle.type != TypeSalle.INTERSECTION:
+            return
+
         #Initialisation de la nouvelle salle
         noeud_salle = NoeudPondere(coord_arrivee)
         salle_indefinie = Salle(noeud_salle, type = TypeSalle.INDEFINI)

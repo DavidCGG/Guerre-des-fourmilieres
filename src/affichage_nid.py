@@ -145,7 +145,7 @@ class Nid:
         if colonie_joueur.menu_fourmis_ouvert:
             colonie_joueur.menu_fourmis(screen)
 
-    def handle_event(self, event, screen,colonie_joueur,liste_fourmis_jeu_complet,map_data,liste_toutes_colonies) -> bool:
+    def handle_event(self, event, screen, colonie_joueur,liste_fourmis_jeu_complet,map_data,liste_toutes_colonies) -> bool:
         """
         Gère tous les événements liés au nid
         Args:
@@ -203,11 +203,19 @@ class Nid:
 
             #ouvrir/fermer menu fourmi
             for fourmi in liste_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords==self.tuile_debut:
-                    if (Vector2(pos)-Vector2(self.camera.apply((fourmi.centre_x_in_nid,fourmi.centre_y_in_nid)))).magnitude() < 32*self.camera.zoom:
-                        #print("toggle menu de la fourmi")
-                        fourmi.menu_is_ouvert = not fourmi.menu_is_ouvert
-                        return
+                if fourmi.in_colonie_map_coords != self.tuile_debut:
+                    continue
+                if (Vector2(pos)-Vector2(self.camera.apply((fourmi.centre_x_in_nid,fourmi.centre_y_in_nid)))).magnitude() > 32*self.camera.zoom:
+                    continue
+
+                fourmi.menu_is_ouvert = not fourmi.menu_is_ouvert
+
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_d]:
+                    fourmi.digging = not fourmi.digging
+                    print(f"{fourmi.digging=}")
+                
+                return
 
             for salle in self.graphe.salles:
                 if (event.pos-Vector2(self.camera.apply(salle.noeud.coord))).magnitude() < salle.type.value[0]*self.camera.zoom and salle.type.value[1]!="salle" and salle.type.value[1]!="sortie" and salle.type.value[1]!="intersection" and salle.type.value[1]!="indéfini":

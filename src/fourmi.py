@@ -175,6 +175,11 @@ class Fourmis(ABC):
 
         self.fourmi_attacking = None
 
+        self.digging = False
+        self.ready_to_dig = False
+        self.digging_target_x = None
+        self.digging_target_y = None
+
     def set_attack(self, fourmi_target,map_data,liste_toutes_colonies):
         print("fourmi attack set")
         self.fourmi_attacking = fourmi_target
@@ -201,6 +206,28 @@ class Fourmis(ABC):
                 return colonie
 
         return None
+    
+    def dig_tunnel(self, target_pos: tuple[float, float], colonies):
+        #TODO ajouter la logique dans les méthodes de graphe pour vérifier la validité
+
+        salle_fourmi = None
+        for salle in self.get_colonie_actuelle(colonies).graphe.salles:
+            if (Vector2(salle.noeud.coord[0], salle.noeud.coord[1]) - Vector2(self.centre_x_in_nid, self.centre_y_in_nid)).magnitude() > salle.type.value[0]:
+                continue
+
+            salle_fourmi = salle
+            break
+
+        if salle_fourmi is not None:
+            self.get_colonie_actuelle(colonies).graphe.creer_salle_depuis_intersection(salle_fourmi, target_pos)
+            return
+        
+        coord_centre = (self.centre_x_in_nid, self.centre_y_in_nid)
+        tunnel_fourmi, _ = self.get_colonie_actuelle(colonies).graphe.get_coord_in_tunnel_at_coord(coord_centre)
+
+        if tunnel_fourmi is not None:
+            self.get_colonie_actuelle(colonies).graphe.creer_salle_depuis_tunnel(tunnel_fourmi, coord_centre, target_pos)
+            return
 
     def get_tuile(self):
         return int(self.centre_x_in_map), int(self.centre_y_in_map)
@@ -240,14 +267,37 @@ class Fourmis(ABC):
                 self.target_y_in_nid_queued = None
 
         def process_nid():
-            not_at_target = (self.target_x_in_nid != self.centre_x_in_nid or self.target_y_in_nid != self.centre_y_in_nid)
-            if not_at_target and self.target_x_in_nid is not None and self.target_y_in_nid is not None:
+            not_at_target = None
+            if not self.digging:
+                not_at_target = ((self.target_x_in_nid != self.centre_x_in_nid or self.target_y_in_nid != self.centre_y_in_nid)
+                                 and self.target_x_in_nid is not None
+                                 and self.target_x_in_nid is not None)
+            else:
+                not_at_target = ((self.digging_target_x != self.centre_x_in_nid or self.digging_target_y != self.centre_y_in_nid)
+                                 and self.digging_target_x is not None
+                                 and self.digging_target_y is not None)
+
+            if not_at_target:
                 self.goto_target(dt, map_data, nids)
             else:
+                if (self.digging and not self.ready_to_dig 
+                    and self.digging_target_x is not None
+                    and self.digging_target_y is not None):
+                    self.ready_to_dig = True
+                elif (self.digging and self.ready_to_dig 
+                    and self.digging_target_x is not None
+                    and self.digging_target_y is not None):
+                    self.ready_to_dig = False
+                    self.digging = False
+                    print(f"{self.digging=}")
+                    #TODO ajouter le timer pour self.digging
+
                 self.is_moving = False
                 self.is_busy = False
                 self.target_x_in_nid = None
                 self.target_y_in_nid = None
+                self.digging_target_x = None
+                self.digging_target_y = None
 
         def process_attaque():
             if self.hp <= 0:
@@ -321,11 +371,48 @@ class Fourmis(ABC):
             process_nid()
 
     def set_target_in_nid(self, target_pos, target_nid, map_data, colonies):
+        def find_closet_noeud_to_tunnel(tunnel):
+            salle_fourmi = None
+            for salle in target_nid.graphe.salles:
+                if (Vector2(salle.noeud.coord[0], salle.noeud.coord[1]) - Vector2(self.centre_x_in_nid, self.centre_y_in_nid)).magnitude() > salle.type.value[0]:
+                    continue
+
+                salle_fourmi = salle
+                break
+            
+            chemin = None
+            chemin1 = target_nid.graphe.dijkstra(salle_fourmi.noeud, tunnel.depart.noeud)
+            chemin2 = target_nid.graphe.dijkstra(salle_fourmi.noeud, tunnel.arrivee.noeud)
+
+            for noeud in chemin1:
+                if noeud == chemin1[-1]:
+                    break
+
+                if noeud in (tunnel.depart.noeud, tunnel.arrivee.noeud):
+                    chemin = chemin2
+            
+            if chemin is None:
+                chemin = chemin1
+
+            return chemin[-1]
+        
         in_map = self.in_map()
         current_colonie = self.get_colonie_actuelle(colonies)
 
         self.is_busy = True
         self.is_moving = True
+
+        if self.digging and not self.ready_to_dig and target_nid.graphe == self.colonie_origine.graphe:
+            tunnel, digging_target = target_nid.graphe.get_coord_in_tunnel_at_coord(target_pos)
+            self.digging_target_x, self.digging_target_y = digging_target
+
+            noeud = find_closet_noeud_to_tunnel(tunnel)
+            self.target_x_in_nid = noeud.coord[0]
+            self.target_y_in_nid = noeud.coord[1]
+
+        if self.digging and self.ready_to_dig and target_nid.graphe == self.colonie_origine.graphe:
+            self.dig_tunnel(target_pos, colonies)
+            self.digging_target_x, self.digging_target_y = target_pos
 
         if in_map:  # set target in nid from map
             self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
@@ -386,11 +473,19 @@ class Fourmis(ABC):
             path = []
             for node in path_nodes:
                 path.append((node.coord[0], node.coord[1]))
+
+            if self.digging_target_x is not None and self.digging_target_y is not None:
+                path.append((self.digging_target_x, self.digging_target_y))
+
             self.path = path
 
         in_map = self.in_map()
         if len(self.path) == 0:
-            self.a_star(map_data) if in_map else calculate_path_nid()
+            if self.ready_to_dig:
+                self.path.append((self.digging_target_x, self.digging_target_y))
+            else:
+                self.a_star(map_data) if in_map else calculate_path_nid()
+            
             return
 
         next_node = self.path[0]
@@ -423,6 +518,7 @@ class Fourmis(ABC):
             else:
                 self.centre_x_in_nid = next_target_x
                 self.centre_y_in_nid = next_target_y
+            
             self.path.pop(0)  # Remove the reached tile
     
     def a_star(self, map_data):

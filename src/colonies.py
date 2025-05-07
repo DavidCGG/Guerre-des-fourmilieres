@@ -382,6 +382,12 @@ class Colonie:
                     self.fourmis_selection = None
                 else:
                     self.fourmis_selection = occupants
+
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_d]:
+                    occupants.digging = not occupants.digging
+                    print(f"fourmi.digging = {occupants.digging}")
+
                 self.menu_f_a_updater = True
                 return
 
