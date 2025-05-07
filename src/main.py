@@ -6,18 +6,19 @@ from curses.ascii import isdigit
 import pygame
 import carte as carte
 import affichage_nid as nid
-from config import trouver_font, trouver_img
+from config import trouver_font, trouver_img, trouver_audio
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import WHITE, BLACK, YELLOW
 from config import Bouton
 from fourmi import FourmiTitleScreen, FourmiTitleScreenSprite, Fourmis
-#from src.config import SCREEN_WIDTH, SCREEN_HEIGHT
+
+#from config import SCREEN_WIDTH, SCREEN_HEIGHT
 
 #Variables globales
 screen: pygame.Surface = None
 clock: pygame.time.Clock = pygame.time.Clock()
 
-font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74)
+font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 74,)
 small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36)
 tiny_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 18)
 liste_boutons: list[Bouton] = []
@@ -74,6 +75,15 @@ text_input: str = ""
 
 test=""
 
+"""
+pygame.init()
+pygame.mixer.init()
+son_test=pygame.mixer.Sound(trouver_audio("test2.wav"))
+pygame.mixer.Sound.play(son_test)
+pygame.event.wait()
+pygame.mixer.music.stop()
+"""
+
 def initialiser() -> None:
     """
     Initialise Pygame, la fenêtre de jeu et les éléments du menu principal
@@ -91,7 +101,9 @@ def initialiser() -> None:
     pygame.init()
     pygame.font.init()
     pygame.display.set_caption("Guerre des fourmillières")
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),pygame.SCALED)
+    if fullscreen:
+        pygame.display.toggle_fullscreen()
 
     spritesheet = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
     if random.random() > 0.5:
@@ -100,8 +112,7 @@ def initialiser() -> None:
         spritesheet.blit(pygame.image.load(trouver_img("Fourmis/habit_soldat.png")).convert_alpha(), (0, 0))
     icon = spritesheet.subsurface(pygame.Rect(0, 0, 32, 32))
     pygame.display.set_icon(icon)
-    if fullscreen:
-        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),pygame.SCALED,pygame.FULLSCREEN)
+
 
     fourmi = FourmiTitleScreen(3 * screen.get_width() // 5, 3 * screen.get_height() // 5, screen,8)
     fourmi_sprite = FourmiTitleScreenSprite(fourmi, spritesheet, 32, 32, 8, 300)
@@ -145,7 +156,7 @@ def draw(dt) -> None:
         Returns:
             None
         """
-        textobj = font.render(text, True, WHITE)
+        textobj = font.render(text, False, WHITE)
         textrect = textobj.get_rect()
         textrect.topleft = (x, y)
         screen.blit(textobj, textrect)
@@ -169,8 +180,8 @@ def draw(dt) -> None:
 
         pygame.draw.rect(screen, BLACK, (0, 0, screen.get_width(), 50))
 
-        fps_info = tiny_font.render(f'FPS: {clock.get_fps():.0f}', True, YELLOW)
-        zoom_info = tiny_font.render(f'Zoom: {camera.zoom * 100:.2f}%', True, YELLOW)
+        fps_info = tiny_font.render(f'FPS: {clock.get_fps():.0f}', False, YELLOW)
+        zoom_info = tiny_font.render(f'Zoom: {camera.zoom * 100:.2f}%', False, YELLOW)
         current_zoom=camera.zoom
         screen.blit(fps_info, (10, 5))
         screen.blit(zoom_info, (10, 25))
@@ -183,7 +194,7 @@ def draw(dt) -> None:
         else:
             titre_message = f"Nid ennemi {nids.index(current_nid)}"
 
-        titre = small_font.render(titre_message, True, WHITE)
+        titre = small_font.render(titre_message, False, WHITE)
         screen.blit(titre, (screen.get_width() / 2 - titre.get_width() / 2, 10))
 
     global liste_options_menu_options
@@ -227,7 +238,7 @@ def menu_options_overlay() -> None:
     surface = pygame.Surface((300, 400))
     surface.fill(BLACK)
 
-    texte_render = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36).render("Options", True, WHITE)
+    texte_render = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 36).render("Options", False, WHITE)
     police_boutons = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
 
     surface.blit(texte_render, [surface.get_width() / 2 - texte_render.get_rect().width / 2, 10])
@@ -405,9 +416,12 @@ def gestion_evenement(event: pygame.event) -> None:
                         fullscreen = not fullscreen
                         write_option("fullscreen",fullscreen)
                         liste_options_menu_options[1]="Fullscreen: "+str(fullscreen)
-                        pygame.display.toggle_fullscreen()
-                        if not fullscreen:
-                            pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
+                        if fullscreen:
+                            #pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT),pygame.FULLSCREEN,pygame.SCALED)
+                            pygame.display.toggle_fullscreen()
+                        else:
+                            pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),pygame.SCALED)
+
                     elif selected_option == 2:
                         quitter()
         else:
@@ -473,7 +487,7 @@ def process(dt) -> None:
 
     if not in_menu_principal and partie_en_cours:
         for colonie in carte_jeu.colonies:
-            colonie.process(clock.get_time(),nids,liste_fourmis_jeu_complet)
+            colonie.process(clock.get_time(),nids,liste_fourmis_jeu_complet,carte_jeu.colonies)
 
     if in_menu_principal:
         fourmi.random_mouvement(dt)
@@ -505,6 +519,9 @@ def demarrer_jeu() -> None:
         new_nid = nid.Nid(graphe,screen,carte_jeu.colonies[i])
         nids.append(new_nid)
         i+=1
+
+    global bool_temp
+    bool_temp=True
 
 def run() -> None:
     """

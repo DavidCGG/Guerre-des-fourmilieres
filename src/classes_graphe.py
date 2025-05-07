@@ -1,3 +1,4 @@
+import math
 from enum import Enum
 
 import pygame
@@ -89,11 +90,13 @@ class TypeSalle(Enum):
     INTERSECTION = (40, "intersection",None,None)
     SALLE = (128, "salle",None,None)
     SORTIE = (40, "sortie",None,None)
-    #Nom = (taille, nom, image, temps en milliseconde pour action, nb ressources pour action)
-    ENCLUME = (128, "enclume",trouver_img("Salles/enclume.png"),10000,2)
-    MEULE = (128, "meule", trouver_img("Salles/meule.png"),5000,1)
-    BANQUE = (128, "banque", trouver_img("Salles/banque.png"),0,0)
-    THRONE = (128, "throne", trouver_img("Salles/throne.png"),0,0)
+    #Nom = (taille, nom, image, level tuple(temps en milliseconde pour action, nb ressources pour action))
+    BANQUE = (128, "banque", trouver_img("Salles/banque.png"),(10000,3),(15000,4),(20000,5))
+    THRONE = (128, "throne", trouver_img("Salles/throne.png"),(10000,3),(15000,4),(20000,5))
+    ENCLUME = (128, "enclume", trouver_img("Salles/enclume.png"), (10000,2),(15000,3),(20000,4))
+    MEULE = (128, "meule", trouver_img("Salles/meule.png"), (5000,3),(15000,4),(20000,5))
+    TRAINING_OUVRIERE = (128,"training_ouvriere",trouver_img("Salle/training_ouvriere.png"))
+    TRAINING_SOLDAT = (128,"training_soldat",trouver_img("Salle/training_soldat.png"))
 
 class Salle:
     """
@@ -115,8 +118,12 @@ class Salle:
         self.temps_ecoule_depuis_debut_action=0
         self.nb_ressources_pour_action=None
         self.nb_ressources_prises=0
+        self.inventaire_taille_max=15
+        self.inventaire=[]
         #self.is_busy: bool = False
         self.fourmi_qui_fait_action = None
+        self.level=1
+        self.max_items=None
 
     def intersecte_salle(self, autre) -> bool:
         """
@@ -166,32 +173,81 @@ class Salle:
 
         return distance <= rayon
 
-    def process(self, listes_fourmis_jeu_complet, colonie_owner:Colonie, dt):
-        if self.type==TypeSalle.BANQUE:
+    def process(self,listes_fourmis_jeu_complet,colonie_owner:Colonie,dt):
+        if self.type==TypeSalle.SORTIE:
+            for fourmi in listes_fourmis_jeu_complet:
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut:
+                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.SORTIE.value[0]:
+                        # print("Nid: "+str(self.tuile_debut)+"----------------------")
+                        # print("fourmi in colonie map coords"+str(fourmi.in_colonie_map_coords))
+                        # print("tuile debut nid:"+str(self.tuile_debut))
+                        # print("salle noeud x: "+str(salle.noeud.coord[0]-40)+","+str(salle.noeud.coord[0]+40))
+                        # print("salle noeud y: " + str(salle.noeud.coord[1] - 40) + "," + str(salle.noeud.coord[1] + 40))
+                        # print("fourmi in nid pos: "+str(fourmi.centre_x_in_nid)+", "+str(fourmi.centre_y_in_nid))
+                        # print("fourmi sur salle exit")
+                        if fourmi.a_bouger_depuis_transition_map_ou_nid == True:
+                            print("exited colonie at " + str(colonie_owner.tuile_debut))
+                            fourmi.in_colonie_map_coords = None
+                            fourmi.centre_x_in_map = colonie_owner.tuile_debut[0]
+                            fourmi.centre_y_in_map = colonie_owner.tuile_debut[1]
+                            #fourmi.target_x_in_map = colonie_owner.tuile_debut[0]
+                            #fourmi.target_y_in_map = colonie_owner.tuile_debut[1]
+                            fourmi.centre_x_in_nid = None
+                            fourmi.centre_y_in_nid = None
+                            fourmi.target_x_in_nid = None
+                            fourmi.target_y_in_nid = None
+                            fourmi.a_bouger_depuis_transition_map_ou_nid = False
+                    else:
+                        #print("fourmi a bouger dans nid")
+                        fourmi.a_bouger_depuis_transition_map_ou_nid = True
+                        pass
+        elif self.type==TypeSalle.BANQUE:
+            #update menu
             if self.menu_is_ouvert:
                 #updates menu
-                self.menu=pygame.Surface((300,150))
-                nb_metal = 0
-                nb_nourriture = 0
-                nb_armure = 0
-                nb_epee = 0
-                for item in colonie_owner.inventaire:
-                    if item.name=="POMME":
-                        nb_nourriture += 1
-                    elif item.name=="METAL":
-                        nb_metal += 1
-                    elif item.name=="EPEE":
-                        nb_epee += 1
-                    elif item.name=="ARMURE":
-                        nb_armure += 1
+                case_inventaire = pygame.Surface((100, 100))
+                case_inventaire.fill(WHITE)
+                if self.inventaire_taille_max <= 5:
+                    self.menu = pygame.Surface((5 + self.inventaire_taille_max * (100 + 5), 5 + 100 + 5))
+                    self.menu.fill(BLACK)
+                    for i in range(self.inventaire_taille_max):
+                        self.menu.blit(case_inventaire, (5 + i * (100 + 5), 5))
+                    for i in range(len(self.inventaire)):
+                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]),(100, 100))
+                        self.menu.blit(image_item, (5 + i * (100 + 5), 5))
 
-                texte= [self.font_menu.render("Nourriture: " + str(nb_nourriture), False, WHITE),
-                        self.font_menu.render("Metal: " + str(nb_metal), False, WHITE),
-                        self.font_menu.render("Armures: " + str(nb_armure), False, WHITE),
-                        self.font_menu.render("Epees: " + str(nb_epee), False, WHITE),
-                        self.font_menu.render("Max ressources: " + str(colonie_owner.taille_inventaire_max), False, WHITE)]
-                for i in range(len(texte)):
-                    self.menu.blit(texte[i],(10,30*i))
+                elif self.inventaire_taille_max <= 10:
+                    self.menu = pygame.Surface((5 + 5 * (100 + 5), 5 + 2 * (100 + 5)))
+                    self.menu.fill(BLACK)
+                    for i in range(self.inventaire_taille_max):
+                        self.menu.blit(case_inventaire, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                    for i in range(len(self.inventaire)):
+                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]),(100, 100))
+                        self.menu.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+
+                elif self.inventaire_taille_max <= 15:
+                    self.menu = pygame.Surface((5 + 5 * (100 + 5), 5 + 3 * (100 + 5)))
+                    self.menu.fill(BLACK)
+                    for i in range(self.inventaire_taille_max):
+                        print(5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5))
+                        self.menu.blit(case_inventaire, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                    for i in range(len(self.inventaire)):
+                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
+                        self.menu.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                    print("all case done")
+
+                elif self.inventaire_taille_max <= 20:
+                    self.menu = pygame.Surface((5 + 5 * (100 + 5), 5 + 4 * (100 + 5)))
+                    self.menu.fill(BLACK)
+                    for i in range(self.inventaire_taille_max):
+                        self.menu.blit(case_inventaire, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                    for i in range(len(self.inventaire)):
+                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
+                        self.menu.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+
+
+
+            #detection if on action
             for fourmi in listes_fourmis_jeu_complet:
                 if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine==colonie_owner:
                     if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.BANQUE.value[0]:
@@ -199,37 +255,16 @@ class Salle:
                         if len(colonie_owner.inventaire) < colonie_owner.taille_inventaire_max:
                             if len(fourmi.inventaire)>0:
                                 colonie_owner.inventaire.append(fourmi.inventaire.pop(0))
-        elif self.type==TypeSalle.SORTIE:
-            for fourmi in listes_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords is None:
-                    continue
-                elif fourmi.in_colonie_map_coords != colonie_owner.tuile_debut:
-                    continue
 
-                if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.SORTIE.value[0]: 
-                    if fourmi.a_bouger_depuis_transition_map_ou_nid == False:
-                        continue
-
-                    fourmi.in_colonie_map_coords = None
-                    fourmi.centre_x_in_map = colonie_owner.tuile_debut[0]
-                    fourmi.centre_y_in_map = colonie_owner.tuile_debut[1]
-                    
-                    fourmi.centre_x_in_nid = None
-                    fourmi.centre_y_in_nid = None
-                    fourmi.target_x_in_nid = None
-                    fourmi.target_y_in_nid = None
-                    fourmi.path = []
-
-                    fourmi.a_bouger_depuis_transition_map_ou_nid = False
-                else:
-                    fourmi.a_bouger_depuis_transition_map_ou_nid = True
-                        
         elif self.type==TypeSalle.THRONE:
+            #update menu
             if self.menu_is_ouvert:
                 #updates menu
                 self.menu=pygame.Surface((125,50))
                 text_surface=self.font_menu.render("HP: "+str(colonie_owner.hp),False,WHITE)
                 self.menu.blit(text_surface,(self.menu.get_height()/2-text_surface.get_height()/2,self.menu.get_height()/2-text_surface.get_height()/2))
+
+            #detect interaction
             for fourmi in listes_fourmis_jeu_complet:
                 if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine!=colonie_owner:
                     if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
@@ -322,6 +357,14 @@ class Salle:
     def draw_menu(self,screen,camera,colonie_owner: Colonie):
         menu_transformed=pygame.transform.scale(self.menu,(self.menu.get_width()*camera.zoom,self.menu.get_height()*camera.zoom))
         screen.blit(menu_transformed,camera.apply((self.noeud.coord[0]-self.menu.get_width()/2,self.noeud.coord[1]-self.type.value[0]-self.menu.get_height())))
+
+    def draw_process_bar(self,screen,camera):
+        process_bar_transformed=pygame.transform.scale(self.process_bar,(self.menu.get_width()*camera.zoom,self.menu.get_height()*camera.zoom))
+        screen.blit(process_bar_transformed, camera.apply((self.noeud.coord[0] - self.menu.get_width() / 2,self.noeud.coord[1] + self.type.value[0] + self.menu.get_height())))
+
+    def upgrade(self):
+        if self.type==TypeSalle.BANQUE:
+            print("banque upgrage")
    
 class Tunnel:
     """
@@ -417,25 +460,6 @@ class Graphe:
     def __init__(self, salles = None, tunnels = None):
         self.salles: set[Salle] = salles if salles is not None else set()
         self.tunnels: set[Tunnel] = tunnels if tunnels is not None else set()
-
-    def get_noeud_at_coord(self, coord: list[float, float]) -> NoeudPondere:
-        """
-        Retourne le noeud correspondant aux coordonnées données.
-        Args:
-            coord (list[float, float]): Coordonnées d'un point sur le graphe.
-        Returns:
-            NoeudPondere: Noeud correspondant aux coordonnées ou None si non trouvé.
-        """
-        for salle in self.salles:
-            coord_salle = salle.noeud.coord
-
-            distance = ((coord[0] - coord_salle[0]) ** 2 + (coord[1] - coord_salle[1]) ** 2) ** 0.5
-            distance_min = salle.type.value[0]
-
-            if distance < distance_min:
-                return salle.noeud
-            
-        return None
 
     def initialiser_graphe(self, noeuds: list[NoeudPondere]) -> None:
         """
@@ -705,7 +729,7 @@ class Graphe:
         Returns:
             list[NoeudPondere]: Liste des noeuds représentant le chemin le plus court.
         """
-        def sort_queue(arr) -> list[NoeudPondere]:
+        def sort_queue(arr, distance) -> list[NoeudPondere]:
             """
             Trie la liste de noeuds en fonction de leur distance avec un algorithme de merge sort.
             Args:
@@ -721,9 +745,9 @@ class Graphe:
             left_half = sort_queue(arr[:mid])
             right_half = sort_queue(arr[mid:])
 
-            return merge(left_half, right_half)
+            return merge(left_half, right_half, distance)
 
-        def merge(left, right) -> list[NoeudPondere]:
+        def merge(left, right, distance) -> list[NoeudPondere]:
             """
             Fusionne deux listes triées en une seule liste triée.
             Args:

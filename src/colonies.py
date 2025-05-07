@@ -5,6 +5,7 @@ from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN, RED, Ty
 from fourmi import FourmisSprite
 from fourmi import CouleurFourmi
 
+
 class Colonie:
     def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,listes_fourmis_jeu_complet):
         #self.graphe = graphe
@@ -32,7 +33,7 @@ class Colonie:
         self.fourmis_selection = None # fourmi selectionnée dans le menu de fourmis
         self.groupe_selection = None
 
-        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE, self) for _ in range(2)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE,self) for _ in range(2)]
+        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE, self) for _ in range(1)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE,self) for _ in range(0)]
         for fourmi in self.fourmis:
             listes_fourmis_jeu_complet.append(fourmi)
         self.groupes = {}
@@ -78,7 +79,7 @@ class Colonie:
         self.tuiles_debut=tuiles_debut_toutes_colonies
 
 
-    def process(self,dt,tous_les_nids,listes_fourmis_jeu_complet):
+    def process(self,dt,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
         groupe_bouge = False
         for _, groupe in self.groupes_cache.items():
             if groupe.get_nb_fourmis() > 1 and not groupe.est_vide():
@@ -92,7 +93,7 @@ class Colonie:
         for f in self.fourmis:
             if not self.fourmi_dans_groupe(f):
                 dern_x, dern_y = f.centre_x_in_map, f.centre_y_in_map
-                f.process(dt, self.map_data, tous_les_nids)
+                f.process(dt, self.map_data,self.tuiles_debut,tous_les_nids,liste_toutes_colonies,liste_fourmis_jeu_complet)
                 if (dern_x, dern_y) != (f.centre_x_in_map, f.centre_y_in_map):
                     fourmis_bouge = True
                 """
@@ -104,7 +105,7 @@ class Colonie:
                 """
 
         for salle in self.graphe.salles:
-            salle.process(listes_fourmis_jeu_complet, self, dt)
+            salle.process(liste_fourmis_jeu_complet,self,dt)
 
         if fourmis_bouge or groupe_bouge:
             self.cache_groupes_a_updater = True
@@ -148,7 +149,7 @@ class Colonie:
 
         for texte in liste_textes:
             couleur = AQUA if texte.split()[0] == self.hover_texte else WHITE
-            _texte = self.font_menu.render(texte, True, couleur)
+            _texte = self.font_menu.render(texte, False, couleur)
             _texte_rect = _texte.get_rect(
                 center=(self.menu_colonie_surface.get_width() / 2, y_offset + _texte.get_height() / 2))
             self.menu_colonie_surface.blit(_texte, (
@@ -191,9 +192,9 @@ class Colonie:
             else:
                 ant_info = f"HP: {fourmi.hp} Map Pos: ({int(fourmi.centre_x_in_map)}, {int(fourmi.centre_y_in_map)})"
             if fourmi.is_busy:
-                _texte = self.font_menu.render(ant_info, True, RED)
+                _texte = self.font_menu.render(ant_info, False, RED)
             else:
-                _texte = self.font_menu.render(ant_info, True, WHITE)
+                _texte = self.font_menu.render(ant_info, False, WHITE)
             list_surface.blit(_texte, (50, y_offset))
 
             rect = pygame.Rect(0, y_offset - 15, 250, 50)

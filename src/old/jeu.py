@@ -27,13 +27,13 @@ liste_items_pointeur=[liste_items]
 
 dans_menu_principal=[]
 
-police = pygame.font.Font("../assets/fonts/Minecraft.ttf", 30)
+police = pygame.font.Font("../../assets/fonts/Minecraft.ttf", 30)
 
 player_pos = pygame.Vector2(screen.get_width()/2,screen.get_height()/2)
 
 pygame.display.set_caption("Guerre des fourmilières")
 
-image_icone=pygame.image.load('../assets/images/Fourmis/fourmi_noire.png')
+image_icone=pygame.image.load('../../assets/images/Fourmis/fourmi_noire.png')
 pygame.display.set_icon(image_icone)
 
 carte=[]
@@ -219,7 +219,7 @@ while running:
         #surface_victoire = pygame.Surface((screen.get_width(), screen.get_height()))
         #surface_victoire.fill("red")
 
-        police_titre = pygame.font.Font("../assets/fonts/Minecraft.ttf", 100)
+        police_titre = pygame.font.Font("../../assets/fonts/Minecraft.ttf", 100)
 
         surface_victoire_titre = police_titre.render("Victoire!", False, 'black')
         #surface_victoire.blit(surface_victoire_titre, (screen.get_width() / 2 - surface_victoire_titre.get_rect().width / 2, screen.get_height() / 10 - surface_victoire_titre.get_rect().height / 2))

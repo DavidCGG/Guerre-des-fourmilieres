@@ -100,7 +100,7 @@ class Carte:
                     if self.map_data[y][x].tuile_ressource:
                         self.tuiles_ressources.append(self.map_data[y][x])
 
-        def placer_colonies(region_size, min_dist):
+        def placer_colonies(min_dist, region_size):
             # On definit des regions aux coins de la carte
             curr_couleur = 0
             regions = [
@@ -136,7 +136,7 @@ class Carte:
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(region_size=20, min_dist=50)
+        placer_colonies(min_dist=5,region_size=90)
         set_tuiles_debut(liste_fourmis_jeu_complet)
 
     def draw(self, screen):

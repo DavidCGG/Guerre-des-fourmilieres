@@ -166,13 +166,13 @@ class Salle:
         #surface_self=pygame.Surface((self.largeur,self.hauteur))
         #surface_self.fill(Color(205, 133, 63))
         #pygame.draw.ellipse(surface_self, Color(139, 69, 19),pygame.Rect(0, 0, self.largeur, self.hauteur))
-        police = pygame.font.Font("../assets/fonts/Minecraft.ttf", 25)
+        police = pygame.font.Font("../../assets/fonts/Minecraft.ttf", 25)
         surface_texte=pygame.surface.Surface((self.largeur+64,64))
         surface_texte.fill(Color(205, 133, 63))
         texte_render=None
         if self.sorte == "throne":
             if self.detruit:
-                self.image=pygame.image.load('../assets/images/Salles/salle_vide.png')
+                self.image=pygame.image.load('../../assets/images/Salles/salle_vide.png')
             texte_render = police.render("Reine : " + str(self.reine_PV) + " PV", False, "Black")
         elif self.sorte == "banque":
             texte_render = police.render("Banque : " + str(self.ressources) + " ressources", False, "Black")
@@ -317,7 +317,7 @@ class Fourmi():
 
     def draw(self):
         if not self.vivant:
-            self.image=pygame.image.load('../assets/images/Fourmis/fourmi_morte.png')
+            self.image=pygame.image.load('../../assets/images/Fourmis/fourmi_morte.png')
         self.screen[0].blit(self.image, (self.pos.x, self.pos.y))
         #for item in self.inventaire:
             #item.draw()

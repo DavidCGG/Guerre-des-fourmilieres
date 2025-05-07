@@ -19,6 +19,7 @@ ORANGE = pygame.Color("orange")
 AQUA = pygame.Color("aqua")
 BROWN = pygame.Color("saddlebrown")
 GRAY = pygame.Color("gray40")
+BEIGE = pygame.Color("bisque")
 SKY_BLUE= pygame.Color(110, 180, 235)
 
 def trouver_img(nom: str) -> str:
@@ -26,6 +27,9 @@ def trouver_img(nom: str) -> str:
 
 def trouver_font(nom: str) -> str:
     return os.path.join(os.path.dirname(__file__), "..", "assets", "fonts", nom)
+
+def trouver_audio(nom: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "..", "assets", "audio", nom)
 
 class Bouton():
     def __init__(self, screen, x, y, largeur, hauteur, texte, fonction_sur_click, police):
@@ -70,7 +74,10 @@ class Bouton():
         return cursor_sur_bouton
 
 class TypeItem(Enum):
+    #NOM=(weight,image path)
     POMME=(1,trouver_img("Items/pomme.png"))
-    METAL=(2,trouver_img("Items/metal.png"))
+    METAL=(3,trouver_img("Items/metal.png"))
+    BOIS=(2,trouver_img("Items/bois.png"))
+    OEUF=(1,trouver_img("Items/oeuf.png"))
     ARMURE=(2,trouver_img("Items/armure.png"))
     EPEE=(1,trouver_img("Items/epee.png"))

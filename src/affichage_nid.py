@@ -14,7 +14,7 @@ from colonies import Colonie
 MAP_LIMIT_X: int = 4000
 MAP_LIMIT_Y: int = 2250
 HAUTEUR_SOL: int = 128
-NB_SALLES_INITIALES: int = 4
+NB_SALLES_INITIALES: int = 3
 
 class Nid:
     """
@@ -48,7 +48,6 @@ class Nid:
         for salle in self.graphe.salles:
             if salle.type.value[1] == "sortie":
                 self.salles_sorties.append(salle)
-
     def scale_images(self, scale, initial_sky_scaling = False) -> None:
         if initial_sky_scaling:
             facteur_ciel = HAUTEUR_SOL / self.image_ciel.get_height()
@@ -218,7 +217,7 @@ class Nid:
         def handle_right_click(pos,map_data,liste_toutes_colonies):
             # set target of fourmi
             if colonie_joueur.fourmis_selection is not None:
-                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos), self, map_data, liste_toutes_colonies)
+                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos),self.tuile_debut,map_data,liste_toutes_colonies)
                 return
 
         def handle_hover(pos):
@@ -311,8 +310,8 @@ def chargement(screen: pygame.Surface,nb_nids) -> list:
         """
         screen.fill((30, 30, 30))
 
-        titre = font.render("Création des nids", True, (255, 255, 255))
-        progression = small_font.render(f"{nb_genere} sur {total}", True, (200, 200, 200))
+        titre = font.render("Création des nids", False, (255, 255, 255))
+        progression = small_font.render(f"{nb_genere} sur {total}", False, (200, 200, 200))
 
         screen.blit(titre, (screen.get_width()//2 - titre.get_width()//2, screen.get_height()//2 - 100))
         screen.blit(progression, (screen.get_width()//2 - progression.get_width()//2, screen.get_height()//2))

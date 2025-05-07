@@ -127,7 +127,7 @@ class CouleurFourmi(Enum):
     ROUGE = (trouver_img("Fourmis/fourmi_rouge.png"))
 
 class Fourmis(ABC):
-    def __init__(self, colonie_origine, hp: int, atk: int, x0, y0, size, couleur):
+    def __init__(self, colonie_origine, hp: int, hp_max,atk: int, x0, y0, size, couleur):
         super().__init__()
         self.centre_y_in_map = None
         self.centre_x_in_map = None
@@ -148,7 +148,9 @@ class Fourmis(ABC):
         self.is_moving = False
         self.facing = 0 # 0 : droite, 1 : gauche
         self.hp = hp
-        self.atk = atk
+        self.hp_max = hp_max
+        self.atk_base = atk
+        self.atk_result = self.atk_base
         self.width = 0
         self.height = 0
         self.inventaire: list[TypeItem] = []
@@ -175,14 +177,32 @@ class Fourmis(ABC):
         self.target_x_in_nid_queued = None
         self.target_y_in_nid_queued = None
 
+        self.fourmi_attacking = None
+
+    def set_attack(self, fourmi_target,map_data,liste_toutes_colonies):
+        print("fourmi attack set")
+        self.fourmi_attacking = fourmi_target
+        if fourmi_target.in_colonie_map_coords is None:
+            self.set_target_in_map(fourmi_target.centre_x_in_map,fourmi_target.centre_y_in_map,map_data,liste_toutes_colonies)
+        else:
+            self.set_target_in_nid((fourmi_target.centre_x_in_nid,fourmi_target.centre_y_in_nid),fourmi_target.in_colonie_map_coords,map_data,liste_toutes_colonies)
+        self.fourmi_attacking = None
+
+    def set_attack(self, fourmi_target,map_data,liste_toutes_colonies):
+        print("fourmi attack set")
+        self.fourmi_attacking = fourmi_target
+        if fourmi_target.in_colonie_map_coords is None:
+            self.set_target_in_map(fourmi_target.centre_x_in_map,fourmi_target.centre_y_in_map,map_data,liste_toutes_colonies)
+        else:
+            self.set_target_in_nid((fourmi_target.centre_x_in_nid,fourmi_target.centre_y_in_nid),fourmi_target.in_colonie_map_coords,map_data,liste_toutes_colonies)
     def in_map(self):
         if self.in_colonie_map_coords is None:
             in_map = True
-        else:   
+        else:
             in_map = False
 
         return in_map
-    
+
     def get_colonie_actuelle(self, colonies):
         if self.in_colonie_map_coords is None:
             return None
@@ -190,9 +210,9 @@ class Fourmis(ABC):
         for colonie in colonies:
             if colonie.tuile_debut == self.in_colonie_map_coords:
                 return colonie
-           
+
         return None
-    
+
     def get_tuile(self):
         return int(self.centre_x_in_map), int(self.centre_y_in_map)
 
@@ -227,7 +247,7 @@ class Fourmis(ABC):
 
             self.a_bouger_depuis_transition_map_ou_nid = False
             self.in_colonie_map_coords = nid.tuile_debut
-            
+
             if self.target_x_in_nid_queued is not None and self.target_y_in_nid_queued is not None:
                 self.target_x_in_nid = self.target_x_in_nid_queued
                 self.target_y_in_nid = self.target_y_in_nid_queued
@@ -249,7 +269,7 @@ class Fourmis(ABC):
             process_map()
         else:
             process_nid()
-                
+
     def set_target_in_nid(self, target_pos, target_nid, map_data, colonies):
         in_map = self.in_map()
         current_colonie = self.get_colonie_actuelle(colonies)
@@ -259,7 +279,7 @@ class Fourmis(ABC):
 
         if in_map: #set target in nid from map
             self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
-            
+
             noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
             if noeud is  not None:
                 self.target_x_in_nid = noeud.coord[0]
@@ -278,7 +298,7 @@ class Fourmis(ABC):
                     self.set_target_in_nid(salle.noeud.coord, current_colonie, map_data, colonies)
 
             self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
-            
+
             noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
             if noeud is  not None:
                 self.target_x_in_nid_queued = noeud.coord[0]
@@ -287,10 +307,10 @@ class Fourmis(ABC):
     def set_target_in_map(self, target_x, target_y, map_data, colonies):
         if isinstance(map_data[target_y][target_x], Eau):
             return
-        
+
         self.target_x_in_map = target_x
         self.target_y_in_map = target_y
-        
+
         in_map = self.in_map()
         if in_map:
             self.is_moving = True
@@ -322,7 +342,7 @@ class Fourmis(ABC):
         if len(self.path) == 0:
             self.a_star(map_data) if in_map else calculate_path_nid()
             return
-        
+
         next_node = self.path[0]
         next_target_x = next_node[0]
         next_target_y = next_node[1]
@@ -333,7 +353,7 @@ class Fourmis(ABC):
         else:
             dx = next_target_x - self.centre_x_in_nid
             dy = next_target_y - self.centre_y_in_nid
-        distance = math.sqrt(dx ** 2 + dy ** 2) 
+        distance = math.sqrt(dx ** 2 + dy ** 2)
 
         if (in_map and distance > 0.1) or (not in_map and distance > 0.1 * self.nid_speed_factor):
             if in_map:
@@ -342,7 +362,7 @@ class Fourmis(ABC):
             else:
                 self.centre_x_in_nid += self.nid_speed_factor * self.speed * dx / distance * (dt / 1000)
                 self.centre_y_in_nid += self.nid_speed_factor * self.speed * dy / distance * (dt / 1000)
-            
+
             self.is_moving = True
             self.facing = 0 if dx > 0 else 1
         else:
@@ -356,6 +376,7 @@ class Fourmis(ABC):
             self.path.pop(0)  # Remove the reached tile
     
     def a_star(self, map_data):
+        #Note: le path retourné contient des tuiles et non des coordonnées
         def sort_queue(arr):
             if len(arr) <= 1:
                 return arr
@@ -477,29 +498,21 @@ class Fourmis(ABC):
 
 class Ouvriere(Fourmis):
     def __init__(self, x0, y0, couleur, colonie_origine):
-        super().__init__(colonie_origine, hp=10, atk=2, x0=x0, y0=y0, size=2,couleur=couleur)
+        super().__init__(colonie_origine, hp=100, hp_max=100,atk=40, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 3
         self.speed = self.base_speed
         sprite_sheet_image=pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.type="ouvriere"
         self.sprite = FourmisSprite(self,sprite_sheet_image,32,32,8,100,1)
 
-
-    def attack(self, other):
-        other.hp -= self.atk
-
 class Soldat(Fourmis):
     def __init__(self, x0, y0, couleur,colonie_origine):
-        super().__init__(colonie_origine, hp=25, atk=5, x0=x0, y0=y0, size=2,couleur=couleur)
+        super().__init__(colonie_origine, hp=200, hp_max=200,atk=50, x0=x0, y0=y0, size=2,couleur=couleur)
         self.base_speed = 1.5
         self.speed = self.base_speed
         sprite_sheet_image = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.type = "soldat"
         self.sprite = FourmisSprite(self, sprite_sheet_image, 32, 32, 8, 100, 1)
-
-
-    def attack(self, other):
-        other.hp -= self.atk
 
 class FourmisSprite(pygame.sprite.Sprite):
     def __init__(self, fourmis: Fourmis, spritesheet, frame_width, frame_height, num_frames: int, frame_duration: int, scale):
