@@ -4,7 +4,7 @@ from config import WHITE, BLACK, BLUE
 import pygame
 
 from config import trouver_img
-from src.config import TypeItem
+from config import TypeItem
 
 
 class Tuile:

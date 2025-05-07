@@ -4,7 +4,7 @@ import pygame
 from pygame import Vector2
 
 from config import trouver_img, trouver_font, WHITE, TypeItem, BLACK, BROWN, GRAY
-from src.colonies import Colonie
+from colonies import Colonie
 
 
 class NoeudGeneration:
@@ -166,7 +166,7 @@ class Salle:
 
         return distance <= rayon
 
-    def process(self,listes_fourmis_jeu_complet,colonie_owner:Colonie,dt):
+    def process(self, listes_fourmis_jeu_complet, colonie_owner:Colonie, dt):
         if self.type==TypeSalle.BANQUE:
             if self.menu_is_ouvert:
                 #updates menu
@@ -201,31 +201,29 @@ class Salle:
                                 colonie_owner.inventaire.append(fourmi.inventaire.pop(0))
         elif self.type==TypeSalle.SORTIE:
             for fourmi in listes_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut:
-                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.SORTIE.value[0]:
-                        # print("Nid: "+str(self.tuile_debut)+"----------------------")
-                        # print("fourmi in colonie map coords"+str(fourmi.in_colonie_map_coords))
-                        # print("tuile debut nid:"+str(self.tuile_debut))
-                        # print("salle noeud x: "+str(salle.noeud.coord[0]-40)+","+str(salle.noeud.coord[0]+40))
-                        # print("salle noeud y: " + str(salle.noeud.coord[1] - 40) + "," + str(salle.noeud.coord[1] + 40))
-                        # print("fourmi in nid pos: "+str(fourmi.centre_x_in_nid)+", "+str(fourmi.centre_y_in_nid))
-                        # print("fourmi sur salle exit")
-                        if fourmi.a_bouger_depuis_transition_map_ou_nid == True:
-                            print("exited colonie at " + str(colonie_owner.tuile_debut))
-                            fourmi.in_colonie_map_coords = None
-                            fourmi.centre_x_in_map = colonie_owner.tuile_debut[0]
-                            fourmi.centre_y_in_map = colonie_owner.tuile_debut[1]
-                            #fourmi.target_x_in_map = colonie_owner.tuile_debut[0]
-                            #fourmi.target_y_in_map = colonie_owner.tuile_debut[1]
-                            fourmi.centre_x_in_nid = None
-                            fourmi.centre_y_in_nid = None
-                            fourmi.target_x_in_nid = None
-                            fourmi.target_y_in_nid = None
-                            fourmi.a_bouger_depuis_transition_map_ou_nid = False
-                    else:
-                        #print("fourmi a bouger dans nid")
-                        fourmi.a_bouger_depuis_transition_map_ou_nid = True
-                        pass
+                if fourmi.in_colonie_map_coords is None:
+                    continue
+                elif fourmi.in_colonie_map_coords != colonie_owner.tuile_debut:
+                    continue
+
+                if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.SORTIE.value[0]: 
+                    if fourmi.a_bouger_depuis_transition_map_ou_nid == False:
+                        continue
+
+                    fourmi.in_colonie_map_coords = None
+                    fourmi.centre_x_in_map = colonie_owner.tuile_debut[0]
+                    fourmi.centre_y_in_map = colonie_owner.tuile_debut[1]
+                    
+                    fourmi.centre_x_in_nid = None
+                    fourmi.centre_y_in_nid = None
+                    fourmi.target_x_in_nid = None
+                    fourmi.target_y_in_nid = None
+                    fourmi.path = []
+
+                    fourmi.a_bouger_depuis_transition_map_ou_nid = False
+                else:
+                    fourmi.a_bouger_depuis_transition_map_ou_nid = True
+                        
         elif self.type==TypeSalle.THRONE:
             if self.menu_is_ouvert:
                 #updates menu
@@ -419,6 +417,25 @@ class Graphe:
     def __init__(self, salles = None, tunnels = None):
         self.salles: set[Salle] = salles if salles is not None else set()
         self.tunnels: set[Tunnel] = tunnels if tunnels is not None else set()
+
+    def get_noeud_at_coord(self, coord: list[float, float]) -> NoeudPondere:
+        """
+        Retourne le noeud correspondant aux coordonnées données.
+        Args:
+            coord (list[float, float]): Coordonnées d'un point sur le graphe.
+        Returns:
+            NoeudPondere: Noeud correspondant aux coordonnées ou None si non trouvé.
+        """
+        for salle in self.salles:
+            coord_salle = salle.noeud.coord
+
+            distance = ((coord[0] - coord_salle[0]) ** 2 + (coord[1] - coord_salle[1]) ** 2) ** 0.5
+            distance_min = salle.type.value[0]
+
+            if distance < distance_min:
+                return salle.noeud
+            
+        return None
 
     def initialiser_graphe(self, noeuds: list[NoeudPondere]) -> None:
         """
@@ -688,7 +705,7 @@ class Graphe:
         Returns:
             list[NoeudPondere]: Liste des noeuds représentant le chemin le plus court.
         """
-        def sort_queue(arr, distance) -> list[NoeudPondere]:
+        def sort_queue(arr) -> list[NoeudPondere]:
             """
             Trie la liste de noeuds en fonction de leur distance avec un algorithme de merge sort.
             Args:
@@ -704,9 +721,9 @@ class Graphe:
             left_half = sort_queue(arr[:mid])
             right_half = sort_queue(arr[mid:])
 
-            return merge(left_half, right_half, distance)
+            return merge(left_half, right_half)
 
-        def merge(left, right, distance) -> list[NoeudPondere]:
+        def merge(left, right) -> list[NoeudPondere]:
             """
             Fusionne deux listes triées en une seule liste triée.
             Args:

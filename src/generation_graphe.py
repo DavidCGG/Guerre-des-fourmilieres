@@ -7,7 +7,7 @@ import classes_graphe as cg
 import random
 from numpy.random import normal
 
-from src.config import RED
+from config import RED
 
 #Variables de génération
 nb_noeuds_cible: int = random.randint(8,10) #Nombre total de noeuds à générer

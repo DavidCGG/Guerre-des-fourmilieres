@@ -10,7 +10,7 @@ from pygame import Vector2
 
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import trouver_img, AQUA, BLACK, BROWN
-from src.config import GREEN, TypeItem
+from config import GREEN, TypeItem
 from tuile import Tuile, Eau
 
 class FourmiTitleScreen():
@@ -143,14 +143,14 @@ class Fourmis(ABC):
                 self.centre_y_in_nid = salle.noeud.coord[1]
         self.base_speed = 2
         self.speed = self.base_speed
-        self.path = None
+        self.path = []
+        self.nid_speed_factor = 100
         self.is_moving = False
         self.facing = 0 # 0 : droite, 1 : gauche
         self.hp = hp
         self.atk = atk
         self.width = 0
         self.height = 0
-        self.pause_timer = 0
         self.inventaire: list[TypeItem] = []
         self.inventaire_taille_max = 1
         self.size = size
@@ -172,155 +172,190 @@ class Fourmis(ABC):
 
         self.menu: pygame.Surface=pygame.Surface((100,100))
 
-        self.target_x_in_nid_queued=None
+        self.target_x_in_nid_queued = None
         self.target_y_in_nid_queued = None
+
+    def in_map(self):
+        if self.in_colonie_map_coords is None:
+            in_map = True
+        else:   
+            in_map = False
+
+        return in_map
+    
+    def get_colonie_actuelle(self, colonies):
+        if self.in_colonie_map_coords is None:
+            return None
+
+        for colonie in colonies:
+            if colonie.tuile_debut == self.in_colonie_map_coords:
+                return colonie
+           
+        return None
+    
+    def get_tuile(self):
+        return int(self.centre_x_in_map), int(self.centre_y_in_map)
 
     @abstractmethod
     def attack(self, other):
         pass
 
-    def process(self, dt, map_data,tuiles_debut_toutes_colonies,tous_les_nids):
-        #print("Map Pos:" + str(self.centre_x_in_map) + ", " + str(self.centre_y_in_map))
-        #print("Map Target: " + str(self.target_x_in_map) + ", " + str(self.target_y_in_map))
-        #print("Nid Pos:" + str(self.centre_x_in_nid) + ", " + str(self.centre_y_in_nid))
-        #print("Nid Target: " + str(self.target_x_in_nid) + ", " + str(self.target_y_in_nid))
-        #print("In colonie at pos: "+str(self.in_colonie_map_coords))
-        #print(str(self.a_bouger_depuis_transition_map_ou_nid))
-        if self.in_colonie_map_coords is None:#if sur la carte
-            #process sur la carte
-            if (self.target_x_in_map != self.centre_x_in_map or self.target_y_in_map != self.centre_y_in_map) and self.target_x_in_map is not None and self.target_y_in_map is not None and self.in_colonie_map_coords is None:
-                #print("fourmi bouge")
-                self.a_bouger_depuis_transition_map_ou_nid=True
-                self.goto_target_in_map(dt, map_data)
+    def process(self, dt, map_data, nids):
+        def process_map():
+            not_at_target = (self.target_x_in_map != self.centre_x_in_map or self.target_y_in_map != self.centre_y_in_map)
+            if not_at_target and self.target_x_in_map is not None and self.target_y_in_map is not None:
+                self.a_bouger_depuis_transition_map_ou_nid = True
+                self.goto_target(dt, map_data, nids)
             else:
-                self.is_moving=False
-                self.is_busy=False
+                self.is_moving = False
+                self.is_busy = False
                 self.target_x_in_map = None
                 self.target_y_in_map = None
-                for nid in tous_les_nids:
-                    if self.centre_x_in_map == nid.tuile_debut[0] and self.centre_y_in_map == nid.tuile_debut[1] and self.a_bouger_depuis_transition_map_ou_nid==True:
-                        print("entered colonie at "+str(nid.tuile_debut))
-                        self.centre_y_in_map = None
-                        self.centre_x_in_map = None
-                        self.target_x_in_map = None
-                        self.target_y_in_map = None
-                        self.centre_x_in_nid = nid.salles_sorties[0].noeud.coord[0]
-                        self.centre_y_in_nid = nid.salles_sorties[0].noeud.coord[1]
-                        #self.target_x_in_nid = None
-                        #self.target_y_in_nid = None
-                        if self.target_x_in_nid_queued is not None and self.target_y_in_nid_queued is not None:
-                            self.target_x_in_nid=self.target_x_in_nid_queued
-                            self.target_y_in_nid=self.target_y_in_nid_queued
-                            self.target_x_in_nid_queued=None
-                            self.target_y_in_nid_queued=None
-                        self.a_bouger_depuis_transition_map_ou_nid=False
-                        self.in_colonie_map_coords=nid.tuile_debut
 
+                for nid in nids:
+                    on_nid = self.centre_x_in_map == nid.tuile_debut[0] and self.centre_y_in_map == nid.tuile_debut[1]
+                    if on_nid and self.a_bouger_depuis_transition_map_ou_nid:
+                        process_transition_map_nid(nid)
+
+        def process_transition_map_nid(nid):
+            self.centre_y_in_map = None
+            self.centre_x_in_map = None
+            for salle in nid.graphe.salles:
+                if salle.type.value[1] == "sortie":
+                    self.centre_x_in_nid = salle.noeud.coord[0]
+                    self.centre_y_in_nid = salle.noeud.coord[1]
+
+            self.a_bouger_depuis_transition_map_ou_nid = False
+            self.in_colonie_map_coords = nid.tuile_debut
+            
+            if self.target_x_in_nid_queued is not None and self.target_y_in_nid_queued is not None:
+                self.target_x_in_nid = self.target_x_in_nid_queued
+                self.target_y_in_nid = self.target_y_in_nid_queued
+                self.target_x_in_nid_queued = None
+                self.target_y_in_nid_queued = None
+
+        def process_nid():
+            not_at_target = (self.target_x_in_nid != self.centre_x_in_nid or self.target_y_in_nid != self.centre_y_in_nid)
+            if not_at_target and self.target_x_in_nid is not None and self.target_y_in_nid is not None:
+                self.goto_target(dt, map_data, nids)
+            else:
+                self.is_moving = False
+                self.is_busy = False
+                self.target_x_in_nid = None
+                self.target_y_in_nid = None
+
+        in_map = self.in_map()
+        if in_map:
+            process_map()
         else:
-            #sortir colonie
-            #if self.target_x_in_map != self.in_colonie_map_coords[0] and self.target_y_in_map != self.in_colonie_map_coords[1]:
-                #self.in_colonie_map_coords=None
-            #process dans le nid
-            if self.target_x_in_nid is not None and self.target_y_in_nid is not None:
-                self.goto_target_in_nid(dt)
-    def set_target_in_nid(self, target_pos, in_nid_target_set_map_coords,map_data,liste_toutes_colonies):
-        #print("set target in nid")
-        if not self.is_busy:
-            if self.in_colonie_map_coords is None:#set target in nid from map
-                self.set_target_in_map(in_nid_target_set_map_coords[0],in_nid_target_set_map_coords[1],map_data,liste_toutes_colonies)
-                self.target_x_in_nid = target_pos[0]
-                self.target_y_in_nid = target_pos[1]
-                self.is_busy = True
-                self.is_moving = True
-            elif self.in_colonie_map_coords==in_nid_target_set_map_coords:#set target in nid from nid
-                if self.centre_x_in_nid!=target_pos[0] and self.centre_y_in_nid!=target_pos[1]:
-                    self.target_x_in_nid=target_pos[0]
-                    self.target_y_in_nid=target_pos[1]
-                    self.is_busy=True
-                    self.is_moving=True
-            else: #set target in nid from other nid
-                self.set_target_in_map(in_nid_target_set_map_coords[0],in_nid_target_set_map_coords[1],map_data,liste_toutes_colonies)
-                self.target_x_in_nid_queued=target_pos[0]
-                self.target_y_in_nid_queued=target_pos[1]
+            process_nid()
+                
+    def set_target_in_nid(self, target_pos, target_nid, map_data, colonies):
+        in_map = self.in_map()
+        current_colonie = self.get_colonie_actuelle(colonies)
 
-    def goto_target_in_nid(self,dt):
-        self.colonie_origine.menu_f_a_updater = True
-        #print("moving to target in nid")
-        pos=Vector2(self.centre_x_in_nid,self.centre_y_in_nid)
-        target=Vector2(self.target_x_in_nid,self.target_y_in_nid)
-        movement=Vector2(0,0)
-        if target!=pos:
-            movement=(target-pos).normalize()*dt*self.speed/10
-        self.centre_x_in_nid+=movement.x
-        self.centre_y_in_nid+=movement.y
-        #check if movement is to the right
-        if movement.x==0:
-            pass
-        elif movement.x/abs(movement.x) > 0:
-            self.facing=0
-        elif movement.x/abs(movement.x) < 0:
-            self.facing = 1
-        if self.target_x_in_nid-abs(movement.x) < self.centre_x_in_nid < self.target_x_in_nid+abs(movement.x) and self.target_y_in_nid-abs(movement.y) < self.centre_y_in_nid < self.target_y_in_nid+abs(movement.y):
-            self.centre_x_in_nid=self.target_x_in_nid
-            self.centre_y_in_nid = self.target_y_in_nid
-            self.target_x_in_nid = None
-            self.target_y_in_nid = None
-            self.is_busy = False
-            self.is_moving = False
-            #print("target in nid reached")
+        self.is_busy = True
+        self.is_moving = True
 
-    def set_target_in_map(self, target_x, target_y, map_data,liste_toutes_colonies):
+        if in_map: #set target in nid from map
+            self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
+            
+            noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
+            if noeud is  not None:
+                self.target_x_in_nid = noeud.coord[0]
+                self.target_y_in_nid = noeud.coord[1]
+
+        elif current_colonie.graphe == target_nid.graphe: #set target in nid from same nid
+            noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
+            if noeud is  not None:
+                self.target_x_in_nid = noeud.coord[0]
+                self.target_y_in_nid = noeud.coord[1]
+
+        else: #set target in nid from other nid
+            current_colonie = self.get_colonie_actuelle(colonies)
+            for salle in current_colonie.graphe.salles:
+                if salle.type.value[1] == "sortie":
+                    self.set_target_in_nid(salle.noeud.coord, current_colonie, map_data, colonies)
+
+            self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
+            
+            noeud = target_nid.graphe.get_noeud_at_coord(target_pos)
+            if noeud is  not None:
+                self.target_x_in_nid_queued = noeud.coord[0]
+                self.target_y_in_nid_queued = noeud.coord[1]
+
+    def set_target_in_map(self, target_x, target_y, map_data, colonies):
         if isinstance(map_data[target_y][target_x], Eau):
             return
-        if not self.is_busy:
-            if self.in_colonie_map_coords is None: #set target in map if in map
-                self.target_x_in_map = target_x
-                self.target_y_in_map = target_y
-                self.is_moving = True
-                self.is_busy = True
-            else: #set target sortie in nid + set target in map
-                #print("set target in map while in nid")
-                sorite=None
-                for colonie in liste_toutes_colonies:
-                    if colonie.tuile_debut == self.in_colonie_map_coords:
-                        for salle in colonie.graphe.salles:
-                            if salle.type.value[1]=="sortie":
-                                #print("set target in nid while in nid to go to map")
-                                self.set_target_in_nid(salle.noeud.coord,colonie.tuile_debut,map_data,liste_toutes_colonies)
-                                self.target_x_in_map = target_x
-                                self.target_y_in_map = target_y
-                                self.is_moving = True
-                                self.is_busy = True
+        
+        self.target_x_in_map = target_x
+        self.target_y_in_map = target_y
+        
+        in_map = self.in_map()
+        if in_map:
+            self.is_moving = True
+            self.is_busy = True
+        else:
+            #set target vers la sortie du nid
+            current_colonie = self.get_colonie_actuelle(colonies)
+            for salle in current_colonie.graphe.salles:
+                if salle.type.value[1] == "sortie":
+                    self.set_target_in_nid(salle.noeud.coord, current_colonie, map_data, colonies)
 
-    def goto_target_in_map(self, dt, map_data):
-        if not self.path and self.is_moving:
-            # Calculate path if not already calculated
-            self.path = self.a_star(map_data)
+    def goto_target(self, dt, map_data, nids):
+        def calculate_path_nid():
+            current_nid = None
+            for nid in nids:
+                if nid.tuile_debut == self.in_colonie_map_coords:
+                    current_nid = nid
 
-        if self.path:
-            next_tile = self.path[0]
-            target_x_of_next_tile = next_tile[0]
-            target_y_of_next_tile = next_tile[1]
+            depart = current_nid.graphe.get_noeud_at_coord((self.centre_x_in_nid, self.centre_y_in_nid))
+            arrivee = current_nid.graphe.get_noeud_at_coord((self.target_x_in_nid, self.target_y_in_nid))
 
-            dx = target_x_of_next_tile - self.centre_x_in_map
-            dy = target_y_of_next_tile - self.centre_y_in_map
-            distance = math.sqrt(dx ** 2 + dy ** 2)
+            path_nodes = current_nid.graphe.dijkstra(depart, arrivee)
+            path = []
+            for node in path_nodes:
+                path.append((node.coord[0], node.coord[1]))
+            self.path = path
 
-            if distance > 0.1:
+        in_map = self.in_map()
+        if len(self.path) == 0:
+            self.a_star(map_data) if in_map else calculate_path_nid()
+            return
+        
+        next_node = self.path[0]
+        next_target_x = next_node[0]
+        next_target_y = next_node[1]
+
+        if in_map:
+            dx = next_target_x - self.centre_x_in_map
+            dy = next_target_y - self.centre_y_in_map
+        else:
+            dx = next_target_x - self.centre_x_in_nid
+            dy = next_target_y - self.centre_y_in_nid
+        distance = math.sqrt(dx ** 2 + dy ** 2) 
+
+        if (in_map and distance > 0.1) or (not in_map and distance > 0.1 * self.nid_speed_factor):
+            if in_map:
                 self.centre_x_in_map += self.speed * dx / distance * (dt / 1000)
                 self.centre_y_in_map += self.speed * dy / distance * (dt / 1000)
-                self.is_moving = True
-
-                self.facing = 0 if dx > 0 else 1
             else:
-                # Reached the next tile
-                self.centre_x_in_map = target_x_of_next_tile
-                self.centre_y_in_map = target_y_of_next_tile
-                self.path.pop(0)  # Remove the reached tile
-                self.is_moving = len(self.path) > 0
+                self.centre_x_in_nid += self.nid_speed_factor * self.speed * dx / distance * (dt / 1000)
+                self.centre_y_in_nid += self.nid_speed_factor * self.speed * dy / distance * (dt / 1000)
+            
+            self.is_moving = True
+            self.facing = 0 if dx > 0 else 1
+        else:
+            # Reached the next tile
+            if in_map:
+                self.centre_x_in_map = next_target_x
+                self.centre_y_in_map = next_target_y
+            else:
+                self.centre_x_in_nid = next_target_x
+                self.centre_y_in_nid = next_target_y
+            self.path.pop(0)  # Remove the reached tile
     
     def a_star(self, map_data):
-        #Note: le path retourné contient des tuiles et non des coordonnées
         def sort_queue(arr):
             if len(arr) <= 1:
                 return arr
@@ -415,10 +450,7 @@ class Fourmis(ABC):
             current = previous[current]
 
         chemin.reverse()
-        return chemin
-
-    def get_tuile(self):
-        return int(self.centre_x_in_map), int(self.centre_y_in_map)
+        self.path = chemin
 
     def draw_in_nid(self,dt,screen,camera):
         #print("fourmi drawn")
