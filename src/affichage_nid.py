@@ -7,8 +7,8 @@ from config import trouver_font, trouver_img, AQUA
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from fourmi import FourmisSprite, CouleurFourmi
 from fourmi import Fourmis,Ouvriere,Soldat
-from src.classes_graphe import TypeSalle
-from src.colonies import Colonie
+from classes_graphe import TypeSalle
+from colonies import Colonie
 
 #Variables globales
 MAP_LIMIT_X: int = 4000
@@ -48,6 +48,7 @@ class Nid:
         for salle in self.graphe.salles:
             if salle.type.value[1] == "sortie":
                 self.salles_sorties.append(salle)
+
     def scale_images(self, scale, initial_sky_scaling = False) -> None:
         if initial_sky_scaling:
             facteur_ciel = HAUTEUR_SOL / self.image_ciel.get_height()
@@ -217,7 +218,7 @@ class Nid:
         def handle_right_click(pos,map_data,liste_toutes_colonies):
             # set target of fourmi
             if colonie_joueur.fourmis_selection is not None:
-                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos),self.tuile_debut,map_data,liste_toutes_colonies)
+                colonie_joueur.fourmis_selection.set_target_in_nid(self.camera.apply_inverse(pos), self, map_data, liste_toutes_colonies)
                 return
 
         def handle_hover(pos):

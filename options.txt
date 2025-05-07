@@ -1,0 +1,4 @@
+max_framerate=60
+fullscreen=False
+SCREEN_WIDTH=1280
+SCREEN_HEIGHT=720
