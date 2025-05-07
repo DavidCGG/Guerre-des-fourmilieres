@@ -15,8 +15,6 @@ class Colonie:
         self.map_data = map_data # la carte de jeu
         self.tuile_debut = tuile_debut
         self.vie = 1 # 1 = 100% (vie de la reine)
-        self.inventaire=[]
-        self.taille_inventaire_max=10
 
         self.graphe=graphe
 
@@ -28,12 +26,14 @@ class Colonie:
             #print(salle.type.value[1])
             if salle.type.value[1] == "sortie":
                 self.sortie_coords=salle.noeud.coord
+            elif salle.type.value[1] == "throne":
+                self.throne_coords=salle.noeud.coord
         #print("Tuile debut: "+str(tuile_debut)+" Sortie debut: "+str(self.sortie_coords))
 
         self.fourmis_selection = None # fourmi selectionnée dans le menu de fourmis
         self.groupe_selection = None
 
-        self.fourmis = [Ouvriere(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE, self) for _ in range(1)] + [Soldat(self.tuile_debut[0], self.tuile_debut[1], CouleurFourmi.NOIRE,self) for _ in range(0)]
+        self.fourmis = [Ouvriere(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.NOIRE, self) for _ in range(1)] + [Soldat(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.NOIRE,self) for _ in range(0)]
         for fourmi in self.fourmis:
             listes_fourmis_jeu_complet.append(fourmi)
         self.groupes = {}
@@ -130,11 +130,14 @@ class Colonie:
         y_offset = 40
         nb_metal=0
         nb_nourriture=0
-        for item in self.inventaire:
-            if item.name=="POMME":
-                nb_nourriture+=1
-            elif item.name=="METAL":
-                nb_metal+=1
+        for salle in self.graphe.salles:
+            for item in salle.inventaire:
+                if item is None:
+                    pass
+                elif item.name=="POMME":
+                    nb_nourriture+=1
+                elif item.name=="METAL":
+                    nb_metal+=1
 
         info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
         info_sold = f"Soldats ({self.nombre_soldats()})"

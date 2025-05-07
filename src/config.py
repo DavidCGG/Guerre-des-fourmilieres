@@ -74,10 +74,10 @@ class Bouton():
         return cursor_sur_bouton
 
 class TypeItem(Enum):
-    #NOM=(weight,image path)
-    POMME=(1,trouver_img("Items/pomme.png"))
-    METAL=(3,trouver_img("Items/metal.png"))
-    BOIS=(2,trouver_img("Items/bois.png"))
-    OEUF=(1,trouver_img("Items/oeuf.png"))
+    #NOM=(weight,image path,image case vide path)
+    POMME=(1,trouver_img("Items/pomme.png"),trouver_img("UI/pomme_tuile.png"))
+    METAL=(3,trouver_img("Items/metal.png"),trouver_img("UI/metal_tuile.png"))
+    BOIS=(2,trouver_img("Items/bois.png"),trouver_img("UI/bois_tuile.png"))
+    OEUF=(1,trouver_img("Items/oeuf.png"),trouver_img("UI/oeuf_tuile.png"))
     ARMURE=(2,trouver_img("Items/armure.png"))
     EPEE=(1,trouver_img("Items/epee.png"))

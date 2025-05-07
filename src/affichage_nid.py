@@ -130,7 +130,7 @@ class Nid:
         def draw_menu_salles():
             for salle in self.graphe.salles:
                 if salle.menu_is_ouvert:
-                    salle.draw_menu(screen,self.camera,self.colonie_owner)
+                    salle.draw_menu(screen, self.camera, self.colonie_owner)
 
         draw_terre()
         draw_nid()

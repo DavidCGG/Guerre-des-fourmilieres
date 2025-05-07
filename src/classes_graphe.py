@@ -6,6 +6,7 @@ from pygame import Vector2
 
 from config import trouver_img, trouver_font, WHITE, TypeItem, BLACK, BROWN, GRAY
 from colonies import Colonie
+from fourmi import CouleurFourmi, Ouvriere, Soldat
 
 
 class NoeudGeneration:
@@ -90,13 +91,13 @@ class TypeSalle(Enum):
     INTERSECTION = (40, "intersection",None,None)
     SALLE = (128, "salle",None,None)
     SORTIE = (40, "sortie",None,None)
-    #Nom = (taille, nom, image, level tuple(temps en milliseconde pour action, nb ressources pour action))
-    BANQUE = (128, "banque", trouver_img("Salles/banque.png"),(10000,3),(15000,4),(20000,5))
-    THRONE = (128, "throne", trouver_img("Salles/throne.png"),(10000,3),(15000,4),(20000,5))
-    ENCLUME = (128, "enclume", trouver_img("Salles/enclume.png"), (10000,2),(15000,3),(20000,4))
-    MEULE = (128, "meule", trouver_img("Salles/meule.png"), (5000,3),(15000,4),(20000,5))
-    TRAINING_OUVRIERE = (128,"training_ouvriere",trouver_img("Salle/training_ouvriere.png"))
-    TRAINING_SOLDAT = (128,"training_soldat",trouver_img("Salle/training_soldat.png"))
+    #Nom = (taille, nom, image)
+    BANQUE = (128, "banque", trouver_img("Salles/banque.png"))
+    THRONE = (128, "throne", trouver_img("Salles/throne.png"))
+    ENCLUME = (128, "enclume", trouver_img("Salles/enclume.png"))
+    MEULE = (128, "meule", trouver_img("Salles/meule.png"))
+    TRAINING_OUVRIERE = (128,"training_ouvriere",trouver_img("Salles/training_ouvriere.png"))
+    TRAINING_SOLDAT = (128,"training_soldat",trouver_img("Salles/training_soldat.png"))
 
 class Salle:
     """
@@ -112,18 +113,20 @@ class Salle:
         self.tunnels: set[Tunnel] = set(tunnels) if tunnels is not None else set()
         self.type: TypeSalle = type
         self.menu_is_ouvert: bool=False
-        self.menu = pygame.image.load(trouver_img("Test64x64.png"))
+        self.menu_top = None
+        self.menu_bottom = None
         self.font_menu = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
         self.temps_pour_action=None
         self.temps_ecoule_depuis_debut_action=0
-        self.nb_ressources_pour_action=None
-        self.nb_ressources_prises=0
-        self.inventaire_taille_max=15
+        self.inventaire_taille_max=None
         self.inventaire=[]
         #self.is_busy: bool = False
         self.fourmi_qui_fait_action = None
         self.level=1
-        self.max_items=None
+
+        self.inventaire_necessaire=None
+        self.liste_images_cases_vides=[]
+        self.liste_images_items=[]
 
     def intersecte_salle(self, autre) -> bool:
         """
@@ -173,194 +176,211 @@ class Salle:
 
         return distance <= rayon
 
-    def process(self,listes_fourmis_jeu_complet,colonie_owner:Colonie,dt):
-        if self.type == TypeSalle.SORTIE:
-            for fourmi in listes_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords is None:
-                    continue
-                elif fourmi.in_colonie_map_coords != colonie_owner.tuile_debut:
-                    continue
-
-                if (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid,
-                                                                                fourmi.centre_y_in_nid)).magnitude() < \
-                        TypeSalle.SORTIE.value[0]:
-                    if fourmi.a_bouger_depuis_transition_map_ou_nid == False:
-                        continue
-
-                    fourmi.in_colonie_map_coords = None
-                    fourmi.centre_x_in_map = colonie_owner.tuile_debut[0]
-                    fourmi.centre_y_in_map = colonie_owner.tuile_debut[1]
-
-                    fourmi.centre_x_in_nid = None
-                    fourmi.centre_y_in_nid = None
-                    fourmi.target_x_in_nid = None
-                    fourmi.target_y_in_nid = None
-                    fourmi.path = []
-
-                    fourmi.a_bouger_depuis_transition_map_ou_nid = False
+    def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self:Colonie, dt):
+        if self.type!=TypeSalle.INDEFINI and self.type!=TypeSalle.INTERSECTION:
+            def update_menu_top():
+                if self.inventaire_taille_max is not None:
+                    case_inventaire = pygame.Surface((100, 100))
+                    case_inventaire.fill(WHITE)
+                    if self.inventaire_taille_max <= 5:
+                        self.menu_top = pygame.Surface((5 + self.inventaire_taille_max * (100 + 5), 5 + 100 + 5))
+                        self.menu_top.fill(BLACK)
+                        for i in range(self.inventaire_taille_max):
+                            self.menu_top.blit(case_inventaire, (5 + i * (100 + 5), 5))
+                        for i in range(len(self.inventaire)):
+                            image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
+                            self.menu_top.blit(image_item, (5 + i * (100 + 5), 5))
+                    elif self.inventaire_taille_max <= 10:
+                        self.menu_top = pygame.Surface((5 + 5 * (100 + 5), 5 + 2 * (100 + 5)))
+                        self.menu_top.fill(BLACK)
+                        for i in range(self.inventaire_taille_max):
+                            self.menu_top.blit(case_inventaire,
+                                               (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                        for i in range(len(self.inventaire)):
+                            image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
+                            self.menu_top.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                    elif self.inventaire_taille_max <= 15:
+                        self.menu_top = pygame.Surface((5 + 5 * (100 + 5), 5 + 3 * (100 + 5)))
+                        self.menu_top.fill(BLACK)
+                        for i in range(self.inventaire_taille_max):
+                            print(5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5))
+                            self.menu_top.blit(case_inventaire,
+                                               (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                        for i in range(len(self.inventaire)):
+                            image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
+                            self.menu_top.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                        print("all case done")
+                    elif self.inventaire_taille_max <= 20:
+                        self.menu_top = pygame.Surface((5 + 5 * (100 + 5), 5 + 4 * (100 + 5)))
+                        self.menu_top.fill(BLACK)
+                        for i in range(self.inventaire_taille_max):
+                            self.menu_top.blit(case_inventaire,
+                                               (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
+                        for i in range(len(self.inventaire)):
+                            image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
+                            self.menu_top.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
                 else:
-                    fourmi.a_bouger_depuis_transition_map_ou_nid = True
-        elif self.type==TypeSalle.BANQUE:
-            #update menu
-            if self.menu_is_ouvert:
-                #updates menu
-                case_inventaire = pygame.Surface((100, 100))
-                case_inventaire.fill(WHITE)
-                if self.inventaire_taille_max <= 5:
-                    self.menu = pygame.Surface((5 + self.inventaire_taille_max * (100 + 5), 5 + 100 + 5))
-                    self.menu.fill(BLACK)
-                    for i in range(self.inventaire_taille_max):
-                        self.menu.blit(case_inventaire, (5 + i * (100 + 5), 5))
-                    for i in range(len(self.inventaire)):
-                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]),(100, 100))
-                        self.menu.blit(image_item, (5 + i * (100 + 5), 5))
+                    self.menu_top = pygame.Surface((5 + len(self.inventaire_necessaire) * (100 + 5), 5 + 100 + 5))
+                    self.menu_top.fill(BLACK)
+                    for i in range(len(self.inventaire_necessaire)):
+                        self.menu_top.blit(pygame.transform.scale(pygame.image.load(self.inventaire_necessaire[i].value[2]),(100,100)), (5 + i * (100 + 5), 5))
+                        if self.inventaire[i] is not None:
+                            if self.inventaire[i]==self.inventaire_necessaire[i]:
+                                self.menu_top.blit(pygame.transform.scale(pygame.image.load(self.inventaire_necessaire[i].value[1]),(100, 100)), (5 + i * (100 + 5), 5))
+            def update_menu_bottom():#only colonie hp for throne
+                self.menu_bottom = pygame.Surface((125, 50))
+                text_surface = self.font_menu.render("HP: " + str(colonie_owner_of_self.hp), False, WHITE)
+                self.menu_bottom.blit(text_surface, (self.menu_bottom.get_height() / 2 - text_surface.get_height() / 2,self.menu_bottom.get_height() / 2 - text_surface.get_height() / 2))
+            def collecte_item_selon_inventaire_necessaire(fourmi_temp):
+                item_collecte_index_in_inventaire_fourmi = None
+                item_collecte_index_in_inventaire_salle = None
+                for i in range(len(self.inventaire_necessaire)):
+                    if self.inventaire[i] is None:
+                        for j in range(len(fourmi_temp.inventaire)):
+                            if fourmi_temp.inventaire[j].name==self.inventaire_necessaire[i].name:
+                                item_collecte_index_in_inventaire_fourmi=j
+                                item_collecte_index_in_inventaire_salle=i
+                if item_collecte_index_in_inventaire_fourmi is not None and item_collecte_index_in_inventaire_salle is not None:
+                    self.inventaire[item_collecte_index_in_inventaire_salle]=fourmi_temp.inventaire.pop(item_collecte_index_in_inventaire_fourmi)
+            def commencer_action(fourmi_temp):
+                if self.inventaire==self.inventaire_necessaire and not fourmi_temp.is_busy and self.fourmi_qui_fait_action is None:
+                    #print("action start")
+                    self.fourmi_qui_fait_action=fourmi_temp
+                    fourmi_temp.is_busy=True
 
-                elif self.inventaire_taille_max <= 10:
-                    self.menu = pygame.Surface((5 + 5 * (100 + 5), 5 + 2 * (100 + 5)))
-                    self.menu.fill(BLACK)
-                    for i in range(self.inventaire_taille_max):
-                        self.menu.blit(case_inventaire, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
-                    for i in range(len(self.inventaire)):
-                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]),(100, 100))
-                        self.menu.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
-
-                elif self.inventaire_taille_max <= 15:
-                    self.menu = pygame.Surface((5 + 5 * (100 + 5), 5 + 3 * (100 + 5)))
-                    self.menu.fill(BLACK)
-                    for i in range(self.inventaire_taille_max):
-                        print(5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5))
-                        self.menu.blit(case_inventaire, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
-                    for i in range(len(self.inventaire)):
-                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
-                        self.menu.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
-                    print("all case done")
-
-                elif self.inventaire_taille_max <= 20:
-                    self.menu = pygame.Surface((5 + 5 * (100 + 5), 5 + 4 * (100 + 5)))
-                    self.menu.fill(BLACK)
-                    for i in range(self.inventaire_taille_max):
-                        self.menu.blit(case_inventaire, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
-                    for i in range(len(self.inventaire)):
-                        image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
-                        self.menu.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
-
-
-
-            #detection if on action
             for fourmi in listes_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine==colonie_owner:
-                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.BANQUE.value[0]:
-                        #print("Fourmi dépose")
-                        if len(colonie_owner.inventaire) < colonie_owner.taille_inventaire_max:
-                            if len(fourmi.inventaire)>0:
-                                colonie_owner.inventaire.append(fourmi.inventaire.pop(0))
+                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords == colonie_owner_of_self.tuile_debut and (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
+                    if fourmi.colonie_origine==colonie_owner_of_self: # action if fourmi is in its own colonie
+                        if self.type==TypeSalle.BANQUE:
+                            # print("Fourmi dépose")
+                            if len(self.inventaire) < self.inventaire_taille_max and len(fourmi.inventaire) > 0:
+                                self.inventaire.append(fourmi.inventaire.pop(0))
+                        elif self.type==TypeSalle.THRONE:
+                            collecte_item_selon_inventaire_necessaire(fourmi)
+                            commencer_action(fourmi)
+                        elif self.type==TypeSalle.ENCLUME:
+                            collecte_item_selon_inventaire_necessaire(fourmi)
+                            commencer_action(fourmi)
+                        elif self.type==TypeSalle.MEULE:
+                            collecte_item_selon_inventaire_necessaire(fourmi)
+                            commencer_action(fourmi)
+                        elif self.type==TypeSalle.TRAINING_OUVRIERE:
+                            collecte_item_selon_inventaire_necessaire(fourmi)
+                            commencer_action(fourmi)
+                        elif self.type==TypeSalle.TRAINING_SOLDAT:
+                            collecte_item_selon_inventaire_necessaire(fourmi)
+                            commencer_action(fourmi)
+                    else: #action if fourmi in enemy colonie
+                        if self.type==TypeSalle.THRONE and not fourmi.is_busy:
+                            #print("attaque reine")
+                            colonie_owner_of_self.hp-=(fourmi.atk_result * dt) / 1000
+                    #action if fourmi in either
+                    if self.type == TypeSalle.SORTIE:
+                        for fourmi in listes_fourmis_jeu_complet:
+                            if fourmi.in_colonie_map_coords is None:
+                                continue
+                            elif fourmi.in_colonie_map_coords != colonie_owner_of_self.tuile_debut:
+                                continue
 
-        elif self.type==TypeSalle.THRONE:
-            #update menu
-            if self.menu_is_ouvert:
-                #updates menu
-                self.menu=pygame.Surface((125,50))
-                text_surface=self.font_menu.render("HP: "+str(colonie_owner.hp),False,WHITE)
-                self.menu.blit(text_surface,(self.menu.get_height()/2-text_surface.get_height()/2,self.menu.get_height()/2-text_surface.get_height()/2))
+                            if (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid,
+                                                                                            fourmi.centre_y_in_nid)).magnitude() < \
+                                    TypeSalle.SORTIE.value[0]:
+                                if fourmi.a_bouger_depuis_transition_map_ou_nid == False:
+                                    continue
 
-            #detect interaction
-            for fourmi in listes_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine!=colonie_owner:
-                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
-                        #print("attaque reine")
-                        pass
-        elif self.type==TypeSalle.MEULE:
-            # print("Process meule")
-            if self.menu_is_ouvert:
-                # updates menu
-                self.menu = pygame.Surface((5 + self.nb_ressources_pour_action * (100 + 5), 5 + 100 + 5))
-                self.menu.fill(BLACK)
-                case_inventaire = pygame.Surface((100, 100))
-                case_inventaire.fill(GRAY)
-                for i in range(self.nb_ressources_pour_action):
-                    self.menu.blit(case_inventaire, (5 + i * (100 + 5), 5))
-                for i in range(self.nb_ressources_prises):
-                    image_item = pygame.transform.scale(pygame.image.load(trouver_img("Items/metal.png")), (100, 100))
-                    self.menu.blit(image_item, (5 + i * (100 + 5), 5))
+                                fourmi.in_colonie_map_coords = None
+                                fourmi.centre_x_in_map = colonie_owner_of_self.tuile_debut[0]
+                                fourmi.centre_y_in_map = colonie_owner_of_self.tuile_debut[1]
 
-            for fourmi in listes_fourmis_jeu_complet:  # action selon fourmi dessus
-                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords == colonie_owner.tuile_debut and fourmi.colonie_origine == colonie_owner:
-                    if (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid,fourmi.centre_y_in_nid)).magnitude() < TypeSalle.MEULE.value[0]:
-                        # print("Fourmi sur meule")
-                        for item in fourmi.inventaire:
-                            # print("item "+item.name)
-                            if item.name == "METAL" and self.nb_ressources_prises < self.nb_ressources_pour_action:
-                                #print("metal enlevé")
-                                fourmi.inventaire.remove(item)
-                                self.nb_ressources_prises += 1
-                        if self.nb_ressources_prises == self.nb_ressources_pour_action and self.fourmi_qui_fait_action is None and not fourmi.is_busy:
-                            #print("fourmi qui fat action set to busy")
-                            self.fourmi_qui_fait_action = fourmi
-                            fourmi.is_busy = True
-            # print(self.fourmi_qui_fait_action)
-            if self.fourmi_qui_fait_action is not None:  # process action
+                                fourmi.centre_x_in_nid = None
+                                fourmi.centre_y_in_nid = None
+                                fourmi.target_x_in_nid = None
+                                fourmi.target_y_in_nid = None
+                                fourmi.path = []
+
+                                fourmi.a_bouger_depuis_transition_map_ou_nid = False
+                            else:
+                                fourmi.a_bouger_depuis_transition_map_ou_nid = True
+
+            if self.fourmi_qui_fait_action is not None: #faire action avec fourmi
                 self.temps_ecoule_depuis_debut_action += dt
                 if self.temps_ecoule_depuis_debut_action >= self.temps_pour_action:
-                    print("epee cree")
+                    print("action accomplie")
+                    if self.type == TypeSalle.THRONE:
+                        self.inventaire=[None,None]
+                        self.fourmi_qui_fait_action.inventaire.append(TypeItem.OEUF)
+                    elif self.type == TypeSalle.ENCLUME:
+                        self.inventaire=[None,None]
+                        self.fourmi_qui_fait_action.inventaire.append(TypeItem.ARMURE)
+                    elif self.type == TypeSalle.MEULE:
+                        self.inventaire=[None,None]
+                        self.fourmi_qui_fait_action.inventaire.append(TypeItem.EPEE)
+                    elif self.type == TypeSalle.TRAINING_OUVRIERE:
+                        self.inventaire = [None, None, None]
+                        nouvelle_fourmi=Ouvriere(self.noeud.coord[0], self.noeud.coord[1], CouleurFourmi.NOIRE, colonie_owner_of_self)
+                        colonie_owner_of_self.fourmis.append(nouvelle_fourmi)
+                        listes_fourmis_jeu_complet.append(nouvelle_fourmi)
+                    elif self.type == TypeSalle.TRAINING_SOLDAT:
+                        self.inventaire = [None, None, None]
+                        nouvelle_fourmi = Soldat(self.noeud.coord[0], self.noeud.coord[1], CouleurFourmi.NOIRE,colonie_owner_of_self)
+                        colonie_owner_of_self.fourmis.append(nouvelle_fourmi)
+                        listes_fourmis_jeu_complet.append(nouvelle_fourmi)
                     self.fourmi_qui_fait_action.is_busy = False
-                    self.fourmi_qui_fait_action.inventaire.append(TypeItem.EPEE)
                     self.fourmi_qui_fait_action = None
-                    self.nb_ressources_prises = 0
                     self.temps_ecoule_depuis_debut_action = 0
 
-        elif self.type==TypeSalle.ENCLUME:
-            #print("Process enclume")
             if self.menu_is_ouvert:
-                #updates menu
-                self.menu = pygame.Surface((5 + self.nb_ressources_pour_action * (100 + 5), 5 + 100 + 5))
-                self.menu.fill(BLACK)
-                case_inventaire = pygame.Surface((100, 100))
-                case_inventaire.fill(GRAY)
-                for i in range(self.nb_ressources_pour_action):
-                    self.menu.blit(case_inventaire, (5 + i * (100 + 5), 5))
-                for i in range(self.nb_ressources_prises):
-                    image_item = pygame.transform.scale(pygame.image.load(trouver_img("Items/metal.png")), (100, 100))
-                    self.menu.blit(image_item, (5 + i * (100 + 5), 5))
-
-            for fourmi in listes_fourmis_jeu_complet: #action selon fourmi dessus
-                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords==colonie_owner.tuile_debut and fourmi.colonie_origine==colonie_owner:
-                    if (Vector2(self.noeud.coord[0],self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.ENCLUME.value[0]:
-                        #print("Fourmi sur meule")
-                        for item in fourmi.inventaire:
-                            #print("item "+item.name)
-                            if item.name=="METAL" and self.nb_ressources_prises<self.nb_ressources_pour_action:
-                                print("metal enlevé")
-                                fourmi.inventaire.remove(item)
-                                self.nb_ressources_prises+=1
-                        if self.nb_ressources_prises==self.nb_ressources_pour_action and self.fourmi_qui_fait_action is None and not fourmi.is_busy:
-                            print("fourmi qui fat action set to busy")
-                            self.fourmi_qui_fait_action=fourmi
-                            fourmi.is_busy=True
-            #print(self.fourmi_qui_fait_action)
-            if self.fourmi_qui_fait_action is not None: #process action
-                self.temps_ecoule_depuis_debut_action+=dt
-                if self.temps_ecoule_depuis_debut_action >= self.temps_pour_action:
-                    print("armure cree")
-                    self.fourmi_qui_fait_action.is_busy = False
-                    self.fourmi_qui_fait_action.inventaire.append(TypeItem.ARMURE)
-                    self.fourmi_qui_fait_action = None
-                    self.nb_ressources_prises=0
-                    self.temps_ecoule_depuis_debut_action=0
+                update_menu_top()
+                if self.type==TypeSalle.THRONE:
+                    update_menu_bottom()
 
     def type_specific_stats_update(self):
-        self.temps_pour_action=self.type.value[3]
-        self.nb_ressources_pour_action=self.type.value[4]
+        if self.type==TypeSalle.BANQUE:
+            self.inventaire_taille_max=10
+        #elif self.type==TypeSalle.THRONE or self.type==TypeSalle.ENCLUME or self.type==TypeSalle.MEULE or self.type==TypeSalle.TRAINING_SOLDAT or self.type==TypeSalle.TRAINING_OUVRIERE:
+        elif self.type==TypeSalle.THRONE:
+            self.inventaire_necessaire=[TypeItem.POMME,TypeItem.POMME]
+            self.inventaire=[None,None]
+            self.temps_pour_action=5000
+        elif self.type==TypeSalle.ENCLUME:
+            self.inventaire_necessaire=[TypeItem.METAL,TypeItem.METAL]
+            self.inventaire = [None, None]
+            self.temps_pour_action=5000
+        elif self.type==TypeSalle.MEULE:
+            self.inventaire_necessaire=[TypeItem.METAL,TypeItem.METAL]
+            self.inventaire = [None, None]
+            self.temps_pour_action=5000
+        elif self.type==TypeSalle.TRAINING_OUVRIERE:
+            self.inventaire_necessaire=[TypeItem.POMME,TypeItem.BOIS,TypeItem.OEUF]
+            self.inventaire = [None, None, None]
+            self.temps_pour_action=5000
+        elif self.type==TypeSalle.TRAINING_SOLDAT:
+            self.inventaire_necessaire=[TypeItem.POMME,TypeItem.METAL,TypeItem.OEUF]
+            self.inventaire = [None, None, None]
+            self.temps_pour_action=5000
+
+        #for item in self.inventaire_necessaire: #images sont chargés a chaque frame jsp si ca affcete performance beaucoup
+            #self.liste_images_cases_vides.append(pygame.transform.scale(pygame.image.load(item.value[1]),(100,100)))
+            #self.liste_images_cases_vides.append(pygame.transform.scale(pygame.image.load(item.value[2]),(100,100)))
 
     def on_click_action(self):
         self.menu_is_ouvert = not self.menu_is_ouvert
 
-    def draw_menu(self,screen,camera,colonie_owner: Colonie):
-        menu_transformed=pygame.transform.scale(self.menu,(self.menu.get_width()*camera.zoom,self.menu.get_height()*camera.zoom))
-        screen.blit(menu_transformed,camera.apply((self.noeud.coord[0]-self.menu.get_width()/2,self.noeud.coord[1]-self.type.value[0]-self.menu.get_height())))
+    def draw_menu(self,screen,camera,colonie_owner:Colonie):
+        def draw_menu_top():
+            menu_transformed=pygame.transform.scale(self.menu_top, (self.menu_top.get_width() * camera.zoom, self.menu_top.get_height() * camera.zoom))
+            screen.blit(menu_transformed, camera.apply((self.noeud.coord[0] - self.menu_top.get_width() / 2, self.noeud.coord[1] - self.type.value[0] - self.menu_top.get_height())))
+        def draw_menu_bottom():
+            menu_transformed = pygame.transform.scale(self.menu_bottom, (self.menu_bottom.get_width() * camera.zoom, self.menu_bottom.get_height() * camera.zoom))
+            screen.blit(menu_transformed, camera.apply((self.noeud.coord[0] - self.menu_bottom.get_width() / 2,self.noeud.coord[1] + self.type.value[0])))
+        if self.menu_top is not None:
+            draw_menu_top()
+        if self.menu_bottom is not None:
+            draw_menu_bottom()
 
     def draw_process_bar(self,screen,camera):
-        process_bar_transformed=pygame.transform.scale(self.process_bar,(self.menu.get_width()*camera.zoom,self.menu.get_height()*camera.zoom))
-        screen.blit(process_bar_transformed, camera.apply((self.noeud.coord[0] - self.menu.get_width() / 2,self.noeud.coord[1] + self.type.value[0] + self.menu.get_height())))
+        process_bar_transformed=pygame.transform.scale(self.process_bar, (self.menu_top.get_width() * camera.zoom, self.menu_top.get_height() * camera.zoom))
+        screen.blit(process_bar_transformed, camera.apply((self.noeud.coord[0] - self.menu_top.get_width() / 2, self.noeud.coord[1] + self.type.value[0] + self.menu_top.get_height())))
 
     def upgrade(self):
         if self.type==TypeSalle.BANQUE:

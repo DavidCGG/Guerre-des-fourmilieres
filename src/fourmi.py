@@ -133,14 +133,10 @@ class Fourmis(ABC):
         self.centre_x_in_map = None
         self.target_x_in_map = None
         self.target_y_in_map = None
-        #self.centre_x_in_nid = 0
-        #self.centre_y_in_nid = 0
+        self.centre_x_in_nid = x0
+        self.centre_y_in_nid = y0
         self.target_x_in_nid = None
         self.target_y_in_nid = None
-        for salle in colonie_origine.graphe.salles:
-            if salle.type.value[1]=="throne":
-                self.centre_x_in_nid = salle.noeud.coord[0]
-                self.centre_y_in_nid = salle.noeud.coord[1]
         self.base_speed = 2
         self.speed = self.base_speed
         self.path = []
