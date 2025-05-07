@@ -27,6 +27,7 @@ class Tuile:
         self.collectee = False if self.tuile_ressource else None
         self.image_metal = pygame.image.load(trouver_img("Items/metal.png")).convert_alpha() if self.tuile_ressource else None
         self.image_pomme = pygame.image.load(trouver_img("Items/pomme.png")).convert_alpha() if self.tuile_ressource else None
+        self.image_bois = pygame.image.load(trouver_img("Items/bois.png")).convert_alpha() if self.tuile_ressource else None
 
         #créer image de tuile selon couleur
         #self.image = pygame.image.load(trouver_img("Monde/noise32x32.png")).convert_alpha()
@@ -40,12 +41,16 @@ class Tuile:
         if isinstance(self, Sable):
             rand = random.randint(0, 8)
             if rand == 5:
+                self.type = "Metal"
                 return True
         if isinstance(self, Terre):
             rand = random.randint(0, 32)
             if rand == 10:
+                rand = random.randint(0, 1)
+                if rand == 1:
+                    self.type = "Pomme"
+                else: self.type = "Bois"
                 return True
-
         else: return False
 
     def toggle_color(self):
@@ -75,7 +80,10 @@ class Tuile:
                 scaled_img = pygame.transform.scale(self.image_metal, (rect.width, rect.height) )
                 screen.blit(scaled_img, rect)
             if isinstance(self, Terre):
-                scaled_img = pygame.transform.scale(self.image_pomme, (rect.width, rect.height) )
+                if self.type == "Pomme":
+                    scaled_img = pygame.transform.scale(self.image_pomme, (rect.width, rect.height))
+                elif self.type == "Bois":
+                    scaled_img = pygame.transform.scale(self.image_bois, (rect.width, rect.height))
                 screen.blit(scaled_img, rect)
 
 
@@ -87,7 +95,10 @@ class Tuile:
         if isinstance(self, Sable):
             return TypeItem.METAL
         elif isinstance(self, Terre):
-            return TypeItem.POMME
+            if self.type == "Pomme":
+                return TypeItem.POMME
+            if self.type == "Bois":
+                return TypeItem.BOIS
 
 class Eau(Tuile):
     def __init__(self, x, y, width, height):
