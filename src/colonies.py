@@ -14,6 +14,7 @@ class Colonie:
         self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.map_data = map_data # la carte de jeu
         self.tuile_debut = tuile_debut
+        self.screen = None
         self.vie = 1 # 1 = 100% (vie de la reine)
 
         self.graphe=graphe
@@ -80,23 +81,36 @@ class Colonie:
 
 
     def process(self,dt,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
-        groupe_bouge = False
-        for _, groupe in self.groupes_cache.items():
-            if groupe.get_nb_fourmis() > 1 and not groupe.est_vide():
-                dern_x, dern_y = groupe.centre_x_in_map, groupe.centre_y_in_map
-                groupe.process(dt)
-                if (dern_x, dern_y) != (groupe.centre_x_in_map, groupe.centre_y_in_map):
-                    groupe_bouge = True
+        # groupe_bouge = False
+        # for _, groupe in self.groupes_cache.items():
+        #     if groupe.get_nb_fourmis() > 1 and not groupe.est_vide():
+        #         dern_x, dern_y = groupe.centre_x_in_map, groupe.centre_y_in_map
+        #         groupe.process(dt)
+        #         if (dern_x, dern_y) != (groupe.centre_x_in_map, groupe.centre_y_in_map):
+        #             groupe_bouge = True
 
         fourmis_bouge = False
 
         for f in self.fourmis:
+            if f.hp <= 0:
+                print("removed")
+                self.fourmis.remove(f)
+                liste_fourmis_jeu_complet.remove(f)
+                # print("fourmi morte")
             if not self.fourmi_dans_groupe(f):
                 dern_x, dern_y = f.centre_x_in_map, f.centre_y_in_map
                 #f.process(dt, self.map_data,tous_les_nids)
                 f.process(dt, self.map_data,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies)
                 if (dern_x, dern_y) != (f.centre_x_in_map, f.centre_y_in_map):
                     fourmis_bouge = True
+                    if f.dans_carte():
+                        self.collecte_fourmi(f)
+
+
+
+
+
+
                 """
                 if f.in_colonie_map_coords is None and f.get_tuile() == self.tuile_debut:
                     ress = f.depot()
@@ -108,12 +122,15 @@ class Colonie:
         for salle in self.graphe.salles:
             salle.process(liste_fourmis_jeu_complet,self,dt)
 
-        if fourmis_bouge or groupe_bouge:
+        if fourmis_bouge: # or groupe_bouge
             self.cache_groupes_a_updater = True
         if self.menu_fourmis_ouvert:
            self.menu_f_a_updater = True
         if self.menu_colonie_ouvert:
             self.menu_a_updater = True
+
+    def check_mort(self):
+        return len(self.fourmis) == 0
 
     def nombre_ouvrieres(self):
         return len([f for f in self.fourmis if isinstance(f, Ouvriere)])
@@ -121,6 +138,19 @@ class Colonie:
     def nombre_soldats(self):
         return len([f for f in self.fourmis if isinstance(f, Soldat)])
 
+    def update_fourmi_tuile(self, fourmi, dern_x, dern_y):
+        if fourmi in self.map_data[int(dern_y)][int(dern_x)].fourmis and self.map_data[int(dern_y)][int(dern_x)].fourmis is not None:
+            self.map_data[int(dern_y)][int(dern_x)].fourmis.remove(fourmi)
+        else:
+            self.map_data[fourmi.get_tuile()[1]][fourmi.get_tuile()[0]].fourmis.append(fourmi)
+
+    def collecte_fourmi(self, f):
+        x, y = f.get_tuile()
+        if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee and (x, y) == (f.target_x_in_map, f.target_y_in_map):
+            ress = self.map_data[y][x].get_ressource()
+            if isinstance(f, Fourmis) and len(f.inventaire) < f.inventaire_taille_max:
+                f.inventaire.append(ress)
+                self.map_data[y][x].collectee = True
 
     def update_menu(self):
         if not self.menu_a_updater or not self.menu_colonie_ouvert:
@@ -214,15 +244,15 @@ class Colonie:
         self.menu_f_a_updater = False
 
 
-    def menu_colonie(self, screen):
+    def menu_colonie(self):
         #print("menu colonie drawn")
         self.update_menu()
-        screen.blit(self.menu_colonie_surface, (screen.get_width() - self.menu_colonie_surface.get_width(), screen.get_height() / 2 - self.menu_colonie_surface.get_height() / 2))
+        self.screen.blit(self.menu_colonie_surface, (self.screen.get_width() - self.menu_colonie_surface.get_width(), self.screen.get_height() / 2 - self.menu_colonie_surface.get_height() / 2))
 
-    def menu_fourmis(self, screen):
+    def menu_fourmis(self):
         #print("menu fourmi drawn")
         self.update_menu_fourmis()
-        screen.blit(self.menu_fourmis_surface, (0, screen.get_height() / 2 - self.menu_fourmis_surface.get_height() / 2))
+        self.screen.blit(self.menu_fourmis_surface, (0, self.screen.get_height() / 2 - self.menu_fourmis_surface.get_height() / 2))
 
 
     def load_sprites(self):
@@ -232,58 +262,62 @@ class Colonie:
             self.sprites.append(sprite)
 
     def update_cache_groupes(self):
-        ants_by_tile = {}
-        for f in self.fourmis:
-            if f.in_colonie_map_coords is None:
-                tuile = f.get_tuile()
-                if tuile not in ants_by_tile:
-                    ants_by_tile[tuile] = []
-                ants_by_tile[tuile].append(f)
-
-        # Track tiles that need updating
-        modif_tuiles = set()
-
-        # Update existing groups or create new ones
-        nouv_groupe = {}
-        for tuile, ants in ants_by_tile.items():
-            # Find existing group at this tile
-            existing_group = next((g for g in self.groupes.values()
-                                   if g.get_tuile() == tuile), None)
-
-            if existing_group:
-                # Update existing group
-                existing_group.fourmis = []
-                for ant in ants:
-                    existing_group.ajouter_fourmis(ant)
-                nouv_groupe[tuile] = existing_group
-            else:
-                # Create new group
-                new_group = Groupe(tuile[0], tuile[1], self.groupe_images)
-                self.groupes[new_group.id] = new_group
-                for ant in ants:
-                    new_group.ajouter_fourmis(ant)
-                nouv_groupe[tuile] = new_group
-
-            # Mark tile as modified
-            if tuile not in self.groupes_cache or self.groupes_cache[tuile] != nouv_groupe[tuile]:
-                modif_tuiles.add(tuile)
-
-        # Find tiles that no longer have groups
-        for tuile in self.groupes_cache:
-            if tuile not in nouv_groupe:
-                modif_tuiles.add(tuile)
-
-        # Clean up empty groups
-        for group_id in list(self.groupes.keys()):
-            group = self.groupes[group_id]
-            if group.est_vide() or group not in nouv_groupe.values():
-                del self.groupes[group_id]
-
-        self.groupes_cache = nouv_groupe
+        self.groupes = {}
+        self.groupes_cache = {}
         self.cache_groupes_a_updater = False
         self.menu_a_updater = True
-
-        self.update_fourmis_tuiles(modif_tuiles)
+        # ants_by_tile = {}
+        # for f in self.fourmis:
+        #     if f.in_colonie_map_coords is None:
+        #         tuile = f.get_tuile()
+        #         if tuile not in ants_by_tile:
+        #             ants_by_tile[tuile] = []
+        #         ants_by_tile[tuile].append(f)
+        #
+        # # Track tiles that need updating
+        # modif_tuiles = set()
+        #
+        # # Update existing groups or create new ones
+        # nouv_groupe = {}
+        # for tuile, ants in ants_by_tile.items():
+        #     # Find existing group at this tile
+        #     existing_group = next((g for g in self.groupes.values()
+        #                            if g.get_tuile() == tuile), None)
+        #
+        #     if existing_group:
+        #         # Update existing group
+        #         existing_group.fourmis = []
+        #         for ant in ants:
+        #             existing_group.ajouter_fourmis(ant)
+        #         nouv_groupe[tuile] = existing_group
+        #     else:
+        #         # Create new group
+        #         new_group = Groupe(tuile[0], tuile[1], self.groupe_images)
+        #         self.groupes[new_group.id] = new_group
+        #         for ant in ants:
+        #             new_group.ajouter_fourmis(ant)
+        #         nouv_groupe[tuile] = new_group
+        #
+        #     # Mark tile as modified
+        #     if tuile not in self.groupes_cache or self.groupes_cache[tuile] != nouv_groupe[tuile]:
+        #         modif_tuiles.add(tuile)
+        #
+        # # Find tiles that no longer have groups
+        # for tuile in self.groupes_cache:
+        #     if tuile not in nouv_groupe:
+        #         modif_tuiles.add(tuile)
+        #
+        # # Clean up empty groups
+        # for group_id in list(self.groupes.keys()):
+        #     group = self.groupes[group_id]
+        #     if group.est_vide() or group not in nouv_groupe.values():
+        #         del self.groupes[group_id]
+        #
+        # self.groupes_cache = nouv_groupe
+        # self.cache_groupes_a_updater = False
+        # self.menu_a_updater = True
+        #
+        # self.update_fourmis_tuiles(modif_tuiles)
 
 
     def update_fourmis_tuiles(self, modif_tuiles):
@@ -301,7 +335,7 @@ class Colonie:
         if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
             ress = self.map_data[y][x].get_ressource()
             groupe = self.get_fourmis_de_groupe(_groupe)
-            if isinstance(groupe, Fourmis) and len(groupe.inventaire) <groupe.inventaire_taille_max:
+            if isinstance(groupe, Fourmis) and len(groupe.inventaire) < groupe.inventaire_taille_max:
                 print("fourmi collecte")
                 groupe.inventaire.append(ress)
                 self.map_data[y][x].collectee = True
@@ -352,26 +386,32 @@ class Colonie:
             self.groupe_images.append(pygame.image.load(trouver_img("UI/"+f"numero-{x}.png")))
 
     def render_ants(self, tile_size, screen, camera):
-        if self.cache_groupes_a_updater:
-            self.update_cache_groupes()
-
-        for tuile, groupe in self.groupes_cache.items():
-            if groupe.get_nb_fourmis() > 1:
-                groupe.update(camera, tile_size)
-                screen.blit(groupe.image, groupe.rect)
-            elif not groupe.est_vide():
-                f = groupe.fourmis[0]
-                if f.in_colonie_map_coords is None:
-                    sprite = self.sprite_dict[f]
-                    sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-                    if screen.get_rect().colliderect(sprite.rect):
-                        #print("fourmi drawn outside")
-                        screen.blit(sprite.image, sprite.rect)
-                else:
-                    sprite = self.sprite_dict[f]
-                    sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-                    if screen.get_rect().colliderect(sprite.rect):
-                        screen.blit(sprite.image, sprite.rect)
+        # if self.cache_groupes_a_updater:
+        #     self.update_cache_groupes()
+        #
+        # for tuile, groupe in self.groupes_cache.items():
+        #     if groupe.get_nb_fourmis() > 1:
+        #         groupe.update(camera, tile_size)
+        #         screen.blit(groupe.image, groupe.rect)
+        #     elif not groupe.est_vide():
+        #         f = groupe.fourmis[0]
+        #         if f.in_colonie_map_coords is None:
+        #             sprite = self.sprite_dict[f]
+        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
+        #             if screen.get_rect().colliderect(sprite.rect):
+        #                 #print("fourmi drawn outside")
+        #                 screen.blit(sprite.image, sprite.rect)
+        #         else:
+        #             sprite = self.sprite_dict[f]
+        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
+        #             if screen.get_rect().colliderect(sprite.rect):
+        #                 screen.blit(sprite.image, sprite.rect)
+        for fourmi in self.fourmis:
+            if fourmi.in_colonie_map_coords is None:
+                sprite = self.sprite_dict[fourmi]
+                sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
+                if screen.get_rect().colliderect(sprite.rect):
+                    screen.blit(sprite.image, sprite.rect)
 
 
     def handle_click(self, pos, tile_x, tile_y, screen):
@@ -401,8 +441,17 @@ class Colonie:
                 self.menu_f_a_updater = True
                 return
 
+        for f in self.fourmis:
+            if f.dans_carte() and f.get_tuile() == (tile_x, tile_y):
+                if self.fourmis_selection == f:
+                    self.fourmis_selection = None
+                else:
+                    self.fourmis_selection = f
+                self.menu_f_a_updater = True
+                return
+
         if tile_x == self.tuile_debut[0] and tile_y == self.tuile_debut[1]:
-            self.menu_colonie(screen)
+            self.menu_colonie()
             return
 
         for key, rect in self.texte_rects.items():
