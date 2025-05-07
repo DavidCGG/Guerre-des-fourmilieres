@@ -176,7 +176,7 @@ class Salle:
 
         return distance <= rayon
 
-    def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self:Colonie, dt):
+    def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self:Colonie, dt,map_data,liste_toutes_colonies):
         if self.type!=TypeSalle.INDEFINI and self.type!=TypeSalle.INTERSECTION:
             def update_menu_top():
                 if self.inventaire_taille_max is not None:
@@ -250,60 +250,99 @@ class Salle:
                     #print("action start")
                     self.fourmi_qui_fait_action=fourmi_temp
                     fourmi_temp.is_busy=True
-
-            for fourmi in listes_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords == colonie_owner_of_self.tuile_debut and (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid, fourmi.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
-                    if fourmi.colonie_origine==colonie_owner_of_self: # action if fourmi is in its own colonie
+            def salle_fourmi_collisions(fourmi_temp):
+                if fourmi_temp.in_colonie_map_coords is not None and fourmi_temp.in_colonie_map_coords == colonie_owner_of_self.tuile_debut and (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi_temp.centre_x_in_nid, fourmi_temp.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
+                    if fourmi_temp.colonie_origine==colonie_owner_of_self: # action if fourmi is in its own colonie
+                        #print("fourmi collide in own colonie")
                         if self.type==TypeSalle.BANQUE:
                             # print("Fourmi dépose")
-                            if len(self.inventaire) < self.inventaire_taille_max and len(fourmi.inventaire) > 0:
-                                self.inventaire.append(fourmi.inventaire.pop(0))
+                            if len(self.inventaire) < self.inventaire_taille_max and len(fourmi_temp.inventaire) > 0:
+                                self.inventaire.append(fourmi_temp.inventaire.pop(0))
                         elif self.type==TypeSalle.THRONE:
-                            collecte_item_selon_inventaire_necessaire(fourmi)
-                            commencer_action(fourmi)
+                            collecte_item_selon_inventaire_necessaire(fourmi_temp)
+                            commencer_action(fourmi_temp)
                         elif self.type==TypeSalle.ENCLUME:
-                            collecte_item_selon_inventaire_necessaire(fourmi)
-                            commencer_action(fourmi)
+                            collecte_item_selon_inventaire_necessaire(fourmi_temp)
+                            commencer_action(fourmi_temp)
                         elif self.type==TypeSalle.MEULE:
-                            collecte_item_selon_inventaire_necessaire(fourmi)
-                            commencer_action(fourmi)
+                            collecte_item_selon_inventaire_necessaire(fourmi_temp)
+                            commencer_action(fourmi_temp)
                         elif self.type==TypeSalle.TRAINING_OUVRIERE:
-                            collecte_item_selon_inventaire_necessaire(fourmi)
-                            commencer_action(fourmi)
+                            collecte_item_selon_inventaire_necessaire(fourmi_temp)
+                            commencer_action(fourmi_temp)
                         elif self.type==TypeSalle.TRAINING_SOLDAT:
-                            collecte_item_selon_inventaire_necessaire(fourmi)
-                            commencer_action(fourmi)
+                            collecte_item_selon_inventaire_necessaire(fourmi_temp)
+                            commencer_action(fourmi_temp)
                     else: #action if fourmi in enemy colonie
-                        if self.type==TypeSalle.THRONE and not fourmi.is_busy:
+                        #print("fourmi collide in enemy")
+                        if self.type==TypeSalle.THRONE and not fourmi_temp.is_busy:
                             #print("attaque reine")
-                            colonie_owner_of_self.hp-=(fourmi.atk_result * dt) / 1000
+                            colonie_owner_of_self.hp-= (fourmi_temp.atk_result * dt) / 1000
                     #action if fourmi in either
+                    #print("fourmi collide in either")
                     if self.type == TypeSalle.SORTIE:
-                        for fourmi in listes_fourmis_jeu_complet:
-                            if fourmi.in_colonie_map_coords is None:
+                        #print("process sortie")
+                        for fourmi_temp in listes_fourmis_jeu_complet:
+                            if fourmi_temp.in_colonie_map_coords is None:
                                 continue
-                            elif fourmi.in_colonie_map_coords != colonie_owner_of_self.tuile_debut:
+                            elif fourmi_temp.in_colonie_map_coords != colonie_owner_of_self.tuile_debut:
                                 continue
 
-                            if (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi.centre_x_in_nid,
-                                                                                            fourmi.centre_y_in_nid)).magnitude() < \
-                                    TypeSalle.SORTIE.value[0]:
-                                if fourmi.a_bouger_depuis_transition_map_ou_nid == False:
+                            if (Vector2(self.noeud.coord[0], self.noeud.coord[1]) - Vector2(fourmi_temp.centre_x_in_nid,fourmi_temp.centre_y_in_nid)).magnitude() < TypeSalle.SORTIE.value[0]:
+                                if fourmi_temp.a_bouger_depuis_transition_map_ou_nid == False:
                                     continue
 
-                                fourmi.in_colonie_map_coords = None
-                                fourmi.centre_x_in_map = colonie_owner_of_self.tuile_debut[0]
-                                fourmi.centre_y_in_map = colonie_owner_of_self.tuile_debut[1]
+                                fourmi_temp.in_colonie_map_coords = None
+                                fourmi_temp.centre_x_in_map = colonie_owner_of_self.tuile_debut[0]
+                                fourmi_temp.centre_y_in_map = colonie_owner_of_self.tuile_debut[1]
 
-                                fourmi.centre_x_in_nid = None
-                                fourmi.centre_y_in_nid = None
-                                fourmi.target_x_in_nid = None
-                                fourmi.target_y_in_nid = None
-                                fourmi.path = []
+                                fourmi_temp.centre_x_in_nid = None
+                                fourmi_temp.centre_y_in_nid = None
+                                fourmi_temp.target_x_in_nid = None
+                                fourmi_temp.target_y_in_nid = None
+                                fourmi_temp.path = []
 
-                                fourmi.a_bouger_depuis_transition_map_ou_nid = False
+                                fourmi_temp.a_bouger_depuis_transition_map_ou_nid = False
+                                if fourmi_temp.target_x_in_map is not None and fourmi_temp.target_y_in_map is not None:
+                                    fourmi_temp.a_bouger_depuis_transition_map_ou_nid = True
                             else:
-                                fourmi.a_bouger_depuis_transition_map_ou_nid = True
+                                fourmi_temp.a_bouger_depuis_transition_map_ou_nid = True
+
+            if self.type == TypeSalle.THRONE: #defense automatique
+                fourmis_a_target=[]
+                fourmis_defenders=[]
+                for fourmi in listes_fourmis_jeu_complet:
+                    if fourmi.in_colonie_map_coords is not None and fourmi.in_colonie_map_coords == colonie_owner_of_self.tuile_debut and fourmi.colonie_origine!=colonie_owner_of_self: #find all enemys in nid
+                        fourmis_a_target.append(fourmi)
+                for fourmi_defender in colonie_owner_of_self.fourmis:#find all friendlies in nid
+                    if (not fourmi_defender.is_busy or fourmi_defender.is_attacking_for_defense_automaique) and fourmi_defender.in_colonie_map_coords is not None and fourmi_defender.in_colonie_map_coords==colonie_owner_of_self.tuile_debut:
+                        fourmis_defenders.append(fourmi_defender)
+                if len(fourmis_a_target)>0 and len(fourmis_defenders)>0:
+                    for i in range(len(fourmis_defenders)):
+                        fourmis_defenders[i].set_attack(fourmis_a_target[i % len(fourmis_a_target)],map_data,liste_toutes_colonies)
+                        fourmis_defenders[i].is_attacking_for_defense_automaique=True
+                elif len(fourmis_a_target)==0:
+                    for fourmi_defender in fourmis_defenders:
+                        #print(fourmi_defender.fourmi_attacking)
+                        if fourmi_defender.is_attacking_for_defense_automaique:
+                            fourmi_defender.fourmi_attacking=None
+                            fourmi_defender.is_attacking_for_defense_automaique=False
+                            fourmi_defender.is_busy=False
+                            fourmi_defender.target_x_in_nid = None
+                            fourmi_defender.target_y_in_nid = None
+                            fourmi_defender.target_x_in_nid_queued = None
+                            fourmi_defender.target_y_in_nid_queued = None
+                            fourmi_defender.target_x_in_map=None
+                            fourmi_defender.target_y_in_map=None
+
+                """
+                for fourmi_defender in fourmis_defenders:
+                    print(fourmi_defender.fourmi_attacking)
+                    if fourmi_defender.fourmi_attacking is not None and fourmi_defender.fourmi_attacking.in_colonie_map_coords is None:
+                        fourmi_defender.fourmi_attacking = None"""
+
+            for fourmi in listes_fourmis_jeu_complet:
+                salle_fourmi_collisions(fourmi)
 
             if self.fourmi_qui_fait_action is not None: #faire action avec fourmi
                 self.temps_ecoule_depuis_debut_action += dt

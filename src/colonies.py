@@ -20,7 +20,7 @@ class Colonie:
         self.graphe=graphe
 
         self.hp=1000
-
+        self.max_hp=1000
         #debug only pour voir si graphe est avec la bonne tuile debut/ colonie
         #self.sortie_coords=None
         for salle in self.graphe.salles:
@@ -34,7 +34,7 @@ class Colonie:
         self.fourmis_selection = None # fourmi selectionnée dans le menu de fourmis
         self.groupe_selection = None
 
-        self.fourmis = [Ouvriere(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.NOIRE, self) for _ in range(1)] + [Soldat(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.NOIRE,self) for _ in range(0)]
+        self.fourmis = [Ouvriere(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.NOIRE, self) for _ in range(1)] + [Soldat(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.NOIRE,self) for _ in range(1)]
         for fourmi in self.fourmis:
             listes_fourmis_jeu_complet.append(fourmi)
         self.groupes = {}
@@ -78,9 +78,9 @@ class Colonie:
         self.groupes_cache = {}
 
         self.tuiles_debut=tuiles_debut_toutes_colonies
+        self.stop_processing_salles_other_than_sortie_when_dead=False
 
-
-    def process(self,dt,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
+    def process(self,dt,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies,map_data):
         # groupe_bouge = False
         # for _, groupe in self.groupes_cache.items():
         #     if groupe.get_nb_fourmis() > 1 and not groupe.est_vide():
@@ -90,7 +90,7 @@ class Colonie:
         #             groupe_bouge = True
 
         fourmis_bouge = False
-
+        """
         for f in self.fourmis:
             if f.hp <= 0:
                 print("removed")
@@ -105,13 +105,11 @@ class Colonie:
                     fourmis_bouge = True
                     if f.dans_carte():
                         self.collecte_fourmi(f)
+        """
+        for f in self.fourmis:
+            f.process(dt, self.map_data,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies)
 
-
-
-
-
-
-                """
+        """
                 if f.in_colonie_map_coords is None and f.get_tuile() == self.tuile_debut:
                     ress = f.depot()
                     self.nourriture += 1 if ress == "pomme" else 0
@@ -120,7 +118,11 @@ class Colonie:
                 """
 
         for salle in self.graphe.salles:
-            salle.process(liste_fourmis_jeu_complet,self,dt)
+            if salle.type.name!="SORTIE":
+                if not self.stop_processing_salles_other_than_sortie_when_dead:
+                    salle.process(liste_fourmis_jeu_complet,self,dt,map_data,liste_toutes_colonies)
+            else:
+                salle.process(liste_fourmis_jeu_complet,self,dt,map_data,liste_toutes_colonies)
 
         if fourmis_bouge: # or groupe_bouge
             self.cache_groupes_a_updater = True
@@ -205,13 +207,13 @@ class Colonie:
 
 
         if self.curr_tab == "Ouvrières":
-            fourmis = [f for f in self.fourmis if isinstance(f, Ouvriere)]
+            fourmis_temp = [f for f in self.fourmis if isinstance(f, Ouvriere)]
         else:
-            fourmis = [f for f in self.fourmis if isinstance(f, Soldat)]
+            fourmis_temp = [f for f in self.fourmis if isinstance(f, Soldat)]
 
 
 
-        for fourmi in fourmis:
+        for fourmi in fourmis_temp:
             if isinstance(fourmi, Ouvriere):
                 sprite_sheet = self.sprite_sheet_ouvr
             elif isinstance(fourmi, Soldat):
@@ -385,7 +387,10 @@ class Colonie:
         for x in range(2,6):
             self.groupe_images.append(pygame.image.load(trouver_img("UI/"+f"numero-{x}.png")))
 
-    def render_ants(self, tile_size, screen, camera):
+    def render_ants(self, tile_size, screen, camera,dt):
+        for fourmi in self.fourmis:
+            fourmi.draw_in_map(dt,screen,camera)
+        """
         # if self.cache_groupes_a_updater:
         #     self.update_cache_groupes()
         #
@@ -412,7 +417,7 @@ class Colonie:
                 sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
                 if screen.get_rect().colliderect(sprite.rect):
                     screen.blit(sprite.image, sprite.rect)
-
+        """
 
     def handle_click(self, pos, tile_x, tile_y, screen):
         if self.map_data[tile_y][tile_x].fourmis is not None:

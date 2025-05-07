@@ -173,6 +173,7 @@ class Fourmis(ABC):
         self.target_y_in_nid_queued = None
 
         self.fourmi_attacking = None
+        self.is_attacking_for_defense_automaique=False
 
         self.digging = False
         self.ready_to_dig = False
@@ -180,13 +181,18 @@ class Fourmis(ABC):
         self.digging_target_y = None
 
     def set_attack(self, fourmi_target,map_data,liste_toutes_colonies):
-        print("fourmi attack set")
+        #print("fourmi attack set")
         self.fourmi_attacking = fourmi_target
+        self.is_busy=False
         if fourmi_target.in_colonie_map_coords is None:
-            self.set_target_in_map(fourmi_target.centre_x_in_map,fourmi_target.centre_y_in_map,map_data,liste_toutes_colonies)
+            self.set_target_in_map(round(fourmi_target.centre_x_in_map),round(fourmi_target.centre_y_in_map),map_data,liste_toutes_colonies)
         else:
-            self.set_target_in_nid((fourmi_target.centre_x_in_nid,fourmi_target.centre_y_in_nid),fourmi_target.colonie_origine,map_data,liste_toutes_colonies)
-        self.fourmi_attacking = None
+            colonie_target=None
+            for colonie in liste_toutes_colonies:
+                if colonie==fourmi_target.colonie_origine:
+                    colonie_target=colonie
+            self.set_target_in_nid((round(fourmi_target.centre_x_in_nid),round(fourmi_target.centre_y_in_nid)),colonie_target,map_data,liste_toutes_colonies)
+        #self.fourmi_attacking = None
 
     def in_map(self):
         if self.in_colonie_map_coords is None:
@@ -297,13 +303,16 @@ class Fourmis(ABC):
 
         def process_attaque():
             if self.hp <= 0:
+                print(self)
+                print(liste_fourmis_jeu_complet)
                 liste_fourmis_jeu_complet.remove(self)
                 self.colonie_origine.fourmis.remove(self)
                 print("fourmi morte")
             if self.fourmi_attacking is not None:  # attack fourmi
+                #print("process attaque")
+                self.set_attack(self.fourmi_attacking,map_data,liste_toutes_colonies)
                 if self.fourmi_attacking.in_colonie_map_coords is None and self.in_colonie_map_coords is None:  # if both in map
-                    if (Vector2(self.fourmi_attacking.centre_x_in_map, self.fourmi_attacking.centre_y_in_map) - Vector2(
-                            self.centre_x_in_map, self.centre_y_in_map)).magnitude() <= 1:  # if closer or equal to 1
+                    if (Vector2(self.fourmi_attacking.centre_x_in_map, self.fourmi_attacking.centre_y_in_map) - Vector2(self.centre_x_in_map, self.centre_y_in_map)).magnitude() <= 1:  # if closer or equal to 1
                         # set all targets to none
                         self.target_x_in_nid = None
                         self.target_y_in_nid = None
@@ -352,13 +361,22 @@ class Fourmis(ABC):
                 if not self.is_busy:  # if self has stopped moving but is not busy=is not attacking
                     # set target to fourmi attacking
                     if self.fourmi_attacking.in_colonie_map_coords is None:
-                        self.set_target_in_map(self.fourmi_attacking.centre_x_in_map,
-                                               self.fourmi_attacking.centre_y_in_map, map_data, liste_toutes_colonies)
+                        self.set_target_in_map(self.fourmi_attacking.centre_x_in_map,self.fourmi_attacking.centre_y_in_map, map_data, liste_toutes_colonies)
                     else:
-                        self.set_target_in_nid(
-                            (self.fourmi_attacking.centre_x_in_nid, self.fourmi_attacking.centre_y_in_nid),
-                            self.fourmi_attacking.in_colonie_map_coords, map_data, liste_toutes_colonies)
+                        self.set_target_in_nid((self.fourmi_attacking.centre_x_in_nid, self.fourmi_attacking.centre_y_in_nid),self.fourmi_attacking.in_colonie_map_coords, map_data, liste_toutes_colonies)
+        def process_pickup():
+            if map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].tuile_ressource and not map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].collectee:
+               #print("on ressource")
+               #print(len(self.inventaire))
+               if len(self.inventaire)<self.inventaire_taille_max:
+                   #print(map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].get_ressource())
+                   self.inventaire.append(map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].get_ressource())
+                   map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].collectee=True
+                   print("item collecte")
 
+        if self.in_colonie_map_coords is None:
+            #print("in map")
+            process_pickup()
         process_attaque()
         in_map = self.in_map()
         if in_map:
@@ -644,6 +662,30 @@ class Fourmis(ABC):
                 self.menu.blit(image_item,(5+i*100,5))
             menu_transformed = pygame.transform.scale(self.menu, (self.menu.get_width() * camera.zoom, self.menu.get_height() * camera.zoom))
             screen.blit(menu_transformed, camera.apply((self.centre_x_in_nid - self.menu.get_width() / 2,self.centre_y_in_nid - self.sprite.image.get_height()/2/camera.zoom - self.menu.get_height())))
+
+    def draw_in_map(self,dt,screen,camera):
+        #print("fourmi drawn")
+        #image_scaled = pygame.transform.scale(self.image,(self.image.get_width()*camera.zoom,self.image.get_height()*camera.zoom))
+        tile_size=32
+        self.sprite.update(dt,camera,tile_size,True)
+        screen_pos = camera.apply((self.centre_x_in_map*tile_size, self.centre_y_in_map*tile_size))
+        if self.is_selected:
+            pygame.draw.rect(self.sprite.image,GREEN,(0,0,self.sprite.image.get_width(),self.sprite.image.get_height()),int(5*camera.zoom))
+        scaled_sprite_image=pygame.transform.scale(self.sprite.image,(tile_size*camera.zoom,tile_size*camera.zoom))
+        screen.blit(scaled_sprite_image, (screen_pos[0], screen_pos[1]))
+
+        if self.menu_is_ouvert:
+            self.menu=pygame.Surface((5+self.inventaire_taille_max * (100 + 5),5+100+5))
+            self.menu.fill(BLACK)
+            case_inventaire = pygame.Surface((100, 100))
+            case_inventaire.fill(BROWN)
+            for i in range(self.inventaire_taille_max):
+                self.menu.blit(case_inventaire,(5+i*100,5))
+            for i in range(len(self.inventaire)):
+                image_item=pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]),(100,100))
+                self.menu.blit(image_item,(5+i*100,5))
+            menu_transformed = pygame.transform.scale(self.menu, (self.menu.get_width() * camera.zoom/32, self.menu.get_height() * camera.zoom/32))
+            screen.blit(menu_transformed, camera.apply((self.centre_x_in_map * tile_size - self.menu.get_width() / 2,self.centre_y_in_map * tile_size - self.sprite.image.get_height()/2/camera.zoom - self.menu.get_height())))
 
 
 class Ouvriere(Fourmis):
