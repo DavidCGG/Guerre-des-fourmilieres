@@ -68,7 +68,7 @@ class Carte:
     
         def transformer_tuiles():
             """Transforme les tuiles de la carte en fonction de la valeur du bruit"""
-            noise_gen = RandomNoise(self.MAP_WIDTH, self.MAP_HEIGHT, 255, extra=65)
+            noise_gen = RandomNoise(self.MAP_WIDTH, self.MAP_HEIGHT, 255, extra=32)
             noise_gen.randomize()
             vals_noise = noise_gen.smoothNoise2d(smoothing_passes=20, upper_value_limit=1)
             
@@ -143,7 +143,7 @@ class Carte:
         set_tuiles_debut(liste_fourmis_jeu_complet)
         self.colonies[0].screen = self.screen
 
-    def draw(self, screen):
+    def draw(self, screen, dt):
         def etoile_tuile_debut():
             """Dessine une étoile sur la tuile de début de la colonie"""
             tile_size = (self.TILE_SIZE * self.camera.zoom)
@@ -169,11 +169,11 @@ class Carte:
                 for x in range(start_x, end_x):
                     tile = self.map_data[y][x]
                     tile_rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
-                    tile.draw(screen, self.camera.apply_rect(tile_rect), self.grid_mode)
-                    if self.colonies[0].fourmis_selection and self.colonies[0].fourmis_selection.centre_x_in_map is not None and self.colonies[0].fourmis_selection.centre_y_in_map is not None:
+                    tile.draw(screen, self.camera.apply_rect(tile_rect), self.grid_mode, dt)
+                    if self.colonies[0].fourmis_selection:
                         if self.hover_tuile == (x, y):
                             pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
-                        if self.colonies[0].fourmis_selection.get_tuile() == (x, y):
+                        if self.colonies[0].fourmis_selection.centre_x_in_map is not None and self.colonies[0].fourmis_selection.centre_y_in_map is not None and self.colonies[0].fourmis_selection.get_tuile() == (x, y):
                             pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
                     if self.colonies[0].groupe_selection:
                         if self.hover_tuile == (x, y):

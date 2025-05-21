@@ -255,7 +255,7 @@ class Fourmis(ABC):
             self.centre_y_in_map = None
             self.centre_x_in_map = None
             for salle in nid.graphe.salles:
-                if salle.type.value[1] == "sortie":
+                if salle.type.value[1] == "Sortie":
                     self.centre_x_in_nid = salle.noeud.coord[0]
                     self.centre_y_in_nid = salle.noeud.coord[1]
 
@@ -303,8 +303,6 @@ class Fourmis(ABC):
 
         def process_attaque():
             if self.hp <= 0:
-                print(self)
-                print(liste_fourmis_jeu_complet)
                 liste_fourmis_jeu_complet.remove(self)
                 self.colonie_origine.fourmis.remove(self)
                 print("fourmi morte")
@@ -451,7 +449,7 @@ class Fourmis(ABC):
         else:  # set target in nid from other nid
             current_colonie = self.get_colonie_actuelle(colonies)
             for salle in current_colonie.graphe.salles:
-                if salle.type.value[1] == "sortie":
+                if salle.type.value[1] == "Sortie":
                     self.set_target_in_nid(salle.noeud.coord, current_colonie, map_data, colonies)
 
             self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)
@@ -476,7 +474,7 @@ class Fourmis(ABC):
             # set target vers la sortie du nid
             current_colonie = self.get_colonie_actuelle(colonies)
             for salle in current_colonie.graphe.salles:
-                if salle.type.value[1] == "sortie":
+                if salle.type.value[1] == "Sortie":
                     self.set_target_in_nid(salle.noeud.coord, current_colonie, map_data, colonies)
 
     def goto_target(self, dt, map_data, nids):
