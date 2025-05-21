@@ -28,15 +28,11 @@ class Nid:
         self.colonie_owner=colonie_owner
         self.tuile_debut=colonie_owner.tuile_debut
         self.graphe = graphe
-        #print(str(screen.get_width()) + str(screen.get_height()))
         self.camera = Camera(screen.get_width(), screen.get_height(), MAP_LIMIT_X, MAP_LIMIT_Y)
 
         self.image_terre = pygame.image.load(trouver_img("Monde/terre.png"))
-        #self.image_terre = pygame.transform.scale(self.image_terre,(self.image_terre.get_width()*screen.get_height()/720,self.image_terre.get_height()*screen.get_height()/720))
         self.image_terre_sombre = pygame.image.load(trouver_img("Monde/terre_sombre.png"))
-        #self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (self.image_terre_sombre.get_width() * screen.get_height() / 720,self.image_terre_sombre.get_height() * screen.get_height() / 720))
         self.image_ciel = pygame.image.load(trouver_img("Monde/ciel32x32.png"))
-        #self.image_ciel = pygame.transform.scale(self.image_ciel, (self.image_ciel.get_width() * screen.get_height() / 720,self.image_ciel.get_height() * screen.get_height() / 720))
         self.scale=4*screen.get_height()/720
 
         self.scale_images(self.scale)
@@ -46,7 +42,7 @@ class Nid:
 
         self.salles_sorties=[]
         for salle in self.graphe.salles:
-            if salle.type.value[1] == "sortie":
+            if salle.type.value[1] == "Sortie":
                 self.salles_sorties.append(salle)
                                
     def scale_images(self, scale, initial_sky_scaling = False) -> None:
@@ -75,15 +71,11 @@ class Nid:
                     screen.blit(self.image_terre , screen_pos)
 
         def draw_ciel() -> None:
-            #print(self.SKY_TILE_SIZE,end=",")
             for x in range(0, MAP_LIMIT_X, self.SKY_TILE_SIZE):
-                #print(x, end=",")
                 screen_pos = self.camera.apply((x, 0))
                 #screen_pos = (int(screen_pos[0]/2), int(screen_pos[1]/2))
                 #screen_pos = (int(screen_pos[0]*720/screen.get_height()),int(screen_pos[1]*720/screen.get_height()))
-                #print(screen_pos, end="")
                 screen.blit(self.image_ciel, screen_pos)
-            #print()
 
         def draw_nid() -> None: 
             mask_surface = pygame.Surface((MAP_LIMIT_X, MAP_LIMIT_Y), pygame.SRCALPHA)
@@ -124,7 +116,6 @@ class Nid:
 
         def draw_fourmis() -> None:
             for fourmi in liste_fourmis_jeu_complet:
-                #print(str(fourmi.in_colonie_map_coords)+","+str(self.tuile_debut))
                 if fourmi.in_colonie_map_coords==self.tuile_debut:
                     fourmi.draw_in_nid(dt,screen,self.camera)
 
@@ -210,17 +201,19 @@ class Nid:
                     continue
 
                 fourmi.menu_is_ouvert = not fourmi.menu_is_ouvert
+                if fourmi == colonie_joueur.fourmis_selection:
+                    colonie_joueur.fourmis_selection = None
+                else:
+                    colonie_joueur.fourmis_selection = fourmi
 
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_d]:
                     fourmi.digging = not fourmi.digging
-                    print(f"{fourmi.digging=}")
 
                 return
 
             for salle in self.graphe.salles:
-                if (event.pos-Vector2(self.camera.apply(salle.noeud.coord))).magnitude() < salle.type.value[0]*self.camera.zoom and salle.type.value[1]!="salle" and salle.type.value[1]!="sortie" and salle.type.value[1]!="intersection" and salle.type.value[1]!="indéfini":
-                    #print("salle "+salle.type.value[1]+" clické")
+                if (event.pos-Vector2(self.camera.apply(salle.noeud.coord))).magnitude() < salle.type.value[0]*self.camera.zoom:
                     salle.menu_is_ouvert = not salle.menu_is_ouvert
 
                 if salle.type == TypeSalle.INDEFINI and salle.menu_is_ouvert and salle.menu_centre is not None:
@@ -238,8 +231,6 @@ class Nid:
                         salle.type_specific_stats_update()
                         salle.menu_centre = None
 
-                        print(index)
-                        print(salle.type.name)
 
         def handle_right_click(pos,map_data,liste_toutes_colonies):
             # set target of fourmi

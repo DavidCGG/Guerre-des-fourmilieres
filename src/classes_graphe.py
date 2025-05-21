@@ -186,7 +186,7 @@ class Salle:
 
         return distance <= rayon
 
-    def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self:Colonie, dt):
+    def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self:Colonie, dt, map_data, liste_toutes_colonies):
         if self.type!=TypeSalle.INTERSECTION:
             def update_menu_centre():
                 # Menu settings
@@ -254,7 +254,7 @@ class Salle:
                         for i in range(len(self.inventaire)):
                             image_item = pygame.transform.scale(pygame.image.load(self.inventaire[i].value[1]), (100, 100))
                             self.menu_top.blit(image_item, (5 + (i % 5) * (100 + 5), 5 + math.floor(i / 5) * (100 + 5)))
-                else:
+                elif self.inventaire_necessaire is not None:
                     self.menu_top = pygame.Surface((5 + len(self.inventaire_necessaire) * (100 + 5), 5 + 100 + 5))
                     self.menu_top.fill(BLACK)
                     for i in range(len(self.inventaire_necessaire)):
@@ -282,7 +282,6 @@ class Salle:
             
             def commencer_action(fourmi_temp):
                 if self.inventaire==self.inventaire_necessaire and not fourmi_temp.is_busy and self.fourmi_qui_fait_action is None:
-                    #print("action start")
                     self.fourmi_qui_fait_action=fourmi_temp
                     fourmi_temp.is_busy=True
             def salle_fourmi_collisions(fourmi_temp):

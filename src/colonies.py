@@ -119,11 +119,11 @@ class Colonie:
                 """
 
         for salle in self.graphe.salles:
-            if salle.type.name!="SORTIE":
+            if salle.type.value[1] != "Sortie":
                 if not self.stop_processing_salles_other_than_sortie_when_dead:
-                    salle.process(liste_fourmis_jeu_complet,self,dt,map_data,liste_toutes_colonies)
+                    salle.process(liste_fourmis_jeu_complet,self,dt, map_data, liste_toutes_colonies)
             else:
-                salle.process(liste_fourmis_jeu_complet,self,dt,map_data,liste_toutes_colonies)
+                salle.process(liste_fourmis_jeu_complet,self,dt, map_data, liste_toutes_colonies)
 
         if fourmis_bouge: # or groupe_bouge
             self.cache_groupes_a_updater = True
@@ -536,65 +536,6 @@ class Colonie:
             self.update_menu_fourmis()
         else: self.scrolling = False
 
-class PrototypeIA:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Prototype IA")
-
-        self.colonie_ia = ColonieIA(0, (0, 0))
-
-        # Creation de frames pour joueur et IA
-        self.player_frame = tk.Frame(root)
-        self.player_frame.pack(side="left", padx=10, pady=10)
-
-        self.ai_frame = tk.Frame(root)
-        self.ai_frame.pack(side="right", padx=10, pady=10)
-
-        # Labels pour joueur et IA
-        player_label = tk.Label(self.player_frame, text="Joueur", font=("Arial", 14))
-        player_label.pack(pady=5)
-
-        ai_label = tk.Label(self.ai_frame, text="IA", font=("Arial", 14))
-        ai_label.pack(pady=5)
-
-        # Inputs pour joueur
-        self.player_inputs = {}
-        self.create_input("Ouvrières:", "player_ouvr", self.player_inputs, self.player_frame)
-        self.create_input("Soldats:", "player_sold", self.player_inputs, self.player_frame)
-        self.create_input("Nourriture:", "player_nourr", self.player_inputs, self.player_frame)
-
-        # Bouton pour mettre à jour l'IA
-        self.update_button = tk.Button(root, text="Update IA", command=self.update_ai)
-        self.update_button.pack(side="bottom", pady=10)
-
-        # Label pour l'état de l'IA
-        self.ai_state_label = tk.Label(root, text=f"État: {self.colonie_ia.state}", font=("Arial", 12))
-        self.ai_state_label.pack(side="bottom", pady=10)
-
-        # Meme input pour l'IA
-        self.ai_inputs = {}
-        self.create_input("Ouvrières:", "ai_ouvr", self.ai_inputs, self.ai_frame)
-        self.create_input("Soldats:", "ai_sold", self.ai_inputs, self.ai_frame)
-        self.create_input("Nourriture:", "ai_nourr", self.ai_inputs, self.ai_frame)
-
-
-
-    def create_input(self, label_text, key, input_dict, frame):
-        sub_frame = tk.Frame(frame)
-        sub_frame.pack(pady=5)
-        label = tk.Label(sub_frame, text=label_text)
-        label.pack(side="left")
-        entry = tk.Entry(sub_frame)
-        entry.pack(side="right")
-        input_dict[key] = entry
-
-    def update_ai(self):
-        player_data = {key: entry.get() or "0" for key, entry in self.player_inputs.items()}
-        ia_data = {key: entry.get() or "0" for key, entry in self.ai_inputs.items()}
-
-        self.colonie_ia.check_state_transition(player_data, ia_data)
-        self.ai_state_label.config(text=f"État: {self.colonie_ia.state}")
-
 class ColonieIA:
     def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,listes_fourmis_jeu_complet):
         self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_rouge.png")).convert_alpha()
@@ -613,11 +554,12 @@ class ColonieIA:
         # debug only pour voir si graphe est avec la bonne tuile debut/ colonie
         # self.sortie_coords=None
         for salle in self.graphe.salles:
-            # print(salle.type.value[1])
-            if salle.type.value[1] == "sortie":
+            if salle.type.value[1] == "Sortie":
                 self.sortie_coords = salle.noeud.coord
-            elif salle.type.value[1] == "throne":
+            elif salle.type.value[1] == "Throne":
                 self.throne_coords = salle.noeud.coord
+            elif salle.type.value[1] == "Banque":
+                self.banque_coords = salle.noeud.coord
 
         self.fourmis = [Ouvriere(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.ROUGE, self) for _ in
                         range(2)] + [Soldat(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.ROUGE, self) for
@@ -634,6 +576,7 @@ class ColonieIA:
         self.load_sprites()
 
         self.tuiles_debut = tuiles_debut_toutes_colonies
+        self.tuiles_ressource = set()
         self.liste_fourmis_jeu_complet = listes_fourmis_jeu_complet
         self.toutes_colonies = None
 
@@ -651,9 +594,7 @@ class ColonieIA:
 
 
         for f in self.fourmis:
-            if f.hp <= 0:
-                self.fourmis.remove(f)
-                liste_fourmis_jeu_complet.remove(f)
+
                 # print("fourmi morte")
             dern_x, dern_y = f.centre_x_in_map, f.centre_y_in_map
             # f.process(dt, self.map_data,tous_les_nids)
@@ -668,12 +609,10 @@ class ColonieIA:
             salle.process(liste_fourmis_jeu_complet,self,dt, map_data, liste_toutes_colonies)
 
     def choix(self):
-        print("CHOIX")
         if self.en_danger():
             print("EN DANGER")
             self.envoyer_fourmis_dans_nid()
         else:
-            print("MEILLEURE ACTIOn")
             self.meilleure_action()
 
     def meilleure_action(self):
@@ -682,7 +621,6 @@ class ColonieIA:
 
     def check_nourriture(self):
         if self.nourriture < len(self.get_fourmis_type()[0]):
-            print("TRUE")
             return True
         return False
 
@@ -697,14 +635,13 @@ class ColonieIA:
 
     def chercher_nourriture(self):
         tuiles = self.trouver_tuiles_ressources()
-        print(len(tuiles))
         partie = int(len(self.get_fourmis_type()[0]) * 0.65)
         ouvr_a_envoyer = random.sample(self.get_fourmis_type()[0], partie)
         for f in ouvr_a_envoyer:
-            if (f.target_x_in_map is None and f.target_y_in_map is None) and len(f.inventaire) < f.inventaire_taille_max:
-                tuile = random.choice(tuiles)
-                f.set_target_in_map(tuile[0], tuile[1], self.map_data, self.toutes_colonies)
-                print("target set")
+            if not f.is_busy:
+                if (f.target_x_in_map is None and f.target_y_in_map is None) and len(f.inventaire) < f.inventaire_taille_max:
+                    tuile = random.choice(tuiles)
+                    f.set_target_in_map(tuile[0], tuile[1], self.map_data, self.toutes_colonies)
 
 
 
@@ -727,7 +664,7 @@ class ColonieIA:
         tot = 0
         f_dans_nid = []
         for f in self.fourmis:
-            if f.in_colonie_map_coords is not None:
+            if f.in_colonie_map_coords == self.tuile_debut:
                 tot += 1
                 f_dans_nid.append(f)
         return (tot, f_dans_nid)
@@ -757,7 +694,6 @@ class ColonieIA:
             if len(f.inventaire) < f.inventaire_taille_max:
                 f.inventaire.append(ress)
                 self.map_data[y][x].collectee = True
-                print("collected")
                 f.set_target_in_nid(self.throne_coords, self, self.map_data, self.toutes_colonies)
 
     def load_sprites(self):
@@ -793,11 +729,3 @@ class ColonieIA:
                 if screen.get_rect().colliderect(sprite.rect):
                     screen.blit(sprite.image, sprite.rect)
 
-
-
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = PrototypeIA(root)
-    root.mainloop()

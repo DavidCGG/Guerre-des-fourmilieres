@@ -16,7 +16,7 @@ class RandomNoise:
         self.n = [[random.randint(0, self.bit_depth) / self.bit_depth for y in range(self.h)] for x in range(self.w)]
 
     def noise2d(self, x, y):
-        return self.n[x][y]
+        return self.n[y][x]
 
     def smoothNoise2d(self, bit_depth=255, smoothing_passes=15, upper_value_limit=1):
         """
