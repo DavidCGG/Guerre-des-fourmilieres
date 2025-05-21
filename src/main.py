@@ -1,11 +1,12 @@
 import ast
 import os
 import random
+import venv_setup
 
 import pygame
 import carte as carte
 import affichage_nid as nid
-from config import trouver_font, trouver_img, trouver_audio
+from config import trouver_font, trouver_img
 #from config import SCREEN_WIDTH, SCREEN_HEIGHT
 from config import WHITE, BLACK, YELLOW
 from config import Bouton
@@ -206,7 +207,7 @@ def draw(dt) -> None:
     elif in_menu_options:
         draw_fullscreen_menu(liste_options_menu_options)
     elif in_carte and not in_menu_secondaire:
-        carte_jeu.draw(screen)
+        carte_jeu.draw(screen, dt)
         for colonie in carte_jeu.colonies:
             for fourmi_to_draw_in_map in colonie.fourmis:
                 if fourmi_to_draw_in_map.in_colonie_map_coords is None:

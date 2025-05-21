@@ -25,6 +25,7 @@ class Tuile:
 
         self.tuile_ressource = self.rand_ressource()
         self.collectee = False if self.tuile_ressource else None
+        self.timer = 0
         self.image_metal = pygame.image.load(trouver_img("Items/metal.png")).convert_alpha() if self.tuile_ressource else None
         self.image_pomme = pygame.image.load(trouver_img("Items/pomme.png")).convert_alpha() if self.tuile_ressource else None
         self.image_bois = pygame.image.load(trouver_img("Items/bois.png")).convert_alpha() if self.tuile_ressource else None
@@ -58,7 +59,12 @@ class Tuile:
             self.color = WHITE
 
 
-    def draw(self, screen, rect, grid_mode):
+    def draw(self, screen, rect, grid_mode, dt):
+        if self.collectee:
+            self.timer += dt
+        if self.timer >= 5000:
+            self.collectee = False
+            self.timer = 0
 
         if self.color!=self.last_color:
             #modifie la texture noise pour donner la couleur
