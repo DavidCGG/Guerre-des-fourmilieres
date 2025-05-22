@@ -20,7 +20,7 @@ class Nid:
     """
     Représente un des nids
     Attributs :
-        graphe (Graphe): Graphe contenant les salles et tunnels du nid
+        graphe (menu_centre): Graphe contenant les salles et tunnels du nid
         camera (Camera): Caméra pour le zoom et le déplacement
     """
 
@@ -223,11 +223,11 @@ class Nid:
                     if ((pos_noeud[0] - largeur_menu < event.pos[0] and pos_noeud[0] + largeur_menu > event.pos[0])
                         and (pos_noeud[1] - hauteur_menu < event.pos[1] and pos_noeud[1] + hauteur_menu > event.pos[1])):
                         hauteur_case = hauteur_menu / len(salle.liste_types_salles)
-                        index = 0
-                        while pos_noeud[1] - hauteur_menu / 2 + index * hauteur_case < event.pos[1]:
-                            index += 1
+                        rel_y = event.pos[1] - (pos_noeud[1] - hauteur_menu / 2)
+                        index = int(rel_y // hauteur_case)
+                        index = max(0, min(index, len(salle.liste_types_salles) - 1))
 
-                        salle.type = salle.liste_types_salles[index - 1]
+                        salle.type = salle.liste_types_salles[index]
                         salle.type_specific_stats_update()
                         salle.menu_centre = None
 

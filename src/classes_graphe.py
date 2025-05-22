@@ -5,7 +5,6 @@ import pygame
 from pygame import Vector2
 
 from config import trouver_img, trouver_font, WHITE, TypeItem, BLACK, BROWN, GRAY
-from colonies import Colonie
 from fourmi import CouleurFourmi, Ouvriere, Soldat
 
 
@@ -186,7 +185,7 @@ class Salle:
 
         return distance <= rayon
 
-    def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self:Colonie, dt, map_data, liste_toutes_colonies):
+    def process(self, listes_fourmis_jeu_complet, colonie_owner_of_self, dt, map_data, liste_toutes_colonies):
         if self.type!=TypeSalle.INTERSECTION:
             def update_menu_centre():
                 # Menu settings
@@ -446,7 +445,7 @@ class Salle:
     def on_click_action(self):
         self.menu_is_ouvert = not self.menu_is_ouvert
 
-    def draw_menu(self,screen,camera,colonie_owner:Colonie):
+    def draw_menu(self,screen,camera,colonie_owner):
         def draw_menu_top():
             menu_transformed=pygame.transform.scale(self.menu_top, (self.menu_top.get_width() * camera.zoom, self.menu_top.get_height() * camera.zoom))
             screen.blit(menu_transformed, camera.apply((self.noeud.coord[0] - self.menu_top.get_width() / 2, self.noeud.coord[1] - self.type.value[0] - self.menu_top.get_height())))

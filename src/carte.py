@@ -119,7 +119,7 @@ class Carte:
                     x = random.randint(region_x, region_x + region_size - 1)
                     y = random.randint(region_y, region_y + region_size - 1)
                     if isinstance(self.map_data[y][x], (Terre, Montagne)):
-                        self.map_data[y][x].tuile_debut_joueur = True
+                        self.map_data[y][x].tuile_debut = True
                         self.map_data[y][x].color = self.couleurs_colonies[curr_couleur]
                         #placed = True
                         curr_couleur += 1
@@ -139,7 +139,7 @@ class Carte:
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(min_dist=20,region_size=15)
+        placer_colonies(min_dist=20,region_size=30)
         set_tuiles_debut(liste_fourmis_jeu_complet)
         self.colonies[0].screen = self.screen
 
