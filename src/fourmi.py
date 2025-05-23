@@ -240,7 +240,9 @@ class Fourmis(ABC):
             if not_at_target and self.target_x_in_map is not None and self.target_y_in_map is not None:
                 self.a_bouger_depuis_transition_map_ou_nid = True
                 self.goto_target(dt, map_data, nids)
+
             else:
+
                 self.is_moving = False
                 #self.is_busy = False
                 self.target_x_in_map = None
@@ -363,13 +365,11 @@ class Fourmis(ABC):
                     else:
                         self.set_target_in_nid((self.fourmi_attacking.centre_x_in_nid, self.fourmi_attacking.centre_y_in_nid),self.fourmi_attacking.in_colonie_map_coords, map_data, liste_toutes_colonies)
         def process_pickup():
-            if map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].tuile_ressource and not map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].collectee:
-               #print("on ressource")
-               #print(len(self.inventaire))
+            if map_data[int(self.centre_y_in_map)][int(self.centre_x_in_map)].tuile_ressource and not map_data[int(self.centre_y_in_map)][int(self.centre_x_in_map)].collectee:
                if len(self.inventaire)<self.inventaire_taille_max and self.target_y_in_map is None and self.target_x_in_map is None:
                    #print(map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].get_ressource())
                    self.inventaire.append(map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].get_ressource())
-                   map_data[round(self.centre_y_in_map)][round(self.centre_x_in_map)].collectee=True
+                   map_data[int(self.centre_y_in_map)][int(self.centre_x_in_map)].collectee=True
                    print("item collecte")
         if self.hp<=self.hp_max:
             self.hp+=dt/1000

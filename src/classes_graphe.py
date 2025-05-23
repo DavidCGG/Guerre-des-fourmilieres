@@ -380,7 +380,6 @@ class Salle:
             if self.fourmi_qui_fait_action is not None: #faire action avec fourmi
                 self.temps_ecoule_depuis_debut_action += dt
                 if self.temps_ecoule_depuis_debut_action >= self.temps_pour_action:
-                    print("action accomplie")
                     if self.type == TypeSalle.THRONE:
                         self.inventaire=[None,None]
                         self.fourmi_qui_fait_action.inventaire.append(TypeItem.OEUF)
@@ -392,12 +391,12 @@ class Salle:
                         self.fourmi_qui_fait_action.inventaire.append(TypeItem.EPEE)
                     elif self.type == TypeSalle.TRAINING_OUVRIERE:
                         self.inventaire = [None, None, None]
-                        nouvelle_fourmi=Ouvriere(self.noeud.coord[0], self.noeud.coord[1], CouleurFourmi.NOIRE, colonie_owner_of_self)
+                        nouvelle_fourmi=Ouvriere(self.noeud.coord[0], self.noeud.coord[1], colonie_owner_of_self.couleure_fourmi, colonie_owner_of_self)
                         colonie_owner_of_self.fourmis.append(nouvelle_fourmi)
                         listes_fourmis_jeu_complet.append(nouvelle_fourmi)
                     elif self.type == TypeSalle.TRAINING_SOLDAT:
                         self.inventaire = [None, None, None]
-                        nouvelle_fourmi = Soldat(self.noeud.coord[0], self.noeud.coord[1], CouleurFourmi.NOIRE,colonie_owner_of_self)
+                        nouvelle_fourmi = Soldat(self.noeud.coord[0], self.noeud.coord[1], colonie_owner_of_self.couleure_fourmi,colonie_owner_of_self)
                         colonie_owner_of_self.fourmis.append(nouvelle_fourmi)
                         listes_fourmis_jeu_complet.append(nouvelle_fourmi)
                     self.fourmi_qui_fait_action.is_busy = False
