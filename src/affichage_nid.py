@@ -4,9 +4,7 @@ from pygame import Vector2
 from camera import Camera
 from generation_graphe import generer_graphe
 from config import trouver_font, trouver_img, AQUA
-#from config import SCREEN_WIDTH, SCREEN_HEIGHT
-from fourmi import FourmisSprite, CouleurFourmi
-from fourmi import Fourmis,Ouvriere,Soldat
+from fourmi_types import Ouvriere, Soldat
 from classes_graphe import TypeSalle
 from colonies import Colonie
 
@@ -14,7 +12,6 @@ from colonies import Colonie
 MAP_LIMIT_X: int = 4000
 MAP_LIMIT_Y: int = 2250
 HAUTEUR_SOL: int = 128
-NB_SALLES_INITIALES: int = 3
 
 class Nid:
     """
@@ -25,8 +22,8 @@ class Nid:
     """
 
     def __init__(self, graphe,screen,colonie_owner: Colonie):
-        self.colonie_owner=colonie_owner
-        self.tuile_debut=colonie_owner.tuile_debut
+        self.colonie_owner = colonie_owner
+        self.tuile_debut = colonie_owner.tuile_debut
         self.graphe = graphe
         self.camera = Camera(screen.get_width(), screen.get_height(), MAP_LIMIT_X, MAP_LIMIT_Y)
 
@@ -42,7 +39,7 @@ class Nid:
 
         self.salles_sorties=[]
         for salle in self.graphe.salles:
-            if salle.type.value[1] == "Sortie":
+            if salle.type == TypeSalle.SORTIE:
                 self.salles_sorties.append(salle)
                                
     def scale_images(self, scale, initial_sky_scaling = False) -> None:
@@ -116,13 +113,13 @@ class Nid:
 
         def draw_fourmis() -> None:
             for fourmi in liste_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords==self.tuile_debut:
+                if fourmi.current_colonie is not None and fourmi.current_colonie.tuile_debut == self.tuile_debut:
                     fourmi.draw_in_nid(dt,screen,self.camera)
 
         def draw_menu_salles():
             for salle in self.graphe.salles:
                 if salle.menu_is_ouvert:
-                    salle.draw_menu(screen, self.camera, self.colonie_owner)
+                    salle.draw_menu(screen, self.camera)
 
         draw_terre()
         draw_nid()
@@ -195,9 +192,9 @@ class Nid:
 
             #ouvrir/fermer menu fourmi
             for fourmi in liste_fourmis_jeu_complet:
-                if fourmi.in_colonie_map_coords != self.tuile_debut:
+                if fourmi.current_colonie is None or fourmi.current_colonie.tuile_debut != self.tuile_debut:
                     continue
-                if (Vector2(pos)-Vector2(self.camera.apply((fourmi.centre_x_in_nid,fourmi.centre_y_in_nid)))).magnitude() > 32*self.camera.zoom:
+                if (Vector2(pos)-Vector2(self.camera.apply(fourmi.centre_in_nid))).magnitude() > 32*self.camera.zoom:
                     continue
 
                 fourmi.menu_is_ouvert = not fourmi.menu_is_ouvert
@@ -303,29 +300,11 @@ class Nid:
                 colonie_joueur.menu_colonie_ouvert = not colonie_joueur.menu_colonie_ouvert
 
 
-def chargement(screen: pygame.Surface,nb_nids) -> list:
-    """
-    Créer tous les graphes du jeu et affiche un écran de chargement
-    Args:
-        screen (pygame.Surface): La surface sur laquelle dessiner
-    Returns:
-        list: Liste des graphes générés
-    """
-    #global MAP_LIMIT_X
-    #global MAP_LIMIT_Y
-    #global HAUTEUR_SOL
-    #MAP_LIMIT_X = int(MAP_LIMIT_X * screen.get_height() / 720)
-    #MAP_LIMIT_Y = int(MAP_LIMIT_Y * screen.get_height() / 720)
-    #HAUTEUR_SOL = int(HAUTEUR_SOL * screen.get_height() / 720)
+def chargement(screen: pygame.Surface, nb_nids: int) -> list:
+    """Créer tous les graphes du jeu et affiche un écran de chargement"""
+
     def afficher_chargement(nb_genere, total):
-        """
-        Affiche l'écran de chargement
-        Args:
-            n (int): Le nombre de graphes déjà générés
-            total (int): Le nombre total de graphes à générer
-        Returns:
-            None
-        """
+        """Affiche l'écran de chargement"""
         screen.fill((30, 30, 30))
 
         titre = font.render("Création des nids", False, (255, 255, 255))
@@ -337,14 +316,13 @@ def chargement(screen: pygame.Surface,nb_nids) -> list:
         pygame.display.update()
 
     graphes = []
-    total = nb_nids
 
     font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 48)
     small_font = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 32)
 
-    for i in range(total):
-        afficher_chargement(i+1, total)
-        graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X,NB_SALLES_INITIALES)
+    for i in range(nb_nids):
+        afficher_chargement(i+1, nb_nids)
+        graphe = generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X)
         graphes.append(graphe)
 
     return graphes

@@ -1,11 +1,9 @@
 import random
 import pygame
 import numpy as np
-from pygame.examples.grid import TILE_SIZE
 
 from colonies import Colonie, ColonieIA
 from camera import Camera
-#from src.colonie_ia import ColonieIA
 from tuile import Tuile
 from random_noise import RandomNoise
 from tuile import Terre, Sable, Eau, Montagne
@@ -32,7 +30,7 @@ class Carte:
         self.MAP_WIDTH = MAP_WIDTH
         self.MAP_HEIGHT = MAP_HEIGHT
 
-        self.graphes=graphes
+        self.graphes = graphes
 
         self.grid_mode = False # option pour montrer la bordure des tuiles en noir
         self.hover_tuile = None  # la tuile qui devient couleur AQUA quand on a une fourmi selectionnee
@@ -41,7 +39,6 @@ class Carte:
         self.tuiles_ressources = [] # liste des tuiles ayant une ressource
         
         self.tuiles_debut = []  # liste des tuiles de debut de chaque colonie
-        #self.tuile_debut_joueur = None
         self.colonies = []
 
         self.liste_boutons = []
@@ -56,7 +53,6 @@ class Carte:
             self.couleurs_colonies.append(couleurs_possibles[i])
         self.screen = screen
         self.generation_map(liste_fourmis_jeu_complet)
-
 
         self.camera = Camera(screen.get_width(), screen.get_height(), self.MAP_WIDTH * self.TILE_SIZE, self.MAP_HEIGHT * self.TILE_SIZE)
         self.set_camera_tuile_debut()
@@ -95,7 +91,6 @@ class Carte:
                         self.map_data[y][x].color = (0, col, 0)
 
                     else:
-                        #print("montagne")
                         self.map_data[y][x] = Montagne(x, y, self.TILE_SIZE, self.TILE_SIZE)
                         self.map_data[y][x].color = (0, 0, 0)
 
@@ -113,34 +108,32 @@ class Carte:
             ]
 
             # On les placent a l'interieur de ces regions aleatoirement
-            for region_x, region_y in regions:
-                #placed = False
-                while len(self.tuiles_debut)<self.nb_colonies_nids:
-                    x = random.randint(region_x, region_x + region_size - 1)
-                    y = random.randint(region_y, region_y + region_size - 1)
+            while len(self.tuiles_debut) < self.nb_colonies_nids:
+                region = random.choice(regions)
+                tuile = None
+
+                while tuile is None:
+                    x = random.randint(region[0], region[0] + region_size - 1)
+                    y = random.randint(region[1], region[1] + region_size - 1)
+
                     if isinstance(self.map_data[y][x], (Terre, Montagne)):
-                        self.map_data[y][x].tuile_debut_joueur = True
-                        self.map_data[y][x].color = self.couleurs_colonies[curr_couleur]
-                        #placed = True
-                        curr_couleur += 1
-                        self.tuiles_debut.append((x, y))
-                        #print(len(self.tuiles_debut))
-        
-        def set_tuiles_debut(liste_fourmis_jeu_complet):
-            #self.tuile_debut_joueur = self.tuiles_debut[random.randint(0, self.nb_colonies_nids - 1)]
+                        tuile = (x,y)
 
-            self.colonies.append(Colonie(self.tuiles_debut[0], self.map_data,self.tuiles_debut,self.graphes[0],liste_fourmis_jeu_complet))
-            self.colonies.append(ColonieIA(self.tuiles_debut[1], self.map_data,self.tuiles_debut,self.graphes[1],liste_fourmis_jeu_complet))
+                self.map_data[tuile[1]][tuile[0]].tuile_debut_joueur = True
+                self.map_data[tuile[1]][tuile[0]].color = self.couleurs_colonies[curr_couleur]
+                curr_couleur += 1
+                self.tuiles_debut.append((x, y))
+                regions.remove(region)
 
-            #index_tuile_debut = self.tuiles_debut.index(self.tuile_debut_joueur)
-            #temp = self.tuiles_debut[0]
-            #self.tuiles_debut[0] = self.tuile_debut_joueur
-            #self.tuiles_debut[index_tuile_debut] = temp
+            for i in range(self.nb_colonies_nids):
+                if i == 0:
+                    self.colonies.append(Colonie(self.tuiles_debut[0], self.map_data,self.tuiles_debut ,self.graphes[0], liste_fourmis_jeu_complet))
+                else:
+                    self.colonies.append(ColonieIA(self.tuiles_debut[1], self.map_data,self.tuiles_debut, self.graphes[1], liste_fourmis_jeu_complet))
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(min_dist=20,region_size=15)
-        set_tuiles_debut(liste_fourmis_jeu_complet)
+        placer_colonies(min_dist=20, region_size=15)
         self.colonies[0].screen = self.screen
 
     def draw(self, screen, dt):
@@ -155,14 +148,7 @@ class Carte:
                 screen.blit(pygame.transform.scale(self.image_etoile, (tile_size, tile_size)), self.camera.apply_rect(rect))
 
         def draw_tiles(start_x, start_y, end_x, end_y):
-            """Dessine les tuiles visibles sur l'écran
-            Args:
-                start_x (int): coordonnee x de la tuile de gauche
-                start_y (int): coordonnee y de la tuile du haut
-                end_x (int): coordonnee x de la tuile de droite
-                end_y (int): coordonnee y de la tuile du bas
-            Voir aussi: trouver_tuiles_visibles()
-                """
+            """Dessine les tuiles visibles sur l'écran"""
             tile_size = (self.TILE_SIZE * self.camera.zoom)
 
             for y in range(start_y, end_y):
@@ -173,7 +159,7 @@ class Carte:
                     if self.colonies[0].fourmis_selection:
                         if self.hover_tuile == (x, y):
                             pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
-                        if self.colonies[0].fourmis_selection.centre_x_in_map is not None and self.colonies[0].fourmis_selection.centre_y_in_map is not None and self.colonies[0].fourmis_selection.get_tuile() == (x, y):
+                        if self.colonies[0].fourmis_selection.centre_in_map is not None and self.colonies[0].fourmis_selection.get_tuile() == (x, y):
                             pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
                     if self.colonies[0].groupe_selection:
                         if self.hover_tuile == (x, y):
@@ -260,10 +246,7 @@ class Carte:
                         self.map_data[y][x].toggle_color()
 
     def get_tuile(self, event) -> tuple:
-        """Retourne la tuile sur laquelle on clique
-        Args:
-            event (tuple): pygame.event
-        """
+        """Retourne la tuile sur laquelle on clique"""
         tile_size = (self.TILE_SIZE * self.camera.zoom)
         tile_x = int((self.camera.x + event.pos[0]) // tile_size)
         tile_y = int((self.camera.y + event.pos[1] - 50) // tile_size)

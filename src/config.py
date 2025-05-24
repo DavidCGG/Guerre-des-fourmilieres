@@ -1,12 +1,7 @@
-## Fichier pour declarer les variables de configuration
-## et les constantes du jeu
 from enum import Enum
 
 import pygame
 import os
-
-#SCREEN_WIDTH: int = 1280
-#SCREEN_HEIGHT: int = 720
 
 WHITE = pygame.Color("white")
 BLACK = pygame.Color("black")
@@ -31,9 +26,12 @@ def trouver_font(nom: str) -> str:
 def trouver_audio(nom: str) -> str:
     return os.path.join(os.path.dirname(__file__), "..", "assets", "audio", nom)
 
+class CouleurFourmi(Enum):
+    NOIRE = (trouver_img("Fourmis/fourmi_noire.png"))
+    ROUGE = (trouver_img("Fourmis/fourmi_rouge.png"))
+
 class Bouton():
     def __init__(self, screen, x, y, largeur, hauteur, texte, fonction_sur_click, police):
-        #self.surface=surface
         self.screen=screen
         self.x = x - largeur / 2
         self.y = y - hauteur / 2
@@ -74,10 +72,10 @@ class Bouton():
         return cursor_sur_bouton
 
 class TypeItem(Enum):
-    #NOM=(weight,image path,image case vide path)
-    POMME=(1,trouver_img("Items/pomme.png"),trouver_img("UI/pomme_tuile.png"))
-    METAL=(3,trouver_img("Items/metal.png"),trouver_img("UI/metal_tuile.png"))
-    BOIS=(2,trouver_img("Items/bois.png"),trouver_img("UI/bois_tuile.png"))
-    OEUF=(1,trouver_img("Items/oeuf.png"),trouver_img("UI/oeuf_tuile.png"))
-    ARMURE=(2,trouver_img("Items/armure.png"))
-    EPEE=(1,trouver_img("Items/epee.png"))
+    #NOM = (weight,image path,image case vide path)
+    POMME = (1,trouver_img("Items/pomme.png"),trouver_img("UI/pomme_tuile.png"))
+    METAL = (3,trouver_img("Items/metal.png"),trouver_img("UI/metal_tuile.png"))
+    BOIS = (2,trouver_img("Items/bois.png"),trouver_img("UI/bois_tuile.png"))
+    OEUF = (1,trouver_img("Items/oeuf.png"),trouver_img("UI/oeuf_tuile.png"))
+    ARMURE = (2,trouver_img("Items/armure.png"))
+    EPEE = (1,trouver_img("Items/epee.png"))
