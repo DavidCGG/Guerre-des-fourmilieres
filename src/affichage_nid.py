@@ -152,8 +152,6 @@ class Nid:
                         colonie_joueur.curr_tab = "Ouvrières"
                     elif key == "Soldats":
                         colonie_joueur.curr_tab = "Soldats"
-                    elif key == "Groupes":
-                        colonie_joueur.curr_tab = "Groupes"
                     colonie_joueur.scroll_offset = 0
                     colonie_joueur.couleur_texte = AQUA
                     # On ferme le menu si on re clique sur le meme tab
@@ -253,8 +251,6 @@ class Nid:
                 max_offset = max(0, colonie_joueur.nombre_ouvrieres() * 50 - 335)
             elif colonie_joueur.curr_tab == "Soldats":
                 max_offset = max(0, colonie_joueur.nombre_soldats() * 50 - 335)
-            elif colonie_joueur.curr_tab == "Groupes":
-                max_offset = max(0, colonie_joueur.get_vrai_nb_groupes() * 50 - 335)
 
             if colonie_joueur.menu_fourmis_rect.collidepoint(pos):  # On scroll seulement si la souris est dans le rect du menu
                 if dir == "up":

@@ -230,65 +230,6 @@ class Colonie:
             self.sprite_dict[f] = sprite
             self.sprites.append(sprite)
 
-    def update_cache_groupes(self):
-        self.groupes = {}
-        self.groupes_cache = {}
-        self.cache_groupes_a_updater = False
-        self.menu_a_updater = True
-        # ants_by_tile = {}
-        # for f in self.fourmis:
-        #     if f.current_colonie is None:
-        #         tuile = f.get_tuile()
-        #         if tuile not in ants_by_tile:
-        #             ants_by_tile[tuile] = []
-        #         ants_by_tile[tuile].append(f)
-        #
-        # # Track tiles that need updating
-        # modif_tuiles = set()
-        #
-        # # Update existing groups or create new ones
-        # nouv_groupe = {}
-        # for tuile, ants in ants_by_tile.items():
-        #     # Find existing group at this tile
-        #     existing_group = next((g for g in self.groupes.values()
-        #                            if g.get_tuile() == tuile), None)
-        #
-        #     if existing_group:
-        #         # Update existing group
-        #         existing_group.fourmis = []
-        #         for ant in ants:
-        #             existing_group.ajouter_fourmis(ant)
-        #         nouv_groupe[tuile] = existing_group
-        #     else:
-        #         # Create new group
-        #         new_group = Groupe(tuile[0], tuile[1], self.groupe_images)
-        #         self.groupes[new_group.id] = new_group
-        #         for ant in ants:
-        #             new_group.ajouter_fourmis(ant)
-        #         nouv_groupe[tuile] = new_group
-        #
-        #     # Mark tile as modified
-        #     if tuile not in self.groupes_cache or self.groupes_cache[tuile] != nouv_groupe[tuile]:
-        #         modif_tuiles.add(tuile)
-        #
-        # # Find tiles that no longer have groups
-        # for tuile in self.groupes_cache:
-        #     if tuile not in nouv_groupe:
-        #         modif_tuiles.add(tuile)
-        #
-        # # Clean up empty groups
-        # for group_id in list(self.groupes.keys()):
-        #     group = self.groupes[group_id]
-        #     if group.est_vide() or group not in nouv_groupe.values():
-        #         del self.groupes[group_id]
-        #
-        # self.groupes_cache = nouv_groupe
-        # self.cache_groupes_a_updater = False
-        # self.menu_a_updater = True
-        #
-        # self.update_fourmis_tuiles(modif_tuiles)
-
-
     def update_fourmis_tuiles(self, modif_tuiles):
         for tuile in modif_tuiles:
             self.map_data[tuile[1]][tuile[0]].fourmis = None
@@ -297,7 +238,6 @@ class Colonie:
 
             self.gerer_collection(tuile, groupe)
             self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
-
 
     def gerer_collection(self, tuile, _groupe):
         x, y = tuile
@@ -350,33 +290,6 @@ class Colonie:
     def render_ants(self, tile_size, screen, camera,dt):
         for fourmi in self.fourmis:
             fourmi.draw_in_map(dt,screen,camera)
-        """
-        # if self.cache_groupes_a_updater:
-        #     self.update_cache_groupes()
-        #
-        # for tuile, groupe in self.groupes_cache.items():
-        #     if groupe.get_nb_fourmis() > 1:
-        #         groupe.update(camera, tile_size)
-        #         screen.blit(groupe.image, groupe.rect)
-        #     elif not groupe.est_vide():
-        #         f = groupe.fourmis[0]
-        #         if f.current_colonie is None:
-        #             sprite = self.sprite_dict[f]
-        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-        #             if screen.get_rect().colliderect(sprite.rect):
-        #                 screen.blit(sprite.image, sprite.rect)
-        #         else:
-        #             sprite = self.sprite_dict[f]
-        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-        #             if screen.get_rect().colliderect(sprite.rect):
-        #                 screen.blit(sprite.image, sprite.rect)
-        for fourmi in self.fourmis:
-            if fourmi.current_colonie is None:
-                sprite = self.sprite_dict[fourmi]
-                sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-                if screen.get_rect().colliderect(sprite.rect):
-                    screen.blit(sprite.image, sprite.rect)
-        """
 
     def handle_click(self, pos, tile_x, tile_y, screen):
         if self.map_data[tile_y][tile_x].fourmis is not None:
@@ -479,8 +392,6 @@ class Colonie:
             max_offset = max(0, self.nombre_ouvrieres() * 50 - 335)
         elif self.curr_tab == "Soldats":
             max_offset = max(0, self.nombre_soldats() * 50 - 335)
-        elif self.curr_tab == "Groupes":
-            max_offset = max(0, self.get_vrai_nb_groupes() * 50 - 335)
 
         if self.menu_fourmis_rect.collidepoint(pos): # On scroll seulement si la souris est dans le rect du menu
             if dir == "up":
@@ -647,25 +558,6 @@ class ColonieIA:
             self.sprites.append(sprite)
 
     def render_ants(self, tile_size, screen, camera):
-        # if self.cache_groupes_a_updater:
-        #     self.update_cache_groupes()
-        #
-        # for tuile, groupe in self.groupes_cache.items():
-        #     if groupe.get_nb_fourmis() > 1:
-        #         groupe.update(camera, tile_size)
-        #         screen.blit(groupe.image, groupe.rect)
-        #     elif not groupe.est_vide():
-        #         f = groupe.fourmis[0]
-        #         if f.current_colonie is None:
-        #             sprite = self.sprite_dict[f]
-        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-        #             if screen.get_rect().colliderect(sprite.rect):
-        #                 screen.blit(sprite.image, sprite.rect)
-        #         else:
-        #             sprite = self.sprite_dict[f]
-        #             sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-        #             if screen.get_rect().colliderect(sprite.rect):
-        #                 screen.blit(sprite.image, sprite.rect)
         for fourmi in self.fourmis:
             if fourmi.current_colonie is None:
                 sprite = self.sprite_dict[fourmi]
