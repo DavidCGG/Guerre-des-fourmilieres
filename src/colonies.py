@@ -2,6 +2,7 @@ import math
 import random
 import tkinter as tk
 import pygame
+from pygame import Vector2
 
 from fourmi import Ouvriere, Soldat, Groupe, Fourmis
 from config import BLACK, trouver_font, WHITE, AQUA, trouver_img, GREEN, RED, TypeItem
@@ -582,6 +583,9 @@ class ColonieIA:
             elif salle.type.value[1] == "Banque":
                 self.banque_coords = salle.noeud.coord
                 self.salle_banque = salle
+            elif salle.type.value[1] == "Meule":
+                self.meule_coords = salle.noeud.coord
+                self.salle_meule = salle
         self.salles_manquantes = [TypeSalle.TRAINING_OUVRIERE, TypeSalle.ENCLUME, TypeSalle.TRAINING_SOLDAT]
         self.fourmis = [Ouvriere(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.ROUGE, self) for _ in
                         range(2)] + [Soldat(self.throne_coords[0], self.throne_coords[1], CouleurFourmi.ROUGE, self) for
@@ -620,10 +624,11 @@ class ColonieIA:
                 salle.process(liste_fourmis_jeu_complet, self, dt, map_data, liste_toutes_colonies)
 
 
-            self.amener_oeufs(f)
+
 
             f.process(dt, self.map_data, tous_les_nids, liste_fourmis_jeu_complet, liste_toutes_colonies)
             self.gerer_collecte_fourmi(f)
+            self.amener_oeufs(f)
             self.gerer_creation_salle(f)
 
 
@@ -761,7 +766,6 @@ class ColonieIA:
             intersection.noeud.coord[0] + dx,
             intersection.noeud.coord[1] + dy
         ]
-        print(f"coord_nouv_salle: {coord_nouv_salle}")
         if coord_nouv_salle[1] < 128+100:
             return
 
@@ -809,14 +813,15 @@ class ColonieIA:
         if dt - self._dern_search < 5000:
             return self._cache_ressources
 
+        toutes_resources = []
         for y in range(max(0, y0 - max_radius), min(len(self.map_data), y0 + max_radius + 1)):
             for x in range(max(0, x0 - max_radius), min(len(self.map_data[0]), x0 + max_radius + 1)):
                 if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
                     dist = abs(x - x0) + abs(y - y0)
                     if dist <= max_radius:
-                        tuiles.add((x, y))
-                        if len(tuiles) >= 10:  # Limit number of resource tiles
-                            break
+                        toutes_resources.append((dist, (x, y)))
+        toutes_resources.sort()
+        tuiles = set(coord for _, coord in toutes_resources)
         if not tuiles:
             self.trouver_tuiles_ressources(max_radius = 35)
         self._dern_search = dt
@@ -866,6 +871,25 @@ class ColonieIA:
         return tuile_proche
 
     def gerer_collecte_fourmi(self, f):
+        def epee_ou_armure(f):
+            metal = len([m for m in self.salle_banque.inventaire if m == TypeItem.METAL])
+            if metal > 1:
+                if TypeItem.EPEE not in f.inventaire and TypeItem.EPEE not in self.salle_banque.inventaire:
+                    f.set_target_in_nid(self.meule_coords, self, self.map_data, self.toutes_colonies)
+
+
+        def gerer_soldats(f):
+            if f.is_busy:
+                return
+            if isinstance(f, Soldat):
+                if f.in_colonie_map_coords is None:
+                    f.set_target_in_nid(self.throne_coords, self, self.map_data, self.toutes_colonies)
+                else:
+                    if not (Vector2(self.salle_trone.noeud.coord[0], self.salle_trone.noeud.coord[1]) - Vector2(f.centre_x_in_nid,f.centre_y_in_nid)).magnitude() < TypeSalle.THRONE.value[0]:
+                        if not f.inventaire:
+                            f.set_target_in_nid(self.throne_coords, self, self.map_data, self.toutes_colonies)
+                        else:
+                            epee_ou_armure(f)
         def envoyer_training(ressource):
             if TypeSalle.TRAINING_OUVRIERE not in self.salles_manquantes:
                 salle = self._nouv_salles[TypeSalle.TRAINING_OUVRIERE]
@@ -896,6 +920,8 @@ class ColonieIA:
                     if not envoyer_training(ress):
                         f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
         else:
+            gerer_soldats(f)
+
             for item in f.inventaire:
                 if item == TypeItem.POMME:
                     if not envoyer_training(item):
@@ -944,17 +970,15 @@ class ColonieIA:
             return False
 
         if check_salle_existe(target_room_type):
-            try:
-                if TypeItem.OEUF not in self._nouv_salles[target_room_type].inventaire:
-                    f.set_target_in_nid(self.nouv_salles_coords[target_room_type],
-                                        self, self.map_data, self.toutes_colonies)
-                else:
-                    f.set_target_in_nid(self.banque_coords,
+
+            if TypeItem.OEUF not in self._nouv_salles[target_room_type].inventaire:
+                f.set_target_in_nid(self.nouv_salles_coords[target_room_type],
                                     self, self.map_data, self.toutes_colonies)
-                return True
-            except (AttributeError, TypeError):
-                if target_room_type not in self.salles_manquantes:
-                    self.salles_manquantes.append(target_room_type)
+            else:
+                f.set_target_in_nid(self.banque_coords,
+                                self, self.map_data, self.toutes_colonies)
+            return True
+
         else:
             # Create room if it doesn't exist
             if not f.digging and len(self.digging_queue_fourmis) == 0:

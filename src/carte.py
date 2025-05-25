@@ -107,25 +107,25 @@ class Carte:
             curr_couleur = 0
             regions = [
                 (min_dist, min_dist),  # Top-left corner
-                (self.MAP_WIDTH - region_size - min_dist, min_dist),  # Top-right corner
-                (min_dist, self.MAP_HEIGHT - region_size - min_dist),  # Bottom-left corner
+                #(self.MAP_WIDTH - region_size - min_dist, min_dist),  # Top-right corner
+                #(min_dist, self.MAP_HEIGHT - region_size - min_dist),  # Bottom-left corner
                 (self.MAP_WIDTH - region_size - min_dist, self.MAP_HEIGHT - region_size - min_dist)  # Bottom-right corner
             ]
 
             # On les placent a l'interieur de ces regions aleatoirement
             for region_x, region_y in regions:
-                #placed = False
-                while len(self.tuiles_debut)<self.nb_colonies_nids:
+                placed = False
+                while not placed:
                     x = random.randint(region_x, region_x + region_size - 1)
                     y = random.randint(region_y, region_y + region_size - 1)
-                    if isinstance(self.map_data[y][x], (Terre, Montagne)):
+                    if isinstance(self.map_data[y][x], Terre):
                         self.map_data[y][x].tuile_debut = True
                         self.map_data[y][x].color = self.couleurs_colonies[curr_couleur]
-                        #placed = True
+                        placed = True
                         curr_couleur += 1
                         self.tuiles_debut.append((x, y))
                         #print(len(self.tuiles_debut))
-        
+
         def set_tuiles_debut(liste_fourmis_jeu_complet):
             #self.tuile_debut_joueur = self.tuiles_debut[random.randint(0, self.nb_colonies_nids - 1)]
 
@@ -139,7 +139,7 @@ class Carte:
 
         self.map_data = np.array(liste_tuiles())
         transformer_tuiles()
-        placer_colonies(min_dist=20,region_size=30)
+        placer_colonies(min_dist=15,region_size=20)
         set_tuiles_debut(liste_fourmis_jeu_complet)
         self.colonies[0].screen = self.screen
 
