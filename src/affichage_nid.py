@@ -14,14 +14,7 @@ MAP_LIMIT_Y: int = 2250
 HAUTEUR_SOL: int = 128
 
 class Nid:
-    """
-    Représente un des nids
-    Attributs :
-        graphe (Graphe): Graphe contenant les salles et tunnels du nid
-        camera (Camera): Caméra pour le zoom et le déplacement
-    """
-
-    def __init__(self, graphe,screen,colonie_owner: Colonie):
+    def __init__(self, graphe, screen, colonie_owner: Colonie):
         self.colonie_owner = colonie_owner
         self.tuile_debut = colonie_owner.tuile_debut
         self.graphe = graphe
@@ -30,7 +23,7 @@ class Nid:
         self.image_terre = pygame.image.load(trouver_img("Monde/terre.png"))
         self.image_terre_sombre = pygame.image.load(trouver_img("Monde/terre_sombre.png"))
         self.image_ciel = pygame.image.load(trouver_img("Monde/ciel32x32.png"))
-        self.scale=4*screen.get_height()/720
+        self.scale = 4 * screen.get_height()/720
 
         self.scale_images(self.scale)
 
@@ -53,14 +46,6 @@ class Nid:
         self.image_terre_sombre = pygame.transform.scale(self.image_terre_sombre, (int(self.image_terre_sombre.get_width() * scale), int(self.image_terre_sombre.get_height() * scale)))
 
     def draw(self, dt, screen, liste_fourmis_jeu_complet, colonie_joueur) -> None:
-        """
-        Dessine tous les éléments du nid sur l'écran incluant l'arrière-plan
-        Args:
-            screen (pygame.Surface): La surface sur laquelle dessiner
-        Returns:
-            None
-        """
-
         def draw_terre() -> None:
             for x in range(0, MAP_LIMIT_X, self.TILE_SIZE):
                 for y in range(HAUTEUR_SOL, MAP_LIMIT_Y, self.TILE_SIZE):
@@ -134,15 +119,7 @@ class Nid:
         if colonie_joueur.menu_fourmis_ouvert:
             colonie_joueur.menu_fourmis()
 
-    def handle_event(self, event, screen, colonie_joueur,liste_fourmis_jeu_complet,map_data,liste_toutes_colonies) -> bool:
-        """
-        Gère tous les événements liés au nid
-        Args:
-            event (pygame.event.Event): L'événement à gérer
-        Returns:
-            bool: True si le ciel a été cliqué pour sortir du nid, False sinon
-        """
-
+    def handle_event(self, event, screen, colonie_joueur, liste_fourmis_jeu_complet, map_data, liste_toutes_colonies) -> bool:
         def handle_left_click(pos):
             #menu colonie
             for key, rect in colonie_joueur.texte_rects.items():

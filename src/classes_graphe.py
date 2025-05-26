@@ -44,6 +44,7 @@ class NoeudPondere:
 
 class TypeSalle(Enum):
     #Nom = (taille, nom, image)
+    CONSTRUCTION = (40, "Construction", None) #Sert de type intermédiaire durant le digging
     INDEFINI = (40, "Indéfini", None)
     INTERSECTION = (40, "Intersection", None)
     SORTIE = (40, "Sortie", None)
@@ -249,6 +250,9 @@ class Salle:
             self.inventaire = [None, None, None]
             self.temps_pour_action = 5000
 
+        elif self.type == TypeSalle.CONSTRUCTION:
+            self.temps_pour_action = 10_000
+
     def verifier_action_timer(self, colonie_owner_of_self, listes_fourmis_jeu_complet, dt):
         self.temps_ecoule_depuis_debut_action += dt
         if self.temps_ecoule_depuis_debut_action >= self.temps_pour_action:
@@ -275,6 +279,10 @@ class Salle:
                 nouvelle_fourmi = Soldat(self.noeud.coord[0], self.noeud.coord[1], CouleurFourmi.NOIRE,colonie_owner_of_self)
                 colonie_owner_of_self.fourmis.append(nouvelle_fourmi)
                 listes_fourmis_jeu_complet.append(nouvelle_fourmi)
+
+            elif self.type == TypeSalle.CONSTRUCTION:
+                self.type = TypeSalle.INDEFINI
+                self.type_specific_stats_update()
 
             self.fourmi_qui_fait_action.is_busy = False
             self.fourmi_qui_fait_action = None
@@ -760,7 +768,7 @@ class Graphe:
             tunnel = Tunnel(salle, voisin)
             self.tunnels.add(tunnel)
 
-    def creer_salle_depuis_intersection(self, salle: Salle, coord_arrivee: list[float, float]) -> None:
+    def creer_salle_depuis_intersection(self, salle: Salle, coord_arrivee: list[float, float], fourmi) -> None:
         """
         Crée une nouvelle salle à partir d'une intersection et d'une coordonnée d'arrivée.
         Args:
@@ -774,13 +782,15 @@ class Graphe:
 
         #Initialisation de la nouvelle salle
         noeud_salle = NoeudPondere(coord_arrivee)
-        salle_indefinie = Salle(noeud_salle, type = TypeSalle.INDEFINI)
+        salle_indefinie = Salle(noeud_salle, type = TypeSalle.CONSTRUCTION)
+        salle_indefinie.type_specific_stats_update()
+        salle_indefinie.fourmi_qui_fait_action = fourmi
         self.salles.add(salle_indefinie)
 
         #Création des nouveaux tunnels
         self.tunnels.add(Tunnel(salle, salle_indefinie))
 
-    def creer_salle_depuis_tunnel(self, tunnel: Tunnel, coord_depart: list[float, float], coord_arrivee) -> None:     
+    def creer_salle_depuis_tunnel(self, tunnel: Tunnel, coord_depart: list[float, float], coord_arrivee, fourmi) -> None:     
         """
         Crée une nouvelle salle à partir d'un tunnel, du point de départ dans le tunnel et des coordonnées de la nouvelle salle.
         Args:
@@ -795,7 +805,9 @@ class Graphe:
         salle_intersection = Salle(noeud_intersection, type = TypeSalle.INTERSECTION)
 
         noeud_salle = NoeudPondere(coord_arrivee)
-        salle_indefinie = Salle(noeud_salle, type = TypeSalle.INDEFINI)
+        salle_indefinie = Salle(noeud_salle, type = TypeSalle.CONSTRUCTION)
+        salle_indefinie.type_specific_stats_update()
+        salle_indefinie.fourmi_qui_fait_action = fourmi
 
         self.salles.add(salle_intersection)
         self.salles.add(salle_indefinie)

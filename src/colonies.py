@@ -4,7 +4,7 @@ from config import trouver_font, trouver_img
 from config import BLACK, WHITE, AQUA, GREEN, RED
 from config import CouleurFourmi
 from fourmi_types import Ouvriere, Soldat
-from fourmi import FourmisSprite, Groupe, Fourmis
+from fourmi import FourmisSprite, Fourmis
 from classes_graphe import TypeSalle
 
 class Colonie:
@@ -271,7 +271,7 @@ class Colonie:
         for _, groupe in self.groupes_cache.items():
             if groupe.get_nb_fourmis() >1 and fourmi in groupe.fourmis:
                 return True
-    def get_fourmis_de_groupe(self, groupe) -> Fourmis | Groupe:
+    def get_fourmis_de_groupe(self, groupe) -> Fourmis:
         if groupe.get_nb_fourmis() == 1:
             return groupe.fourmis[0] # Retourne une fourmi particuliere
         return groupe

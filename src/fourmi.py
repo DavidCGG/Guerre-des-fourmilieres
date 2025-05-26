@@ -199,14 +199,14 @@ class Fourmis(ABC):
             break
 
         if salle_fourmi is not None:
-            self.current_colonie.graphe.creer_salle_depuis_intersection(salle_fourmi, target_pos)
+            self.current_colonie.graphe.creer_salle_depuis_intersection(salle_fourmi, target_pos, self)
             return
         
         coord_centre = (self.centre_in_nid[0], self.centre_in_nid[1])
         tunnel_fourmi, _ = self.current_colonie.graphe.get_coord_in_tunnel_at_coord(coord_centre)
 
         if tunnel_fourmi is not None:
-            self.current_colonie.graphe.creer_salle_depuis_tunnel(tunnel_fourmi, coord_centre, target_pos)
+            self.current_colonie.graphe.creer_salle_depuis_tunnel(tunnel_fourmi, coord_centre, target_pos, self)
             return
 
     def process(self, dt, map_data, nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
@@ -255,7 +255,6 @@ class Fourmis(ABC):
                 elif self.digging_target is not None and self.digging and self.ready_to_dig:
                     self.ready_to_dig = False
                     self.digging = False
-                    #TODO ajouter le timer pour self.digging
 
                 self.is_moving = False
                 self.is_busy = False
