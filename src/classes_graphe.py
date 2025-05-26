@@ -176,9 +176,15 @@ class Salle:
                 self.inventaire[item_collecte_index_in_inventaire_salle] = fourmi.inventaire.pop(item_collecte_index_in_inventaire_fourmi)
         
         def commencer_action(fourmi):
-            if self.inventaire == self.inventaire_necessaire and not fourmi.is_busy and self.fourmi_qui_fait_action is None:
+            if fourmi.is_busy and self.fourmi_qui_fait_action is None and self.inventaire == self.inventaire_necessaire:
+                for f in colonie_of_salle.fourmis:
+                    if f.current_salle == self and not f.is_busy:
+                        self.fourmi_qui_fait_action = f
+                        f.is_busy = True
+            elif self.inventaire == self.inventaire_necessaire and self.fourmi_qui_fait_action is None:
                 self.fourmi_qui_fait_action = fourmi
                 fourmi.is_busy = True
+
                     
         if fourmi.colonie_origine == colonie_of_salle: # action if fourmi is in its own colonie
             if self.type == TypeSalle.BANQUE:
@@ -270,13 +276,13 @@ class Salle:
 
             elif self.type == TypeSalle.TRAINING_OUVRIERE:
                 self.inventaire = [None, None, None]
-                nouvelle_fourmi = Ouvriere(self.noeud.coord[0], self.noeud.coord[1], CouleurFourmi.NOIRE, colonie_owner_of_self)
+                nouvelle_fourmi = Ouvriere(self.noeud.coord[0], self.noeud.coord[1], colonie_owner_of_self.couleur_fourmi, colonie_owner_of_self, self)
                 colonie_owner_of_self.fourmis.append(nouvelle_fourmi)
                 listes_fourmis_jeu_complet.append(nouvelle_fourmi)
 
             elif self.type == TypeSalle.TRAINING_SOLDAT:
                 self.inventaire = [None, None, None]
-                nouvelle_fourmi = Soldat(self.noeud.coord[0], self.noeud.coord[1], CouleurFourmi.NOIRE,colonie_owner_of_self)
+                nouvelle_fourmi = Soldat(self.noeud.coord[0], self.noeud.coord[1], colonie_owner_of_self.couleur_fourmi,colonie_owner_of_self, self)
                 colonie_owner_of_self.fourmis.append(nouvelle_fourmi)
                 listes_fourmis_jeu_complet.append(nouvelle_fourmi)
 
@@ -389,7 +395,7 @@ class Salle:
                         if self.inventaire[i]==self.inventaire_necessaire[i]:
                             self.menu_top.blit(pygame.transform.scale(pygame.image.load(self.inventaire_necessaire[i].value[1]),(100, 100)), (5 + i * (100 + 5), 5))
         
-        def update_menu_bottom(colonie_owner_of_self):#only colonie hp for throne
+        def update_menu_bottom():#only colonie hp for throne
             self.menu_bottom = pygame.Surface((125, 50))
             text_surface = self.font_menu.render("HP: " + str(colonie_owner_of_self.hp), False, WHITE)
             self.menu_bottom.blit(text_surface, (self.menu_bottom.get_height() / 2 - text_surface.get_height() / 2,self.menu_bottom.get_height() / 2 - text_surface.get_height() / 2))

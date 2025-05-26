@@ -378,6 +378,7 @@ def gestion_evenement(event: pygame.event) -> None:
             current_nid = None
 
 def check_victory():
+    global carte_jeu
     def victory():
         global in_menu_secondaire
         global liste_boutons
@@ -456,7 +457,7 @@ def process(dt) -> None:
     if partie_en_cours:
         check_victory()
         for colonie in carte_jeu.colonies:
-            colonie.process(clock.get_time(),nids,liste_fourmis,carte_jeu.colonies,carte_jeu.map_data)
+            colonie.process(clock.get_time(),nids,carte_jeu.colonies)
 
     if in_menu_principal:
         fourmi.random_mouvement(dt)

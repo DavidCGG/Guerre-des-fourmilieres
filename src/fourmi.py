@@ -217,12 +217,14 @@ class Fourmis(ABC):
                 self.goto_target(dt, map_data, nids)
             else:
                 self.is_moving = False
+                self.is_busy = False
                 self.target_in_map = None
 
                 for nid in nids:
-                    on_nid = self.centre_in_map[0] == nid.tuile_debut[0] and self.centre_in_map[1] == nid.tuile_debut[1]
-                    if on_nid and self.bouge_depuis_transition:
-                        process_transition_map_nid(nid)
+                    if self.centre_in_map is not None:
+                        on_nid = self.centre_in_map[0] == nid.tuile_debut[0] and self.centre_in_map[1] == nid.tuile_debut[1]
+                        if on_nid and self.bouge_depuis_transition:
+                            process_transition_map_nid(nid)
 
         def process_transition_map_nid(nid):
             self.centre_in_map = None
