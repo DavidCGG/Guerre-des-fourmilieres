@@ -402,9 +402,10 @@ class ColonieIA:
         self.toutes_colonies = liste_toutes_colonies
         # Processus de l'IA
         fourmis_bouge = False
+        for salle in self.graphe.salles:
+            salle.process(self.liste_fourmis_jeu_complet, self, dt, self.map_data, liste_toutes_colonies)
 
-
-        self.choix()
+        #self.choix()
 
         for f in self.fourmis:
             f.process(dt, self.map_data, tous_les_nids, self.liste_fourmis_jeu_complet, liste_toutes_colonies)
@@ -412,8 +413,19 @@ class ColonieIA:
             self.amener_oeufs(f)
             self.gerer_creation_salle(f)
 
-        for salle in self.graphe.salles:
-            salle.process(self.liste_fourmis_jeu_complet, self, dt, self.map_data, liste_toutes_colonies)
+            if not f.is_busy and f.target_in_map is None and f.target_in_nid is None:
+                if isinstance(f, Ouvriere):
+                    if self.check_nourriture():
+                        self.chercher_nourriture(f)
+                    elif self.check_banque():
+                        self.chercher_bois_metal(f)
+
+            # Colony-wide decisions only for danger situations
+        if self.en_danger():
+            self.envoyer_fourmis_dans_nid()
+
+
+
 
 
 
@@ -453,46 +465,49 @@ class ColonieIA:
                 return True
         return False
 
-    def chercher_nourriture(self):
-        ouvr_inactives = [f for f in self.get_fourmis_type()[0]
-                            if len(f.inventaire) < f.inventaire_taille_max and
-                            not f.is_busy and
-                            not f.digging]
-        if not ouvr_inactives:
-            return
+    def chercher_nourriture(self, f):
+        if len(f.inventaire) >= f.inventaire_taille_max or \
+        f.is_busy or \
+        f.digging: return
 
         self.tuiles_ressources = self.trouver_tuiles_ressources()
-        for f in ouvr_inactives:
-            if f.target_in_map is None:
 
-                pommes = [p for p in self.tuiles_ressources if self.map_data[p[1]][p[0]].get_ressource() == TypeItem.POMME]
-                tuile_proche = self.tuile_ressource_proche(f, pommes)
-                if tuile_proche:
-                    x, y = tuile_proche
-                    f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
-                    self.tuiles_ressources.remove(tuile_proche)
-                else:
-                    self.autre_action()
+        if f.target_in_map is None:
 
-    def chercher_bois_metal(self):
-        ouvr_inactives = [f for f in self.get_fourmis_type()[0]
-                          if len(f.inventaire) < f.inventaire_taille_max and
-                          not f.is_busy and
-                          not f.digging]
-        if not ouvr_inactives:
-            return
+            pommes = [p for p in self.tuiles_ressources if self.map_data[p[1]][p[0]].get_ressource() == TypeItem.POMME]
+            tuile_proche = self.tuile_ressource_proche(f, pommes)
+            if tuile_proche:
+                x, y = tuile_proche
+                f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
+                self.tuiles_ressources.remove(tuile_proche)
+            else:
+                self.autre_action()
+
+    def chercher_bois_metal(self, f):
+        if len(f.inventaire) >= f.inventaire_taille_max or \
+        f.is_busy or \
+        f.digging: return
 
         self.tuiles_ressources = self.trouver_tuiles_ressources()
-        for f in ouvr_inactives:
-            if f.target_in_map is None:
-                bois_metal = [b for b in self.tuiles_ressources if self.map_data[b[1]][b[0]].get_ressource() in [TypeItem.METAL, TypeItem.BOIS]]
-                tuile_proche = self.tuile_ressource_proche(f, bois_metal)
-                if tuile_proche:
-                    x, y = tuile_proche
-                    f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
-                    self.tuiles_ressources.remove(tuile_proche)
-                else:
-                    self.autre_action()
+
+        if f.target_in_map is None:
+            liste = []
+            salle_ouvr = self.check_salle_existe(TypeSalle.TRAINING_OUVRIERE)
+            salle_sold = self.check_salle_existe(TypeSalle.TRAINING_SOLDAT)
+            if salle_ouvr is not None and TypeItem.BOIS not in salle_ouvr.inventaire and TypeItem.BOIS not in self.salle_banque.inventaire:
+                liste = [b for b in self.tuiles_ressources if
+                         self.map_data[b[1]][b[0]].get_ressource() == TypeItem.BOIS]
+
+
+            else:
+                liste = [b for b in self.tuiles_ressources if self.map_data[b[1]][b[0]].get_ressource() in [TypeItem.METAL, TypeItem.BOIS]]
+            tuile_proche = self.tuile_ressource_proche(f, liste)
+            if tuile_proche:
+                x, y = tuile_proche
+                f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
+                self.tuiles_ressources.remove(tuile_proche)
+            else:
+                self.autre_action()
 
     def autre_action(self):
         print("autre action")
@@ -552,7 +567,6 @@ class ColonieIA:
 
 
     def gerer_creation_salle(self, fourmi):
-
         if fourmi not in self.digging_queue_fourmis:
             return
 
@@ -588,7 +602,8 @@ class ColonieIA:
         x0, y0 = self.tuile_debut
 
         dt = pygame.time.get_ticks()
-
+        if dt - self._dern_search < 3000:
+            return self._cache_ressources
 
         toutes_resources = []
         for y in range(max(0, y0 - max_radius), min(len(self.map_data), y0 + max_radius + 1)):
@@ -635,9 +650,7 @@ class ColonieIA:
 
 
         def gerer_soldats(f):
-            if f.is_busy:
-                return
-            if isinstance(f, Soldat):
+            if isinstance(f, Soldat) and not f.is_busy:
                 if f.current_colonie is None:
                     f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
                 else:
@@ -735,17 +748,20 @@ class ColonieIA:
 
         else:
             gerer_soldats(f)
+            if isinstance(f, Ouvriere) and not f.is_busy:
+                for item in f.inventaire:
+                    if item in f.current_salle.inventaire:
+                        if f.current_salle.type in [TypeSalle.TRAINING_OUVRIERE, TypeSalle.TRAINING_SOLDAT, TypeSalle.THRONE]:
+                            if item == TypeItem.POMME:
+                                if not envoyer_training(item):
+                                    if self.check_nourriture():
+                                        f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+                                    else:
+                                        f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
 
-            for item in f.inventaire:
-                if item == TypeItem.POMME:
-                    if not envoyer_training(item):
-                        if self.salle_trone.inventaire != self.salle_trone.inventaire_necessaire:
-                            f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
-                        else:
-                            f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
-                else:
-                    if not envoyer_training(item):
-                        f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
+                            elif item == TypeItem.BOIS:
+                                if not envoyer_training(item):
+                                    f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
 
 
 

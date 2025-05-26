@@ -181,9 +181,17 @@ class Salle:
                     if f.current_salle == self and not f.is_busy:
                         self.fourmi_qui_fait_action = f
                         f.is_busy = True
+                if colonie_of_salle.couleur_fourmi == CouleurFourmi.ROUGE and isinstance(fourmi,Ouvriere) and self.type in [TypeSalle.TRAINING_OUVRIERE, TypeSalle.TRAINING_SOLDAT]:
+                    if self.inventaire == self.inventaire_necessaire and self.fourmi_qui_fait_action is None:
+                        fourmi.target_in_map = None
+                        fourmi.target_in_nid = None
+                        self.fourmi_qui_fait_action = fourmi
+                        fourmi.is_busy = True
             elif self.inventaire == self.inventaire_necessaire and self.fourmi_qui_fait_action is None:
                 self.fourmi_qui_fait_action = fourmi
                 fourmi.is_busy = True
+
+
 
                     
         if fourmi.colonie_origine == colonie_of_salle: # action if fourmi is in its own colonie
@@ -301,17 +309,17 @@ class Salle:
             if fourmi.current_colonie is not None and fourmi.current_colonie == colonie_owner_of_self and fourmi.colonie_origine != colonie_owner_of_self: #find all enemys in nid
                 fourmis_a_target.append(fourmi)
         for fourmi_defender in colonie_owner_of_self.fourmis:#find all friendlies in nid
-            if (not fourmi_defender.is_busy or fourmi_defender.is_attacking_for_defense_automaique) and fourmi_defender.current_colonie is not None and fourmi_defender.current_colonie == colonie_owner_of_self:
+            if (not fourmi_defender.is_busy or fourmi_defender.is_attacking_for_defense_automatique) and fourmi_defender.current_colonie is not None and fourmi_defender.current_colonie == colonie_owner_of_self:
                 fourmis_defenders.append(fourmi_defender)
         if len(fourmis_a_target)>0 and len(fourmis_defenders)>0:
             for i in range(len(fourmis_defenders)):
                 fourmis_defenders[i].set_attack(fourmis_a_target[i % len(fourmis_a_target)],map_data,liste_toutes_colonies)
-                fourmis_defenders[i].is_attacking_for_defense_automaique=True
+                fourmis_defenders[i].is_attacking_for_defense_automatique=True
         elif len(fourmis_a_target)==0:
             for fourmi_defender in fourmis_defenders:
-                if fourmi_defender.is_attacking_for_defense_automaique:
+                if fourmi_defender.is_attacking_for_defense_automatique:
                     fourmi_defender.fourmi_attacking = None
-                    fourmi_defender.is_attacking_for_defense_automaique = False
+                    fourmi_defender.is_attacking_for_defense_automatique = False
                     fourmi_defender.is_busy = False
 
                     fourmi_defender.target_in_nid = None

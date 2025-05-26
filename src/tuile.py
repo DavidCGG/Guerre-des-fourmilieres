@@ -62,7 +62,7 @@ class Tuile:
     def draw(self, screen, rect, grid_mode, dt):
         if self.collectee:
             self.timer += dt
-        if self.timer >= 5000:
+        if self.timer >= 20000:
             self.collectee = False
             self.timer = 0
 

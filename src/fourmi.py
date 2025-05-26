@@ -153,7 +153,7 @@ class Fourmis(ABC):
         self.atk_base = atk
         self.atk_result = self.atk_base
         self.fourmi_attacking = None
-        self.is_attacking_for_defense_automaique = False
+        self.is_attacking_for_defense_automatique = False
 
         self.inventaire: list[TypeItem] = []
         self.inventaire_taille_max = 2
@@ -473,6 +473,7 @@ class Fourmis(ABC):
                 self.centre_in_nid[1] += self.nid_speed_factor * self.speed * dy / distance * (dt / 1000)
 
             self.is_moving = True
+            self.is_busy = True
             self.facing = 0 if dx > 0 else 1
         else:
             # Reached the next tile
