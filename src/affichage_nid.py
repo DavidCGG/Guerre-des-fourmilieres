@@ -198,7 +198,7 @@ class Nid:
                 fourmi.menu_is_ouvert = not fourmi.menu_is_ouvert
                 if fourmi == colonie_joueur.fourmis_selection:
                     colonie_joueur.fourmis_selection = None
-                else:
+                elif fourmi in colonie_joueur.fourmis:
                     colonie_joueur.fourmis_selection = fourmi
 
                 keys = pygame.key.get_pressed()
@@ -212,19 +212,29 @@ class Nid:
                     salle.menu_is_ouvert = not salle.menu_is_ouvert
 
                 if salle.type == TypeSalle.INDEFINI and salle.menu_is_ouvert and salle.menu_centre is not None:
-                    pos_noeud = self.camera.apply(salle.noeud.coord)
-                    largeur_menu = salle.menu_centre.get_width() * self.camera.zoom
-                    hauteur_menu = salle.menu_centre.get_width() * self.camera.zoom
-                    if ((pos_noeud[0] - largeur_menu < event.pos[0] and pos_noeud[0] + largeur_menu > event.pos[0])
-                        and (pos_noeud[1] - hauteur_menu < event.pos[1] and pos_noeud[1] + hauteur_menu > event.pos[1])):
-                        hauteur_case = hauteur_menu / len(salle.liste_types_salles)
-                        index = 0
-                        while pos_noeud[1] - hauteur_menu / 2 + index * hauteur_case < event.pos[1]:
-                            index += 1
+                    if salle.type == TypeSalle.INDEFINI and salle.menu_is_ouvert and salle.menu_centre is not None:
+                        pos_noeud = self.camera.apply(salle.noeud.coord)
+                        largeur_menu = salle.menu_centre.get_width() * self.camera.zoom
+                        hauteur_menu = salle.menu_centre.get_width() * self.camera.zoom
 
-                        salle.type = salle.liste_types_salles[index - 1]
-                        salle.type_specific_stats_update()
-                        salle.menu_centre = None
+                        # Check if click is within menu bounds
+                        if ((pos_noeud[0] - largeur_menu / 2 < event.pos[0] < pos_noeud[0] + largeur_menu / 2)
+                                and (pos_noeud[1] - hauteur_menu / 2 < event.pos[1] < pos_noeud[1] + hauteur_menu / 2)):
+
+                            # Calculate height of each menu option accounting for zoom
+                            hauteur_case = hauteur_menu / len(salle.liste_types_salles)
+
+                            # Calculate relative Y position from menu top, accounting for centered position
+                            rel_y = event.pos[1] - (pos_noeud[1] - hauteur_menu / 2)
+
+                            # Calculate index based on relative position
+                            index = int(rel_y / hauteur_case)
+
+                            # Ensure index is within bounds
+                            if 0 <= index < len(salle.liste_types_salles):
+                                salle.type = salle.liste_types_salles[index]
+                                salle.type_specific_stats_update()
+                                salle.menu_centre = None
 
 
         def handle_right_click(pos,map_data,liste_toutes_colonies):

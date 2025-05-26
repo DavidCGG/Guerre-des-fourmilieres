@@ -389,16 +389,16 @@ def generer_graphe(HAUTEUR_SOL, MAP_LIMIT_X) -> cg.Graphe:
                 coords_sortie = salle.noeud.coord
             elif salle.type == cg.TypeSalle.INDEFINI:
                 salles_indefinies.append(salle)
-
         for i in range(len(salles_indefinies)): #sort selon distance
             for j in range(len(salles_indefinies) - 1 - i):
                 if distance_sortie(salles_indefinies[j], coords_sortie) > distance_sortie(salles_indefinies[j + 1], coords_sortie):
                     salles_indefinies[j], salles_indefinies[j + 1] = salles_indefinies[j + 1], salles_indefinies[j]
 
         salles_indefinies[-1].type = cg.TypeSalle.THRONE
-        options_salles = [cg.TypeSalle.BANQUE, cg.TypeSalle.ENCLUME, cg.TypeSalle.MEULE, cg.TypeSalle.TRAINING_OUVRIERE, cg.TypeSalle.TRAINING_SOLDAT]
+        salles_indefinies[-2].type = cg.TypeSalle.BANQUE
+        options_salles = [cg.TypeSalle.ENCLUME, cg.TypeSalle.MEULE]
 
-        for i in range(len(salles_indefinies) - 1):
+        for i in range(len(salles_indefinies) - 2):
             type_aleatoire = random.choice(options_salles)
             options_salles.remove(type_aleatoire)
             salles_indefinies[i].type = type_aleatoire

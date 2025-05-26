@@ -1,20 +1,22 @@
+import math
 import random
 import pygame
-from config import trouver_font, trouver_img
+from pygame import Vector2
+from config import trouver_font, trouver_img, TypeItem
 from config import BLACK, WHITE, AQUA, GREEN, RED
 from config import CouleurFourmi
 from fourmi_types import Ouvriere, Soldat
-from fourmi import FourmisSprite, Groupe, Fourmis
-from classes_graphe import TypeSalle
+from fourmi import FourmisSprite, Fourmis
+from classes_graphe import TypeSalle, Salle
+
 
 class Colonie:
-    def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,listes_fourmis_jeu_complet):
+    def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,liste_fourmis_jeu_complet):
         self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_noire.png")).convert_alpha()
         self.map_data = map_data
         self.tuile_debut = tuile_debut
         self.screen = None
-        self.vie = 1 # 1 = 100% (vie de la reine)
 
         self.graphe = graphe
 
@@ -27,13 +29,12 @@ class Colonie:
                 self.throne = salle
 
         self.fourmis_selection = None # fourmi selectionnée dans le menu de fourmis
-        self.groupe_selection = None
 
-        self.fourmis = [Ouvriere(self.throne.noeud.coord[0], self.throne.noeud.coord[1], CouleurFourmi.NOIRE, self, self.throne) for _ in range(1)] + [Soldat(self.throne.noeud.coord[0], self.throne.noeud.coord[1], CouleurFourmi.NOIRE, self, self.throne) for _ in range(1)]
+        self.fourmis = [Ouvriere(self.throne.noeud.coord[0], self.throne.noeud.coord[1], CouleurFourmi.NOIRE, self, self.throne) for _ in range(2)] + [Soldat(self.throne.noeud.coord[0], self.throne.noeud.coord[1], CouleurFourmi.NOIRE, self, self.throne) for _ in range(2)]
         
         for fourmi in self.fourmis:
-            listes_fourmis_jeu_complet.append(fourmi)
-        self.groupes = {}
+            liste_fourmis_jeu_complet.append(fourmi)
+        self.liste_fourmis_jeu_complet = liste_fourmis_jeu_complet
         #self.fourmis_presentes = self.fourmis
         #self.groupes_presents = self.groupes
         self.texte_rects = {} # les rects dans le menu colonie pour changer leur coloeur trop cool
@@ -47,9 +48,8 @@ class Colonie:
         self.scroll_speed = 10
         self.curr_tab = "Ouvrières"
         self.font_menu = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 20)
+        self.petit_font_menu = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 15)
         self.last_tab = self.curr_tab
-
-        self.boutons = [] # pas en utilisation en ce moment
 
         self.menu_colonie_surface = pygame.Surface((250, 375))
         self.menu_fourmis_surface = pygame.Surface((250, 375))
@@ -60,23 +60,10 @@ class Colonie:
         self.update_menu()
         self.update_menu_fourmis()
 
-        self.sprite_sheets = {
-            Ouvriere: self.sprite_sheet_ouvr,
-            Soldat: self.sprite_sheet_sold
-        }
-        self.sprite_dict = {}
-        self.sprites = []
-        self.load_sprites()
-
-        self.groupe_images = []
-        self.load_groupe_images()
-        self.cache_groupes_a_updater = False
-        self.groupes_cache = {}
-
         self.tuiles_debut = tuiles_debut_toutes_colonies
         self.stop_processing_salles_other_than_sortie_when_dead = False
 
-    def process(self,dt,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies,map_data):
+    def process(self,dt,tous_les_nids,liste_toutes_colonies):
         # groupe_bouge = False
         # for _, groupe in self.groupes_cache.items():
         #     if groupe.get_nb_fourmis() > 1 and not groupe.est_vide():
@@ -85,45 +72,25 @@ class Colonie:
         #         if (dern_x, dern_y) != (groupe.centre_x_in_map, groupe.centre_y_in_map):
         #             groupe_bouge = True
 
-        fourmis_bouge = False
         for f in self.fourmis:
-            f.process(dt, self.map_data,tous_les_nids,liste_fourmis_jeu_complet,liste_toutes_colonies)
+            f.process(dt, self.map_data,tous_les_nids,self.liste_fourmis_jeu_complet,liste_toutes_colonies)
 
         for salle in self.graphe.salles:
             if salle.type != TypeSalle.SORTIE and not self.stop_processing_salles_other_than_sortie_when_dead:
-                salle.process(liste_fourmis_jeu_complet, self, dt, map_data, liste_toutes_colonies)
+                salle.process(self.liste_fourmis_jeu_complet, self, dt, self.map_data, liste_toutes_colonies)
             else:
-                salle.process(liste_fourmis_jeu_complet, self, dt, map_data, liste_toutes_colonies)
+                salle.process(self.liste_fourmis_jeu_complet, self, dt, self.map_data, liste_toutes_colonies)
 
-        if fourmis_bouge: # or groupe_bouge
-            self.cache_groupes_a_updater = True
         if self.menu_fourmis_ouvert:
             self.menu_f_a_updater = True
         if self.menu_colonie_ouvert:
             self.menu_a_updater = True
-
-    def check_mort(self):
-        return len(self.fourmis) == 0
 
     def nombre_ouvrieres(self):
         return len([f for f in self.fourmis if isinstance(f, Ouvriere)])
 
     def nombre_soldats(self):
         return len([f for f in self.fourmis if isinstance(f, Soldat)])
-
-    def update_fourmi_tuile(self, fourmi, dern_x, dern_y):
-        if fourmi in self.map_data[int(dern_y)][int(dern_x)].fourmis and self.map_data[int(dern_y)][int(dern_x)].fourmis is not None:
-            self.map_data[int(dern_y)][int(dern_x)].fourmis.remove(fourmi)
-        else:
-            self.map_data[fourmi.get_tuile()[1]][fourmi.get_tuile()[0]].fourmis.append(fourmi)
-
-    def collecte_fourmi(self, f):
-        x, y = f.get_tuile()
-        if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee and (x, y) == (f.target_in_map[0], f.target_in_map[1]):
-            ress = self.map_data[y][x].get_ressource()
-            if isinstance(f, Fourmis) and len(f.inventaire) < f.inventaire_taille_max:
-                f.inventaire.append(ress)
-                self.map_data[y][x].collectee = True
 
     def update_menu(self):
         if not self.menu_a_updater or not self.menu_colonie_ouvert:
@@ -144,7 +111,6 @@ class Colonie:
 
         info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
         info_sold = f"Soldats ({self.nombre_soldats()})"
-        info_groupes = f"Groupes ({self.get_vrai_nb_groupes()})"
         info_vie = "Vie: "+str(self.hp)
         info_nourr = "Nourriture: "+str(nb_nourriture)
         info_metal = "Métal: "+str(nb_metal)
@@ -152,7 +118,7 @@ class Colonie:
         menu_x = 1280 - self.menu_colonie_surface.get_width()
         menu_y = 720 / 2 - self.menu_colonie_surface.get_height() / 2
 
-        liste_textes = [info_ouvr, info_sold, info_groupes,info_vie, info_nourr, info_metal]
+        liste_textes = [info_ouvr, info_sold,info_vie, info_nourr, info_metal]
 
         for texte in liste_textes:
             couleur = AQUA if texte.split()[0] == self.hover_texte else WHITE
@@ -198,9 +164,9 @@ class Colonie:
             else:
                 ant_info = f"HP: {int(fourmi.hp)} Map Pos: ({int(fourmi.centre_in_map[0])}, {int(fourmi.centre_in_map[1])})"
             if fourmi.is_busy:
-                _texte = self.font_menu.render(ant_info, False, RED)
+                _texte = self.petit_font_menu.render(ant_info, False, RED)
             else:
-                _texte = self.font_menu.render(ant_info, False, WHITE)
+                _texte = self.petit_font_menu.render(ant_info, False, WHITE)
             list_surface.blit(_texte, (50, y_offset))
 
             rect = pygame.Rect(0, y_offset - 15, 250, 50)
@@ -224,98 +190,7 @@ class Colonie:
         self.update_menu_fourmis()
         self.screen.blit(self.menu_fourmis_surface, (0, self.screen.get_height() / 2 - self.menu_fourmis_surface.get_height() / 2))
 
-    def load_sprites(self):
-        for f in self.fourmis:
-            sprite = FourmisSprite(f, self.sprite_sheets[type(f)], 32, 32, 8, 100,1/2)
-            self.sprite_dict[f] = sprite
-            self.sprites.append(sprite)
-
-    def update_fourmis_tuiles(self, modif_tuiles):
-        for tuile in modif_tuiles:
-            self.map_data[tuile[1]][tuile[0]].fourmis = None
-
-        for tuile, groupe in self.groupes_cache.items():
-
-            self.gerer_collection(tuile, groupe)
-            self.map_data[tuile[1]][tuile[0]].fourmis = self.get_fourmis_de_groupe(groupe)
-
-    def gerer_collection(self, tuile, _groupe):
-        x, y = tuile
-        if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
-            ress = self.map_data[y][x].get_ressource()
-            groupe = self.get_fourmis_de_groupe(_groupe)
-            if isinstance(groupe, Fourmis) and len(groupe.inventaire) < groupe.inventaire_taille_max:
-                groupe.inventaire.append(ress)
-                self.map_data[y][x].collectee = True
-            elif isinstance(groupe, Groupe):
-                if groupe.collecter_ressource(ress):
-                    self.map_data[y][x].collectee = True
-
-    def gerer_depot(self, tuile, groupe):
-        if tuile == self.tuile_debut:
-            occupants = self.get_fourmis_de_groupe(groupe)
-            if isinstance(occupants, Fourmis):
-                if occupants.tient_ressource == "metal":
-                    self.metal += 1
-                elif occupants.tient_ressource == "pomme":
-                    self.nourriture += 1
-                occupants.tient_ressource = None
-            if isinstance(groupe, Groupe) and groupe.get_nb_fourmis() > 1:
-                nourr, metal = groupe.deposer_ressources()
-                self.metal += metal
-                self.nourriture += nourr
-            self.menu_a_updater = True
-            self.update_menu()
-
-    def fourmi_dans_groupe(self, fourmi):
-        for _, groupe in self.groupes_cache.items():
-            if groupe.get_nb_fourmis() >1 and fourmi in groupe.fourmis:
-                return True
-    def get_fourmis_de_groupe(self, groupe) -> Fourmis | Groupe:
-        if groupe.get_nb_fourmis() == 1:
-            return groupe.fourmis[0] # Retourne une fourmi particuliere
-        return groupe
-
-    def get_vrai_nb_groupes(self):
-        tot = 0
-        for tuile, groupe in self.groupes_cache.items():
-            if groupe.get_nb_fourmis() > 1:
-                tot += 1
-        return tot
-
-    def load_groupe_images(self):
-        for x in range(2,6):
-            self.groupe_images.append(pygame.image.load(trouver_img("UI/"+f"numero-{x}.png")))
-
-    def render_ants(self, tile_size, screen, camera,dt):
-        for fourmi in self.fourmis:
-            fourmi.draw_in_map(dt,screen,camera)
-
     def handle_click(self, pos, tile_x, tile_y, screen):
-        if self.map_data[tile_y][tile_x].fourmis is not None:
-            occupants = self.map_data[tile_y][tile_x].fourmis
-            if isinstance(occupants, Fourmis):
-                if occupants == self.fourmis_selection:
-                    self.fourmis_selection = None
-                else:
-                    self.fourmis_selection = occupants
-
-                keys = pygame.key.get_pressed()
-                if keys[pygame.K_d]:
-                    occupants.digging = not occupants.digging
-
-                self.menu_f_a_updater = True
-                return
-
-            if isinstance(occupants, Groupe):
-                if self.groupe_selection == occupants:
-                    self.groupe_selection = None
-                else:
-                    self.groupe_selection = occupants
-
-                self.menu_f_a_updater = True
-                return
-
         for f in self.fourmis:
             if f.dans_carte() and f.get_tuile() == (tile_x, tile_y):
                 if self.fourmis_selection == f:
@@ -407,10 +282,16 @@ class ColonieIA:
     def __init__(self, tuile_debut, map_data, tuiles_debut_toutes_colonies,graphe,listes_fourmis_jeu_complet):
         self.sprite_sheet_ouvr = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_rouge.png")).convert_alpha()
         self.sprite_sheet_sold = pygame.image.load(trouver_img("Fourmis/sprite_sheet_fourmi_rouge.png")).convert_alpha()
+        self.couleur_fourmi = CouleurFourmi.ROUGE
+
         self.map_data = map_data  # la carte de jeu
+        self._dern_search = 0 # temps depuis dernier search de ressources
+        self._dern_envoi_ressources = 0
+        self._dern_creation_salle = 0
+        self._cache_ressources = set()
+        self.tuiles_ressources = []
         self.tuile_debut = tuile_debut
         self.screen = None
-        self.vie = 1  # 1 = 100% (vie de la reine)
         self.nourriture = 0
         self.choix_timer = 0
 
@@ -418,58 +299,56 @@ class ColonieIA:
 
         self.hp = 1000
 
+
         for salle in self.graphe.salles:
             if salle.type == TypeSalle.SORTIE:
                 self.sortie = salle
             elif salle.type == TypeSalle.THRONE:
-                self.throne = salle
+                self.trone_coords = salle.noeud.coord
+                self.salle_trone = salle
+            elif salle.type == TypeSalle.BANQUE:
+                self.banque_coords = salle.noeud.coord
+                self.salle_banque = salle
 
-        self.fourmis = [Ouvriere(self.throne.noeud.coord[0], self.throne.noeud.coord[1], CouleurFourmi.ROUGE, self, self.throne) for _ in
-                        range(2)] + [Soldat(self.throne.noeud.coord[0], self.throne.noeud.coord[1], CouleurFourmi.ROUGE, self, self.throne) for
+        self.toutes_salles = self.sortie.liste_types_salles
+        self.salles_manquantes = [salle for salle in self.toutes_salles if salle not in [s.type for s in self.graphe.salles]]
+        self.nouv_salles_coords = {s: None for s in self.salles_manquantes}
+        self._nouv_salles = {}
+        self.fourmis = [Ouvriere(self.trone_coords[0], self.trone_coords[1], CouleurFourmi.ROUGE, self, self.salle_trone) for _ in
+                        range(2)] + [Soldat(self.trone_coords[0], self.trone_coords[1], CouleurFourmi.ROUGE, self, self.salle_trone) for
                                      _ in range(2)]
-        
+
         for fourmi in self.fourmis:
             listes_fourmis_jeu_complet.append(fourmi)
 
-        self.sprite_sheets = {
-            Ouvriere: self.sprite_sheet_ouvr,
-            Soldat: self.sprite_sheet_sold
-        }
-        self.sprite_dict = {}
-        self.sprites = []
-        self.load_sprites()
+        self.digging_queue_fourmis = {}
+        self.envoi_sold_vers_ouvr = False
+        self.envoi_sold_vers_sold = False
 
         self.tuiles_debut = tuiles_debut_toutes_colonies
-        self.tuiles_ressource = set()
         self.liste_fourmis_jeu_complet = listes_fourmis_jeu_complet
         self.toutes_colonies = None
 
 
-    def process(self, dt, tous_les_nids, liste_fourmis_jeu_complet, liste_toutes_colonies, map_data):
+    def process(self, dt, tous_les_nids, liste_toutes_colonies):
+
         self.toutes_colonies = liste_toutes_colonies
         # Processus de l'IA
         fourmis_bouge = False
-        self.choix_timer += dt
-        if self.choix_timer >= 3000:
 
-            # Choisir une action pour l'IA
-            self.choix()
-            self.choix_timer = 0
 
+        self.choix()
 
         for f in self.fourmis:
-            f.process(dt, self.map_data, tous_les_nids, liste_fourmis_jeu_complet, liste_toutes_colonies)
-
-            if not f.dans_carte():
-                continue
-
-            dern_x, dern_y = f.centre_in_map[0], f.centre_in_map[1]
-            if (dern_x, dern_y) != (f.centre_in_map[0], f.centre_in_map[1]):
-                fourmis_bouge = True
-                self.collecte_fourmi(f)
+            f.process(dt, self.map_data, tous_les_nids, self.liste_fourmis_jeu_complet, liste_toutes_colonies)
+            self.gerer_collecte_fourmi(f)
+            self.amener_oeufs(f)
+            self.gerer_creation_salle(f)
 
         for salle in self.graphe.salles:
-            salle.process(liste_fourmis_jeu_complet,self,dt, map_data, liste_toutes_colonies)
+            salle.process(self.liste_fourmis_jeu_complet, self, dt, self.map_data, liste_toutes_colonies)
+
+
 
     def choix(self):
         if self.en_danger():
@@ -480,10 +359,24 @@ class ColonieIA:
     def meilleure_action(self):
         if self.check_nourriture():
             self.chercher_nourriture()
+        elif self.check_banque():
+            self.chercher_bois_metal()
 
     def check_nourriture(self):
-        if self.nourriture < len(self.get_fourmis_type()[0]):
+        if self.salle_trone.inventaire != self.salle_trone.inventaire_necessaire:
             return True
+        return False
+
+    def check_banque(self):
+        if len(self.salle_banque.inventaire) < self.salle_banque.inventaire_taille_max:
+            return True
+        return False
+
+    def check_inventaire_salle(self, salle_type):
+        for salle in self.graphe.salles:
+            if salle.type == salle_type:
+                if salle.inventaire == salle.inventaire_necessaire:
+                    return True
         return False
 
     def en_danger(self):
@@ -494,39 +387,357 @@ class ColonieIA:
         return False
 
     def chercher_nourriture(self):
-        tuiles = self.trouver_tuiles_ressources()
-        partie = int(len(self.get_fourmis_type()[0]) * 0.65)
-        ouvr_a_envoyer = random.sample(self.get_fourmis_type()[0], partie)
-        for f in ouvr_a_envoyer:
-            if not f.is_busy:
-                if (f.target_in_map is None) and len(f.inventaire) < f.inventaire_taille_max:
-                    tuile = random.choice(tuiles)
-                    f.set_target_in_map(tuile[0], tuile[1], self.map_data, self.toutes_colonies)
+        ouvr_inactives = [f for f in self.get_fourmis_type()[0]
+                            if len(f.inventaire) < f.inventaire_taille_max and
+                            not f.is_busy and
+                            not f.digging]
+        if not ouvr_inactives:
+            return
 
-    def trouver_tuiles_ressources(self):
-        tuiles = []
-        for y in range(self.tuile_debut[1]-20, self.tuile_debut[1]+20):
-            for x in range(self.tuile_debut[0]-20, self.tuile_debut[0]+20):
-                if 0 <= y < 100 and 0 <= x < 100:
-                    if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
-                        tuiles.append((x, y))
+        self.tuiles_ressources = self.trouver_tuiles_ressources()
+        for f in ouvr_inactives:
+            if f.target_in_map is None:
+
+                pommes = [p for p in self.tuiles_ressources if self.map_data[p[1]][p[0]].get_ressource() == TypeItem.POMME]
+                tuile_proche = self.tuile_ressource_proche(f, pommes)
+                if tuile_proche:
+                    x, y = tuile_proche
+                    f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
+                    self.tuiles_ressources.remove(tuile_proche)
+                else:
+                    self.autre_action()
+
+    def chercher_bois_metal(self):
+        ouvr_inactives = [f for f in self.get_fourmis_type()[0]
+                          if len(f.inventaire) < f.inventaire_taille_max and
+                          not f.is_busy and
+                          not f.digging]
+        if not ouvr_inactives:
+            return
+
+        self.tuiles_ressources = self.trouver_tuiles_ressources()
+        for f in ouvr_inactives:
+            if f.target_in_map is None:
+                bois_metal = [b for b in self.tuiles_ressources if self.map_data[b[1]][b[0]].get_ressource() in [TypeItem.METAL, TypeItem.BOIS]]
+                tuile_proche = self.tuile_ressource_proche(f, bois_metal)
+                if tuile_proche:
+                    x, y = tuile_proche
+                    f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
+                    self.tuiles_ressources.remove(tuile_proche)
+                else:
+                    self.autre_action()
+
+    def autre_action(self):
+        print("autre action")
+
+    def choisir_salle(self, fourmi, salle_type):
+        if salle_type not in self.salles_manquantes:
+            return
+        intersections = [i for i in self.graphe.salles if i.type == TypeSalle.INTERSECTION]
+
+        if not intersections:
+            return
+
+        intersections_valides = [i for i in intersections if len(i.tunnels) < 4]
+        if not intersections_valides:
+            return
+
+        intersection = random.choice(intersections_valides)
+        fourmi.set_target_in_nid(intersection.noeud.coord, self, self.map_data, self.toutes_colonies)
+
+        directions_occupees = []
+        for tunnel in intersection.tunnels:
+            autre_salle = tunnel.arrivee if tunnel.depart == intersection else tunnel.depart
+            dx = autre_salle.noeud.coord[0] - intersection.noeud.coord[0]
+            dy = autre_salle.noeud.coord[1] - intersection.noeud.coord[1]
+            angle = math.degrees(math.atan2(dy, dx))
+            directions_occupees.append(angle)
+
+        angles_possibles = []
+        for angle in range(0, 360, 5):
+            valide = True
+            for dir_occupee in directions_occupees:
+                diff_angle = min(abs(angle - dir_occupee), 360 - abs(angle - dir_occupee))
+                if diff_angle < 45:
+                    valide = False
+                    break
+            if valide:
+                angles_possibles.append(angle)
+
+        if not angles_possibles:
+            return
+
+        angle = random.choice(angles_possibles)
+        dist = random.randint(250, 350)
+
+        angle_rad = math.radians(angle)
+        dx = math.cos(angle_rad) * dist
+        dy = math.sin(angle_rad) * dist
+
+        coord_nouv_salle = [
+            intersection.noeud.coord[0] + dx,
+            intersection.noeud.coord[1] + dy
+        ]
+        if coord_nouv_salle[1] < 128+100:
+            return
+
+        self.digging_queue_fourmis[fourmi] = intersection, coord_nouv_salle, salle_type
+
+
+    def gerer_creation_salle(self, fourmi):
+
+        if fourmi not in self.digging_queue_fourmis:
+            return
+
+        intersection, coord_salle, salle_type = self.digging_queue_fourmis[fourmi]
+        if not (fourmi.centre_in_nid[0], fourmi.centre_in_nid[1]) == (intersection.noeud.coord[0], intersection.noeud.coord[1]):
+            return
+
+        fourmi.digging = True
+        self.graphe.creer_salle_depuis_intersection(intersection, coord_salle)
+
+        nouv_salle = None
+        for s in self.graphe.salles:
+            if s.type == TypeSalle.INDEFINI:
+                nouv_salle = s
+                break
+
+        if nouv_salle:
+            nouv_salle.type = salle_type
+            self.nouv_salles_coords[nouv_salle.type] = nouv_salle.noeud.coord
+            self._nouv_salles[nouv_salle.type] = nouv_salle
+            self.salles_manquantes.remove(salle_type) if salle_type in self.salles_manquantes else None
+
+            nouv_salle.type_specific_stats_update()
+            fourmi.set_target_in_nid(nouv_salle.noeud.coord, self, self.map_data, self.toutes_colonies)
+            self.digging_queue_fourmis.pop(fourmi)
+            fourmi.digging = False
+            return
+
+
+
+
+    def trouver_tuiles_ressources(self, max_radius=25):
+        x0, y0 = self.tuile_debut
+
+        dt = pygame.time.get_ticks()
+
+
+        toutes_resources = []
+        for y in range(max(0, y0 - max_radius), min(len(self.map_data), y0 + max_radius + 1)):
+            for x in range(max(0, x0 - max_radius), min(len(self.map_data[0]), x0 + max_radius + 1)):
+                if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee:
+                    dist = abs(x - x0) + abs(y - y0)
+                    if dist <= max_radius:
+                        toutes_resources.append((dist, (x, y)))
+        toutes_resources.sort()
+        tuiles = set(coord for _, coord in toutes_resources)
+        if not tuiles:
+            return self.trouver_tuiles_ressources(max_radius = 35)
+        self._dern_search = dt
+        self._cache_ressources = tuiles
         return tuiles
 
-    def envoyer_fourmis_dans_nid(self):
-        pass
+    def tuile_ressource_proche(self, fourmi, tuiles) -> tuple[int, int] | None:
+        if not tuiles:
+            return None
+        tuile_fourmi = None
+        if fourmi.current_colonie == self:
+            tuile_fourmi = fourmi.current_colonie.tuile_debut
+        elif fourmi.current_colonie is None:
+            tuile_fourmi = fourmi.get_tuile()
+        tuile_proche = None
+        min_dist = float('inf')
+
+        for tuile in tuiles:
+            dist = abs(tuile[0] - tuile_fourmi[0]) + abs(tuile[1] - tuile_fourmi[1])
+            if dist < min_dist:
+                min_dist = dist
+                tuile_proche = tuile
+        return tuile_proche
+
+    def gerer_collecte_fourmi(self, f):
+        def epee_ou_armure(f):
+            meule = self.check_salle_existe(TypeSalle.MEULE)
+            enclume = self.check_salle_existe(TypeSalle.ENCLUME)
+
+            metal = len([m for m in self.salle_banque.inventaire if m == TypeItem.METAL])
+            if metal > 1:
+                if TypeItem.EPEE not in f.inventaire and TypeItem.EPEE not in self.salle_banque.inventaire:
+                    f.set_target_in_nid(meule.noeud.coord, self, self.map_data, self.toutes_colonies)
+
+
+        def gerer_soldats(f):
+            if f.is_busy:
+                return
+            if isinstance(f, Soldat):
+                if f.current_colonie is None:
+                    f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+                else:
+                    if not (Vector2(self.salle_trone.noeud.coord[0], self.salle_trone.noeud.coord[1]) - Vector2(f.centre_in_nid[0],f.centre_in_nid[1])).magnitude() < TypeSalle.THRONE.value[0]:
+                        if not f.inventaire:
+                            f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+                        else:
+                            epee_ou_armure(f)
+        # def gerer_soldats(f):
+        #     if isinstance(f, Soldat) and not f.is_busy:
+        #         salle_ouvr = self.check_salle_existe(TypeSalle.TRAINING_OUVRIERE)
+        #         salle_sold = self.check_salle_existe(TypeSalle.TRAINING_SOLDAT)
+        #         if salle_ouvr is not None:
+        #             if f.centre_in_map == salle_ouvr.noeud.coord and self.envoi_sold_vers_ouvr:
+        #                 print("soldat dans salle ouvr")
+        #                 self.envoi_sold_vers_ouvr = False
+        #             if self.check_inventaire_salle(salle_ouvr):
+        #                 f.set_target_in_nid(salle_ouvr.noeud.coord, self, self.map_data, self.toutes_colonies)
+        #                 self.envoi_sold_vers_ouvr = True
+        #
+        #         if salle_sold is not None:
+        #             if f.centre_in_map == salle_sold.noeud.coord and self.envoi_sold_vers_sold:
+        #                 self.envoi_sold_vers_sold = False
+        #
+        #         if f.current_colonie is None:
+        #             f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+        #
+        #         else:
+        #             if salle_sold is not None and salle_sold.inventaire == salle_sold.inventaire_necessaire and not self.envoi_sold_vers_sold:
+        #                 f.set_target_in_nid(salle_sold.noeud.coord, self, self.map_data, self.toutes_colonies)
+        #                 self.envoi_sold_vers_sold = True
+        #             if not (Vector2(self.salle_trone.noeud.coord[0], self.salle_trone.noeud.coord[1]) - Vector2(f.centre_in_nid[0],f.centre_in_nid[1])).magnitude() < TypeSalle.THRONE.value[0]:
+        #                 if len(f.inventaire) == 0:
+        #                     f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+        #
+        # def envoyer_meule_ou_enclume(ressource):
+        #     if ressource != TypeItem.METAL:
+        #         return False
+        #     meule = self.check_salle_existe(TypeSalle.MEULE)
+        #     enclume = self.check_salle_existe(TypeSalle.ENCLUME)
+        #     if meule is not None:
+        #         if ressource not in meule.inventaire and ressource in meule.inventaire_necessaire:
+        #             f.set_target_in_nid(meule.noeud.coord, self, self.map_data, self.toutes_colonies)
+        #             return True
+        #     elif enclume is not None:
+        #         if ressource not in enclume.inventaire and ressource in enclume.inventaire_necessaire:
+        #             f.set_target_in_nid(enclume.noeud.coord, self, self.map_data, self.toutes_colonies)
+        #             return True
+        #     if meule is None and enclume is None:
+        #         self.choisir_salle(f, random.choice([TypeSalle.MEULE, TypeSalle.ENCLUME]))
+
+        def envoyer_training(ressource):
+            salle_ouvr = self.check_salle_existe(TypeSalle.TRAINING_OUVRIERE)
+            salle_sold = self.check_salle_existe(TypeSalle.TRAINING_SOLDAT)
+            if salle_ouvr is not None:
+                if ressource not in salle_ouvr.inventaire and ressource in salle_ouvr.inventaire_necessaire:
+                    f.set_target_in_nid(salle_ouvr.noeud.coord, self, self.map_data, self.toutes_colonies)
+                    return True
+            elif salle_sold is not None:
+                if ressource not in salle_sold.inventaire and ressource in salle_sold.inventaire_necessaire:
+                    f.set_target_in_nid(salle_sold.noeud.coord, self, self.map_data, self.toutes_colonies)
+                    return True
+            return False
+
+        # Si sur carte, on send vers une salle (les fourmis restent prises dans des salles sils on la ressource et que la salle l'a deja)
+        if f.centre_in_map is not None:
+            x, y = f.get_tuile()
+            if (f.target_in_map[0], f.target_in_map[1]) == f.get_tuile():
+                ress = self.map_data[y][x].get_ressource()
+                if not self.map_data[y][x].collectee and len(f.inventaire) < f.inventaire_taille_max:
+                    f.inventaire.append(ress)
+                    self.map_data[y][x].collectee = True
+                if self.map_data[y][x].collectee and ress not in f.inventaire:
+                    if ress == TypeItem.POMME:
+                        pommes = [p for p in self.tuiles_ressources if self.map_data[p[1]][p[0]].get_ressource() == TypeItem.POMME]
+                        tuile_proche = self.tuile_ressource_proche(f, pommes)
+                        if tuile_proche:
+                            x, y = tuile_proche
+                            f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
+                            self.tuiles_ressources.remove(tuile_proche)
+                    elif ress in [TypeItem.METAL, TypeItem.BOIS]:
+                        bois_metal = [b for b in self.tuiles_ressources if self.map_data[b[1]][b[0]].get_ressource() in [TypeItem.METAL, TypeItem.BOIS]]
+                        tuile_proche = self.tuile_ressource_proche(f, bois_metal)
+                        if tuile_proche:
+                            x, y = tuile_proche
+                            f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
+                            self.tuiles_ressources.remove(tuile_proche)
+
+                if ress == TypeItem.POMME and ress in f.inventaire:
+                    if not envoyer_training(ress):
+                        f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+                elif ress in [TypeItem.METAL, TypeItem.BOIS] and ress in f.inventaire:
+                    if not envoyer_training(ress):
+                        f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
+
+        else:
+            gerer_soldats(f)
+
+            for item in f.inventaire:
+                if item == TypeItem.POMME:
+                    if not envoyer_training(item):
+                        if self.salle_trone.inventaire != self.salle_trone.inventaire_necessaire:
+                            f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+                        else:
+                            f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
+                else:
+                    if not envoyer_training(item):
+                        f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
+
+
+
+    def amener_oeufs(self, f):
+        if TypeItem.OEUF not in f.inventaire:
+            return
+
+        if any(ant.digging for ant in self.fourmis):
+            return
+
+        ouvr, sold = self.get_fourmis_type()
+        ouvr_count, sold_count = len(ouvr), len(sold)
+
+        if sold_count == 0:
+            target_room_type = TypeSalle.TRAINING_SOLDAT
+        elif ouvr_count < sold_count:
+            target_room_type = TypeSalle.TRAINING_OUVRIERE
+        elif sold_count < ouvr_count / 3:
+            target_room_type = TypeSalle.TRAINING_SOLDAT
+        else:
+            target_room_type = TypeSalle.TRAINING_OUVRIERE
+
+        if target_room_type not in self.salles_manquantes:
+            salle = self.check_salle_existe(target_room_type)
+            if salle is not None:
+                if TypeItem.OEUF not in salle.inventaire:
+                    f.set_target_in_nid(salle.noeud.coord, self, self.map_data, self.toutes_colonies)
+                else:
+                    f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
+                return
+
+        if (target_room_type in self.salles_manquantes and
+                not any(room_type == target_room_type for _, _, room_type in self.digging_queue_fourmis.values())):
+            if not f.digging and len(self.digging_queue_fourmis) == 0:
+                self.choisir_salle(f, target_room_type)
+
+
+
+    def check_salle_existe(self, salle_type) -> Salle:
+        if salle_type not in self.salles_manquantes:
+            for salle in self.graphe.salles:
+                if salle.type == salle_type:
+                    return salle
+        else:
+            return None
 
     def fourmis_dans_nid(self):
         tot = 0
         f_dans_nid = []
         for f in self.fourmis:
-            if f.current_colonie == self:
+            if f.current_colonie is not None and f.current_colonie == self:
                 tot += 1
                 f_dans_nid.append(f)
-        return (tot, f_dans_nid)
+        return tot, f_dans_nid
 
     def get_fourmis_type(self):
         ouvr = []
         sold = []
+
         for f in self.fourmis:
             if isinstance(f, Ouvriere):
                 ouvr.append(f)
@@ -542,26 +753,8 @@ class ColonieIA:
 
         return len(ennemis)
 
-    def collecte_fourmi(self, f):
-        x, y = f.get_tuile()
-        if self.map_data[y][x].tuile_ressource and not self.map_data[y][x].collectee and (x, y) == (f.target_in_map[0], f.target_in_map[1]):
-            ress = self.map_data[y][x].get_ressource()
-            if len(f.inventaire) < f.inventaire_taille_max:
-                f.inventaire.append(ress)
-                self.map_data[y][x].collectee = True
-                f.set_target_in_nid(self.throne.noeud.coord, self, self.map_data, self.toutes_colonies)
-
-    def load_sprites(self):
+    def envoyer_fourmis_dans_nid(self):
         for f in self.fourmis:
-            sprite = FourmisSprite(f, self.sprite_sheets[type(f)], 32, 32, 8, 100,1/2)
-            self.sprite_dict[f] = sprite
-            self.sprites.append(sprite)
-
-    def render_ants(self, tile_size, screen, camera):
-        for fourmi in self.fourmis:
-            if fourmi.current_colonie is None:
-                sprite = self.sprite_dict[fourmi]
-                sprite.update(pygame.time.get_ticks() / 1000, camera, tile_size)
-                if screen.get_rect().colliderect(sprite.rect):
-                    screen.blit(sprite.image, sprite.rect)
+            if f.current_colonie is None and f.target_in_map is None:
+                f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
 

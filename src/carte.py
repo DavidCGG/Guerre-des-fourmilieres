@@ -102,8 +102,8 @@ class Carte:
             curr_couleur = 0
             regions = [
                 (min_dist, min_dist),  # Top-left corner
-                (self.MAP_WIDTH - region_size - min_dist, min_dist),  # Top-right corner
-                (min_dist, self.MAP_HEIGHT - region_size - min_dist),  # Bottom-left corner
+                #(self.MAP_WIDTH - region_size - min_dist, min_dist),  # Top-right corner
+                #(min_dist, self.MAP_HEIGHT - region_size - min_dist),  # Bottom-left corner
                 (self.MAP_WIDTH - region_size - min_dist, self.MAP_HEIGHT - region_size - min_dist)  # Bottom-right corner
             ]
 
@@ -119,7 +119,7 @@ class Carte:
                     if isinstance(self.map_data[y][x], (Terre, Montagne)):
                         tuile = (x,y)
 
-                self.map_data[tuile[1]][tuile[0]].tuile_debut_joueur = True
+                self.map_data[tuile[1]][tuile[0]].tuile_debut = True
                 self.map_data[tuile[1]][tuile[0]].color = self.couleurs_colonies[curr_couleur]
                 curr_couleur += 1
                 self.tuiles_debut.append((x, y))
@@ -161,11 +161,6 @@ class Carte:
                             pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
                         if self.colonies[0].fourmis_selection.centre_in_map is not None and self.colonies[0].fourmis_selection.get_tuile() == (x, y):
                             pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
-                    if self.colonies[0].groupe_selection:
-                        if self.hover_tuile == (x, y):
-                            pygame.draw.rect(screen, AQUA, self.camera.apply_rect(tile_rect), 2)
-                        if self.colonies[0].groupe_selection.get_tuile() == (x, y):
-                            pygame.draw.rect(screen, GREEN, self.camera.apply_rect(tile_rect), 2)
         
         screen.fill(BLACK)
         start_x, start_y, end_x, end_y = self.trouver_tuiles_visibles()
@@ -201,10 +196,7 @@ class Carte:
                     self.colonies[0].fourmis_selection.set_target_in_map(tile_x, tile_y, self.map_data, self.colonies)
                     self.colonies[0].fourmis_selection = None
                     self.hover_tuile = None
-                elif self.colonies[0].groupe_selection:
-                    self.colonies[0].groupe_selection.set_target_in_map(tile_x, tile_y, self.map_data, self.colonies)
-                    self.colonies[0].groupe_selection = None
-                    self.hover_tuile = None
+
 
                 elif (tile_x, tile_y) in self.tuiles_debut:
                     return self.tuiles_debut.index((tile_x, tile_y))
@@ -227,8 +219,6 @@ class Carte:
             self.camera.drag(*event.pos)
             self.colonies[0].handle_hover(event.pos)
             if self.colonies[0].fourmis_selection is not None:
-                self.hover_tuile = self.get_tuile(event)
-            elif self.colonies[0].groupe_selection is not None:
                 self.hover_tuile = self.get_tuile(event)
     
     def set_camera_tuile_debut(self):
