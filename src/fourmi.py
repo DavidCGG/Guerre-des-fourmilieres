@@ -170,14 +170,11 @@ class Fourmis(ABC):
     def set_attack(self, fourmi_target, map_data, liste_toutes_colonies):
         self.fourmi_attacking = fourmi_target
         self.is_busy = False
+
         if fourmi_target.current_colonie is None:
             self.set_target_in_map(round(fourmi_target.centre_in_map[0]),round(fourmi_target.centre_in_map[1]),map_data,liste_toutes_colonies)
         else:
-            colonie_target = None
-            for colonie in liste_toutes_colonies:
-                if colonie == fourmi_target.colonie_origine:
-                    colonie_target = colonie
-            self.set_target_in_nid((round(fourmi_target.centre_in_nid[0]),round(fourmi_target.centre_in_nid[1])),colonie_target,map_data,liste_toutes_colonies)
+            self.set_target_in_nid((round(fourmi_target.centre_in_nid[0]), round(fourmi_target.centre_in_nid[1])), fourmi_target.current_colonie, map_data,liste_toutes_colonies)
 
     def in_map(self) -> bool:
         if self.current_colonie is None:

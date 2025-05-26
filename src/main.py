@@ -1,7 +1,7 @@
 import ast
 import os
 import random
-import venv_setup #TODO enlever le hashtag
+#import venv_setup #TODO enlever le hashtag
 
 import pygame
 import carte as carte

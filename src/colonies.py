@@ -718,7 +718,7 @@ class ColonieIA:
         # Si sur carte, on send vers une salle (les fourmis restent prises dans des salles sils on la ressource et que la salle l'a deja)
         if f.centre_in_map is not None:
             x, y = f.get_tuile()
-            if (f.target_in_map[0], f.target_in_map[1]) == f.get_tuile():
+            if f.target_in_map is not None and (f.target_in_map[0], f.target_in_map[1]) == f.get_tuile():
                 ress = self.map_data[y][x].get_ressource()
                 if not self.map_data[y][x].collectee and len(f.inventaire) < f.inventaire_taille_max:
                     f.inventaire.append(ress)

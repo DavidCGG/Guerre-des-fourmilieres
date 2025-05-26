@@ -305,17 +305,21 @@ class Salle:
     def defense_automatique(self, colonie_owner_of_self, listes_fourmis_jeu_complet, map_data, liste_toutes_colonies):
         fourmis_a_target = []
         fourmis_defenders = []
+
         for fourmi in listes_fourmis_jeu_complet:
             if fourmi.current_colonie is not None and fourmi.current_colonie == colonie_owner_of_self and fourmi.colonie_origine != colonie_owner_of_self: #find all enemys in nid
                 fourmis_a_target.append(fourmi)
-        for fourmi_defender in colonie_owner_of_self.fourmis:#find all friendlies in nid
+
+        for fourmi_defender in colonie_owner_of_self.fourmis:
             if (not fourmi_defender.is_busy or fourmi_defender.is_attacking_for_defense_automatique) and fourmi_defender.current_colonie is not None and fourmi_defender.current_colonie == colonie_owner_of_self:
                 fourmis_defenders.append(fourmi_defender)
-        if len(fourmis_a_target)>0 and len(fourmis_defenders)>0:
+
+        if len(fourmis_a_target) > 0 and len(fourmis_defenders) > 0:
             for i in range(len(fourmis_defenders)):
                 fourmis_defenders[i].set_attack(fourmis_a_target[i % len(fourmis_a_target)],map_data,liste_toutes_colonies)
-                fourmis_defenders[i].is_attacking_for_defense_automatique=True
-        elif len(fourmis_a_target)==0:
+                fourmis_defenders[i].is_attacking_for_defense_automatique = True
+        
+        elif len(fourmis_a_target) == 0:
             for fourmi_defender in fourmis_defenders:
                 if fourmi_defender.is_attacking_for_defense_automatique:
                     fourmi_defender.fourmi_attacking = None
