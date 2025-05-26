@@ -1,6 +1,5 @@
 import math
 import random
-import uuid
 from abc import ABC
 
 import pygame
@@ -262,7 +261,6 @@ class Fourmis(ABC):
                     self.digging = False
 
                 self.is_moving = False
-                self.is_busy = False
                 self.target_in_nid = None
                 self.digging_target = None
 

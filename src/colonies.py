@@ -213,9 +213,6 @@ class Colonie:
             if isinstance(groupe, Fourmis) and len(groupe.inventaire) < groupe.inventaire_taille_max:
                 groupe.inventaire.append(ress)
                 self.map_data[y][x].collectee = True
-            elif isinstance(groupe, Groupe):
-                if groupe.collecter_ressource(ress):
-                    self.map_data[y][x].collectee = True
 
     def gerer_depot(self, tuile, groupe):
         if tuile == self.tuile_debut:
@@ -226,10 +223,7 @@ class Colonie:
                 elif occupants.tient_ressource == "pomme":
                     self.nourriture += 1
                 occupants.tient_ressource = None
-            if isinstance(groupe, Groupe) and groupe.get_nb_fourmis() > 1:
-                nourr, metal = groupe.deposer_ressources()
-                self.metal += metal
-                self.nourriture += nourr
+
             self.menu_a_updater = True
             self.update_menu()
 
