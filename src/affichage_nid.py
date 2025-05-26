@@ -191,29 +191,28 @@ class Nid:
                     salle.menu_is_ouvert = not salle.menu_is_ouvert
 
                 if salle.type == TypeSalle.INDEFINI and salle.menu_is_ouvert and salle.menu_centre is not None:
-                    if salle.type == TypeSalle.INDEFINI and salle.menu_is_ouvert and salle.menu_centre is not None:
-                        pos_noeud = self.camera.apply(salle.noeud.coord)
-                        largeur_menu = salle.menu_centre.get_width() * self.camera.zoom
-                        hauteur_menu = salle.menu_centre.get_width() * self.camera.zoom
+                    pos_noeud = self.camera.apply(salle.noeud.coord)
+                    largeur_menu = salle.menu_centre.get_width() * self.camera.zoom
+                    hauteur_menu = salle.menu_centre.get_height() * self.camera.zoom
 
-                        # Check if click is within menu bounds
-                        if ((pos_noeud[0] - largeur_menu / 2 < event.pos[0] < pos_noeud[0] + largeur_menu / 2)
-                                and (pos_noeud[1] - hauteur_menu / 2 < event.pos[1] < pos_noeud[1] + hauteur_menu / 2)):
+                    # Check if click is within menu bounds
+                    if ((pos_noeud[0] - largeur_menu / 2 < event.pos[0] < pos_noeud[0] + largeur_menu / 2)
+                            and (pos_noeud[1] - hauteur_menu / 2 < event.pos[1] < pos_noeud[1] + hauteur_menu / 2)):
 
-                            # Calculate height of each menu option accounting for zoom
-                            hauteur_case = hauteur_menu / len(salle.liste_types_salles)
+                        # Calculate height of each menu option accounting for zoom
+                        hauteur_case = hauteur_menu / len(salle.liste_types_salles)
 
-                            # Calculate relative Y position from menu top, accounting for centered position
-                            rel_y = event.pos[1] - (pos_noeud[1] - hauteur_menu / 2)
+                        # Calculate relative Y position from menu top, accounting for centered position
+                        rel_y = event.pos[1] - (pos_noeud[1] - hauteur_menu / 2)
 
-                            # Calculate index based on relative position
-                            index = int(rel_y / hauteur_case)
+                        # Calculate index based on relative position
+                        index = int(rel_y / hauteur_case)
 
-                            # Ensure index is within bounds
-                            if 0 <= index < len(salle.liste_types_salles):
-                                salle.type = salle.liste_types_salles[index]
-                                salle.type_specific_stats_update()
-                                salle.menu_centre = None
+                        # Ensure index is within bounds
+                        if 0 <= index < len(salle.liste_types_salles):
+                            salle.type = salle.liste_types_salles[index]
+                            salle.type_specific_stats_update()
+                            salle.menu_centre = None
 
 
         def handle_right_click(pos,map_data,liste_toutes_colonies):
