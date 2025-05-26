@@ -336,18 +336,10 @@ class Fourmis(ABC):
             process_nid()
 
     def set_target_in_nid(self, target_pos, target_nid, map_data, colonies):
-        def find_closet_noeud_to_tunnel(tunnel):
-            salle_fourmi = None
-            for salle in target_nid.graphe.salles:
-                if (Vector2(salle.noeud.coord[0], salle.noeud.coord[1]) - Vector2(self.centre_in_nid[0], self.centre_in_nid[1])).magnitude() > salle.type.value[0]:
-                    continue
-
-                salle_fourmi = salle
-                break
-            
+        def find_closet_noeud_to_tunnel(tunnel):            
             chemin = None
-            chemin1 = target_nid.graphe.dijkstra(salle_fourmi.noeud, tunnel.depart.noeud)
-            chemin2 = target_nid.graphe.dijkstra(salle_fourmi.noeud, tunnel.arrivee.noeud)
+            chemin1 = target_nid.graphe.dijkstra(self.current_salle.noeud, tunnel.depart.noeud)
+            chemin2 = target_nid.graphe.dijkstra(self.current_salle.noeud, tunnel.arrivee.noeud)
 
             for noeud in chemin1:
                 if noeud == chemin1[-1]:
