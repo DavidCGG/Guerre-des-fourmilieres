@@ -1,12 +1,16 @@
-# Guerre-des-fourmilieres
-Version d'arcade utilisée: 3.0
-
 # Installation de packages
-Lancer le fichier `setup.py` pour installer les packages nécessaires.
-Cela va lancer la commande `pip install -r requirements.txt`,
-activer l'environnement virtuel et installer les packages.
+Les packages seront installés automatiquement lorsque le jeu sera démarré.
 
-# Ajoute de packages
-Si vous utilisez `pip install ...` pour ajouter des packages,
-n'oubliez pas de mettre à jour le fichier `requirements.txt`
-avec la commande `pip freeze > requirements.txt`.
+# Démarrer le jeu
+Écrire python src/main dans le terminal pour exécuter le fichier source.
+
+# Instructions pour jouer
+Naviguer entre les cartes: Clickez sur une des cases colorées avec un click droit pour y entrer. Pour sortir de la colonie, faites un click droit sur le ciel.
+
+Diriger les fourmis: Ouvrez le menu avec "q" et sélectionner une fourmis à déplacer ou faites un click gauche sur une fourmis. Une fois la fourmis sélectionnée, faites un click droit sur la case ou la salle ou vous voulez l'envoyer. Ceci fonctionne aussi d'une carte à une autre.
+
+Récolter et déposer des ressources: Envoyer la fourmis sur une ressource pour la récolter. Vous pouvez déposer la ressource dans votre nid en envoyant la fourmis qui la tient dans une salle appropriée.
+
+Ouvrir les menus des salles et des fourmis: Vous pouvez voir les ressources détennues par les salles ou les fourmis en faisant un click gauche dessus.
+
+Créer des nouvelles salles: Faites un click gauche sur une fourmis en appuyant sur "d" pour la préparer à creuser. Envoyer la ensuite vers la salle ou le tunnel à partir duquel elle devra commencer à creuser. Ensuite, clicker sur l'endroit ou vous voulez créer une nouvelle salle. Vous pouvez choisir le type de salle à créer en cliquant sur le menu de la nouvelle salle.

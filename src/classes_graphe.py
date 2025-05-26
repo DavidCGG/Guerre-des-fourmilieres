@@ -774,44 +774,69 @@ class Graphe:
             tunnel = Tunnel(salle, voisin)
             self.tunnels.add(tunnel)
 
-    def creer_salle_depuis_intersection(self, salle: Salle, coord_arrivee: list[float, float], fourmi) -> None:
-        """
-        Crée une nouvelle salle à partir d'une intersection et d'une coordonnée d'arrivée.
-        Args:
-            salle (Salle): Salle d'intersection.
-            coord_arrivee (list[float, float]): Coordonnée de la nouvelle salle.
-        Returns:
-            None
-        """
+    def creer_salle_depuis_intersection(self, salle: Salle, coord_arrivee: list[float, float], fourmi) -> bool:
+        """Crée une nouvelle salle à partir d'une intersection et d'une coordonnée d'arrivée."""
+        
         if salle.type != TypeSalle.INTERSECTION:
-            return
+            return False
 
         #Initialisation de la nouvelle salle
         noeud_salle = NoeudPondere(coord_arrivee)
         salle_indefinie = Salle(noeud_salle, type = TypeSalle.CONSTRUCTION)
+        nouveau_tunnel = Tunnel(salle, salle_indefinie)
+
+        #Vérifier si la nouvelle salle est valide
+        for salle_graphe in self.salles:
+            if salle_graphe == fourmi.current_salle:
+                continue
+
+            if salle_indefinie.intersecte_salle(salle_graphe):
+                return False
+            
+        for tunnel_graphe in self.tunnels:
+            if tunnel_graphe in fourmi.current_salle.tunnels:
+                continue
+
+            if salle_indefinie.intersecte_tunnel(tunnel_graphe):
+                return False
+            if nouveau_tunnel.intersecte(tunnel_graphe):
+                return False
+
         salle_indefinie.type_specific_stats_update()
         salle_indefinie.fourmi_qui_fait_action = fourmi
         self.salles.add(salle_indefinie)
+        self.tunnels.add(nouveau_tunnel)
 
-        #Création des nouveaux tunnels
-        self.tunnels.add(Tunnel(salle, salle_indefinie))
+        return True
 
-    def creer_salle_depuis_tunnel(self, tunnel: Tunnel, coord_depart: list[float, float], coord_arrivee, fourmi) -> None:     
-        """
-        Crée une nouvelle salle à partir d'un tunnel, du point de départ dans le tunnel et des coordonnées de la nouvelle salle.
-        Args:
-            tunnel (Tunnel): Tunnel à partir duquel la salle est créée.
-            coord_depart (list[float, float]): Coordonnée de départ dans le tunnel.
-            coord_arrivee (list[float, float]): Coordonnée de la nouvelle salle.
-        Returns:
-            None
-        """
+    def creer_salle_depuis_tunnel(self, tunnel: Tunnel, coord_depart: list[float, float], coord_arrivee, fourmi) -> bool:     
+        """Crée une nouvelle salle à partir d'un tunnel, du point de départ dans le tunnel et des coordonnées de la nouvelle salle."""
+
         #Initialisation des nouvelles salles
         noeud_intersection = NoeudPondere(coord_depart)
         salle_intersection = Salle(noeud_intersection, type = TypeSalle.INTERSECTION)
 
         noeud_salle = NoeudPondere(coord_arrivee)
         salle_indefinie = Salle(noeud_salle, type = TypeSalle.CONSTRUCTION)
+        nouveau_tunnel = Tunnel(salle_intersection, salle_indefinie)
+
+        #Vérifier si la nouvelle salle est valide
+        for salle_graphe in self.salles:
+            if salle_graphe == fourmi.current_salle:
+                continue
+
+            if salle_indefinie.intersecte_salle(salle_graphe):
+                return False
+            
+        for tunnel_graphe in self.tunnels:
+            if tunnel_graphe in fourmi.current_salle.tunnels:
+                continue
+
+            if salle_indefinie.intersecte_tunnel(tunnel_graphe):
+                return False
+            if nouveau_tunnel.intersecte(tunnel_graphe):
+                return False
+
         salle_indefinie.type_specific_stats_update()
         salle_indefinie.fourmi_qui_fait_action = fourmi
 
@@ -833,7 +858,9 @@ class Graphe:
         #Création des nouveaux tunnels
         self.tunnels.add(Tunnel(tunnel.depart, salle_intersection))
         self.tunnels.add(Tunnel(tunnel.arrivee, salle_intersection))
-        self.tunnels.add(Tunnel(salle_intersection, salle_indefinie))
+        self.tunnels.add(nouveau_tunnel)
+
+        return True
 
     def dijkstra(self, depart, arrivee) -> list[NoeudPondere]:
         """

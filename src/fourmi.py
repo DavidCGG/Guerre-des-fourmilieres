@@ -179,7 +179,7 @@ class Fourmis(ABC):
                     colonie_target = colonie
             self.set_target_in_nid((round(fourmi_target.centre_in_nid[0]),round(fourmi_target.centre_in_nid[1])),colonie_target,map_data,liste_toutes_colonies)
 
-    def in_map(self):
+    def in_map(self) -> bool:
         if self.current_colonie is None:
             in_map = True
         else:
@@ -187,27 +187,33 @@ class Fourmis(ABC):
 
         return in_map
     
-    def dig_tunnel(self, target_pos: tuple[float, float], colonies):
-        #TODO ajouter la logique dans les méthodes de graphe pour vérifier la validité
-
-        salle_fourmi = None
-        for salle in self.current_colonie.graphe.salles:
-            if (Vector2(salle.noeud.coord[0], salle.noeud.coord[1]) - Vector2(self.centre_in_nid[0], self.centre_in_nid[1])).magnitude() > salle.type.value[0]:
-                continue
-
-            salle_fourmi = salle
-            break
-
-        if salle_fourmi is not None:
-            self.current_colonie.graphe.creer_salle_depuis_intersection(salle_fourmi, target_pos, self)
-            return
+    def in_tunnel(self) -> bool:
+        if self.current_colonie.graphe is None:
+            return False
         
-        coord_centre = (self.centre_in_nid[0], self.centre_in_nid[1])
-        tunnel_fourmi, _ = self.current_colonie.graphe.get_coord_in_tunnel_at_coord(coord_centre)
+        graphe = self.current_colonie.graphe
+        for salle in graphe.salles:
+            if (Vector2(self.centre_in_nid[0], self.centre_in_nid[1]) - Vector2(salle.noeud.coord[0], salle.noeud.coord[1])).magnitude() <= salle.type.value[0]:
+                return False
+            
+        return True
 
-        if tunnel_fourmi is not None:
-            self.current_colonie.graphe.creer_salle_depuis_tunnel(tunnel_fourmi, coord_centre, target_pos, self)
-            return
+    
+    def dig_tunnel(self, target_pos: tuple[float, float]):
+        if not self.in_tunnel():
+            creation_valide: bool = self.current_colonie.graphe.creer_salle_depuis_intersection(self.current_salle, target_pos, self)
+            if creation_valide:
+                self.digging_target = target_pos
+
+        else:        
+            coord_centre = (self.centre_in_nid[0], self.centre_in_nid[1])
+            tunnel_infos = self.current_colonie.graphe.get_coord_in_tunnel_at_coord(coord_centre)
+            
+            if tunnel_infos is not None:
+                tunnel_fourmi, _ = tunnel_infos
+                creation_valide: bool = self.current_colonie.graphe.creer_salle_depuis_tunnel(tunnel_fourmi, coord_centre, target_pos, self)
+                if creation_valide:
+                    self.digging_target = target_pos
 
     def process(self, dt, map_data, nids,liste_fourmis_jeu_complet,liste_toutes_colonies):
         def process_map():
@@ -360,15 +366,16 @@ class Fourmis(ABC):
         self.is_moving = True
 
         if self.digging and not self.ready_to_dig and target_nid.graphe == self.colonie_origine.graphe:
-            tunnel, digging_target = target_nid.graphe.get_coord_in_tunnel_at_coord(target_pos)
-            self.digging_target = digging_target
+            tunnel_infos = target_nid.graphe.get_coord_in_tunnel_at_coord(target_pos)
+            if tunnel_infos is not None:
+                tunnel, digging_target = tunnel_infos
+                self.digging_target = digging_target
 
-            noeud = find_closet_noeud_to_tunnel(tunnel)
-            self.target_in_nid = noeud.coord
+                noeud = find_closet_noeud_to_tunnel(tunnel)
+                self.target_in_nid = noeud.coord
 
-        if self.digging and self.ready_to_dig and target_nid.graphe == self.colonie_origine.graphe:
-            self.dig_tunnel(target_pos, colonies)
-            self.digging_target = target_pos
+        elif self.digging and self.ready_to_dig and target_nid.graphe == self.colonie_origine.graphe:
+            self.dig_tunnel(target_pos)
 
         if in_map:  # set target in nid from map
             self.set_target_in_map(target_nid.tuile_debut[0], target_nid.tuile_debut[1], map_data, colonies)

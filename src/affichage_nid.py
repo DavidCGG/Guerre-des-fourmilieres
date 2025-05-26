@@ -181,6 +181,8 @@ class Nid:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_d]:
                     fourmi.digging = not fourmi.digging
+                    if fourmi.ready_to_dig:
+                        fourmi.ready_to_dig = False
 
                 return
 
