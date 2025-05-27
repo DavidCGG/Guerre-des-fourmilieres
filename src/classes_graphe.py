@@ -166,7 +166,7 @@ class Salle:
             for i in range(len(self.inventaire_necessaire)):
                 if self.inventaire[i] is None:
                     for j in range(len(fourmi.inventaire)):
-                        if fourmi.inventaire[j].name == self.inventaire_necessaire[i].name:
+                        if fourmi.inventaire[j] is not None and fourmi.inventaire[j].name == self.inventaire_necessaire[i].name:
                             item_collecte_index_in_inventaire_fourmi = j
                             item_collecte_index_in_inventaire_salle = i
 

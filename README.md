@@ -16,3 +16,5 @@ Récolter et déposer des ressources: Envoyer la fourmis sur une ressource pour 
 Ouvrir les menus des salles et des fourmis: Vous pouvez voir les ressources détennues par les salles ou les fourmis en faisant un click gauche dessus.
 
 Créer des nouvelles salles: Faites un click gauche sur une fourmis en appuyant sur "d" pour la préparer à creuser. Envoyer la ensuite vers la salle ou le tunnel à partir duquel elle devra commencer à creuser. Ensuite, cliquer sur l'endroit ou vous voulez créer une nouvelle salle. Vous pouvez choisir le type de salle à créer en cliquant sur le menu de la nouvelle salle.
+
+P.S.: La défense automatique de la colonie IA (pas une décision de l'IA) est très instable, alors évitez s.v.p. :)

@@ -108,17 +108,20 @@ class Colonie:
                     nb_nourriture+=1
                 elif item.name=="METAL":
                     nb_metal+=1
+                elif item.name=="BOIS":
+                    nb_metal+=1
 
         info_ouvr = f"Ouvrières ({self.nombre_ouvrieres()})"
         info_sold = f"Soldats ({self.nombre_soldats()})"
         info_vie = "Vie: "+str(self.hp)
         info_nourr = "Nourriture: "+str(nb_nourriture)
         info_metal = "Métal: "+str(nb_metal)
+        info_bois = "Bois: "+str(nb_metal)
 
         menu_x = 1280 - self.menu_colonie_surface.get_width()
         menu_y = 720 / 2 - self.menu_colonie_surface.get_height() / 2
 
-        liste_textes = [info_ouvr, info_sold,info_vie, info_nourr, info_metal]
+        liste_textes = [info_ouvr, info_sold,info_vie, info_nourr, info_metal, info_bois]
 
         for texte in liste_textes:
             couleur = AQUA if texte.split()[0] == self.hover_texte else WHITE
@@ -365,7 +368,8 @@ class ColonieIA:
     def en_danger(self):
         if self.ennemis_dans_nid() == 0: return False
         else:
-            if self.fourmis_dans_nid()[0] / self.ennemis_dans_nid() < 0.8:
+            if self.fourmis_dans_nid()[0] // self.ennemis_dans_nid() < 0.8:
+
                 return True
         return False
 
@@ -410,7 +414,7 @@ class ColonieIA:
                 f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
                 self.tuiles_ressources.remove(tuile_proche)
             else:
-                self.chercher_nourriture(f)
+                pass
 
     def choisir_salle(self, fourmi, salle_type):
         if salle_type not in self.salles_manquantes:
@@ -467,7 +471,7 @@ class ColonieIA:
 
 
     def gerer_creation_salle(self, fourmi):
-        if fourmi not in self.digging_queue_fourmis:
+        if fourmi not in self.digging_queue_fourmis or fourmi.current_colonie is None:
             return
 
         intersection, coord_salle, salle_type = self.digging_queue_fourmis[fourmi]
@@ -515,7 +519,9 @@ class ColonieIA:
         toutes_resources.sort()
         tuiles = set(coord for _, coord in toutes_resources)
         if not tuiles:
-            return self.trouver_tuiles_ressources(max_radius+10)
+            if max_radius >= 90:
+                return self._cache_ressources
+            self.trouver_tuiles_ressources(max_radius+10)
         self._dern_search = dt
         self._cache_ressources = tuiles
         return tuiles
@@ -541,56 +547,24 @@ class ColonieIA:
     def gerer_collecte_fourmi(self, f):
 
         def gerer_soldats(f):
-            if isinstance(f, Soldat) and not f.is_busy:
-                if f.current_colonie is None:
-                    f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
-                else:
-                    if not (Vector2(self.salle_trone.noeud.coord[0], self.salle_trone.noeud.coord[1]) - Vector2(f.centre_in_nid[0],f.centre_in_nid[1])).magnitude() < TypeSalle.THRONE.value[0]:
-                        if not f.inventaire:
-                            f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
 
-        # def gerer_soldats(f):
-        #     if isinstance(f, Soldat) and not f.is_busy:
-        #         salle_ouvr = self.check_salle_existe(TypeSalle.TRAINING_OUVRIERE)
-        #         salle_sold = self.check_salle_existe(TypeSalle.TRAINING_SOLDAT)
-        #         if salle_ouvr is not None:
-        #             if f.centre_in_map == salle_ouvr.noeud.coord and self.envoi_sold_vers_ouvr:
-        #                 print("soldat dans salle ouvr")
-        #                 self.envoi_sold_vers_ouvr = False
-        #             if self.check_inventaire_salle(salle_ouvr):
-        #                 f.set_target_in_nid(salle_ouvr.noeud.coord, self, self.map_data, self.toutes_colonies)
-        #                 self.envoi_sold_vers_ouvr = True
-        #
-        #         if salle_sold is not None:
-        #             if f.centre_in_map == salle_sold.noeud.coord and self.envoi_sold_vers_sold:
-        #                 self.envoi_sold_vers_sold = False
-        #
-        #         if f.current_colonie is None:
-        #             f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
-        #
-        #         else:
-        #             if salle_sold is not None and salle_sold.inventaire == salle_sold.inventaire_necessaire and not self.envoi_sold_vers_sold:
-        #                 f.set_target_in_nid(salle_sold.noeud.coord, self, self.map_data, self.toutes_colonies)
-        #                 self.envoi_sold_vers_sold = True
-        #             if not (Vector2(self.salle_trone.noeud.coord[0], self.salle_trone.noeud.coord[1]) - Vector2(f.centre_in_nid[0],f.centre_in_nid[1])).magnitude() < TypeSalle.THRONE.value[0]:
-        #                 if len(f.inventaire) == 0:
-        #                     f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
-        #
-        # def envoyer_meule_ou_enclume(ressource):
-        #     if ressource != TypeItem.METAL:
-        #         return False
-        #     meule = self.check_salle_existe(TypeSalle.MEULE)
-        #     enclume = self.check_salle_existe(TypeSalle.ENCLUME)
-        #     if meule is not None:
-        #         if ressource not in meule.inventaire and ressource in meule.inventaire_necessaire:
-        #             f.set_target_in_nid(meule.noeud.coord, self, self.map_data, self.toutes_colonies)
-        #             return True
-        #     elif enclume is not None:
-        #         if ressource not in enclume.inventaire and ressource in enclume.inventaire_necessaire:
-        #             f.set_target_in_nid(enclume.noeud.coord, self, self.map_data, self.toutes_colonies)
-        #             return True
-        #     if meule is None and enclume is None:
-        #         self.choisir_salle(f, random.choice([TypeSalle.MEULE, TypeSalle.ENCLUME]))
+            if isinstance(f, Soldat):
+                if self.ennemis_dans_nid() == 0:
+                    f.fourmi_attacking = None
+                    f.is_attacking_for_defense_automatique = False
+                    f.is_moving = False
+                    f.is_busy = False
+                    f.target_in_map = None
+                    f.target_in_nid_queued = None
+                    f.target_in_nid = None
+                if not f.is_busy:
+                    if f.current_colonie is None or f.current_colonie != self:
+                        f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+                    else:
+                        if not (Vector2(self.salle_trone.noeud.coord[0], self.salle_trone.noeud.coord[1]) - Vector2(f.centre_in_nid[0],f.centre_in_nid[1])).magnitude() < TypeSalle.THRONE.value[0]:
+                            if not f.inventaire and not f.current_salle == self.salle_trone:
+                                f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+
 
         def envoyer_training(ressource):
             salle_ouvr = self.check_salle_existe(TypeSalle.TRAINING_OUVRIERE)
@@ -608,7 +582,7 @@ class ColonieIA:
         # Si sur carte, on send vers une salle (les fourmis restent prises dans des salles sils on la ressource et que la salle l'a deja)
         if f.centre_in_map is not None:
             x, y = f.get_tuile()
-            if f.target_in_map is None and isinstance(f, Ouvriere):
+            if f.target_in_map is None and (isinstance(f, Ouvriere) or isinstance(f, Soldat)):
                 if not f.current_salle == self.salle_trone:
                     f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
 
@@ -736,6 +710,7 @@ class ColonieIA:
         ennemis = [
         f for f in self.liste_fourmis_jeu_complet
             if f not in self.fourmis
+            and f.current_colonie == self
         ]
 
         return len(ennemis)
