@@ -1,7 +1,7 @@
 import ast
 import os
 import random
-#import venv_setup
+import venv_setup
 
 import pygame
 import carte as carte

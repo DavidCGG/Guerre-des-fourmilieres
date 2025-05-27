@@ -385,7 +385,7 @@ class ColonieIA:
                 f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
                 self.tuiles_ressources.remove(tuile_proche)
             else:
-                self.autre_action()
+                self.chercher_bois_metal(f)
 
     def chercher_bois_metal(self, f):
         if len(f.inventaire) >= f.inventaire_taille_max or \
@@ -395,13 +395,12 @@ class ColonieIA:
         self.tuiles_ressources = self.trouver_tuiles_ressources()
 
         if f.target_in_map is None:
-            liste = []
             salle_ouvr = self.check_salle_existe(TypeSalle.TRAINING_OUVRIERE)
             salle_sold = self.check_salle_existe(TypeSalle.TRAINING_SOLDAT)
-            if salle_ouvr is not None and TypeItem.BOIS not in salle_ouvr.inventaire and TypeItem.BOIS not in self.salle_banque.inventaire:
-                liste = [b for b in self.tuiles_ressources if
-                         self.map_data[b[1]][b[0]].get_ressource() == TypeItem.BOIS]
 
+            if (salle_ouvr is not None and TypeItem.BOIS not in salle_ouvr.inventaire and TypeItem.BOIS not in self.salle_banque.inventaire) or \
+            (salle_sold is not None and TypeItem.BOIS not in salle_sold.inventaire and TypeItem.METAL not in self.salle_banque.inventaire):
+                liste = [b for b in self.tuiles_ressources if self.map_data[b[1]][b[0]].get_ressource() == TypeItem.BOIS]
 
             else:
                 liste = [b for b in self.tuiles_ressources if self.map_data[b[1]][b[0]].get_ressource() in [TypeItem.METAL, TypeItem.BOIS]]
@@ -411,7 +410,7 @@ class ColonieIA:
                 f.set_target_in_map(x, y, self.map_data, self.toutes_colonies)
                 self.tuiles_ressources.remove(tuile_proche)
             else:
-                self.autre_action()
+                self.chercher_nourriture(f)
 
     def choisir_salle(self, fourmi, salle_type):
         if salle_type not in self.salles_manquantes:

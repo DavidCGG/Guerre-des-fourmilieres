@@ -228,13 +228,6 @@ class Carte:
         self.camera.x = x * tile_size - self.screen.get_width() / 2 + tile_size/2
         self.camera.y = y * tile_size - self.screen.get_height() / 2 + tile_size/2
 
-    def decouvrir_tuiles(self, x_tuile, y_tuile):
-        for y in range(y_tuile - 2, y_tuile+3):
-            for x in range(x_tuile - 2, x_tuile+3):
-                if abs(x - x_tuile) + abs(y - y_tuile) <= 2:
-                    if 0 <= x < self.MAP_WIDTH and 0 <= y < self.MAP_HEIGHT:
-                        self.map_data[y][x].toggle_color()
-
     def get_tuile(self, event) -> tuple:
         """Retourne la tuile sur laquelle on clique"""
         tile_size = (self.TILE_SIZE * self.camera.zoom)
