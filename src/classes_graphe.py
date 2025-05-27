@@ -68,8 +68,6 @@ class Salle:
         self.menu_bottom = None
         self.menu_centre = None
         self.font_menu = pygame.font.Font(trouver_font("LowresPixel-Regular.otf"), 30)
-        self.liste_images_cases_vides = []
-        self.liste_images_items = []
 
         self.fourmi_qui_fait_action = None
         self.temps_pour_action = None
