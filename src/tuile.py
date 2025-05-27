@@ -40,12 +40,12 @@ class Tuile:
     def rand_ressource(self):
         if self.tuile_debut: return False
         if isinstance(self, Sable):
-            rand = random.randint(0, 8)
+            rand = random.randint(0, 14)
             if rand == 5:
                 self.type = "Metal"
                 return True
         if isinstance(self, Terre):
-            rand = random.randint(0, 32)
+            rand = random.randint(0, 40)
             if rand == 10:
                 rand = random.randint(0, 1)
                 if rand == 1:
