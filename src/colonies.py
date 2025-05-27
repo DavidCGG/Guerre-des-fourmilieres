@@ -539,15 +539,6 @@ class ColonieIA:
         return tuile_proche
 
     def gerer_collecte_fourmi(self, f):
-        def epee_ou_armure(f):
-            meule = self.check_salle_existe(TypeSalle.MEULE)
-            enclume = self.check_salle_existe(TypeSalle.ENCLUME)
-
-            metal = len([m for m in self.salle_banque.inventaire if m == TypeItem.METAL])
-            if metal > 1:
-                if TypeItem.EPEE not in f.inventaire and TypeItem.EPEE not in self.salle_banque.inventaire:
-                    f.set_target_in_nid(meule.noeud.coord, self, self.map_data, self.toutes_colonies)
-
 
         def gerer_soldats(f):
             if isinstance(f, Soldat) and not f.is_busy:
@@ -557,8 +548,7 @@ class ColonieIA:
                     if not (Vector2(self.salle_trone.noeud.coord[0], self.salle_trone.noeud.coord[1]) - Vector2(f.centre_in_nid[0],f.centre_in_nid[1])).magnitude() < TypeSalle.THRONE.value[0]:
                         if not f.inventaire:
                             f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
-                        else:
-                            epee_ou_armure(f)
+
         # def gerer_soldats(f):
         #     if isinstance(f, Soldat) and not f.is_busy:
         #         salle_ouvr = self.check_salle_existe(TypeSalle.TRAINING_OUVRIERE)
@@ -618,7 +608,11 @@ class ColonieIA:
         # Si sur carte, on send vers une salle (les fourmis restent prises dans des salles sils on la ressource et que la salle l'a deja)
         if f.centre_in_map is not None:
             x, y = f.get_tuile()
-            if (f.target_in_map[0], f.target_in_map[1]) == f.get_tuile():
+            if f.target_in_map is None and isinstance(f, Ouvriere):
+                if not f.current_salle == self.salle_trone:
+                    f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
+
+            elif (f.target_in_map[0], f.target_in_map[1]) == f.get_tuile():
                 ress = self.map_data[y][x].get_ressource()
                 if not self.map_data[y][x].collectee and len(f.inventaire) < f.inventaire_taille_max:
                     f.inventaire.append(ress)
@@ -644,7 +638,17 @@ class ColonieIA:
                         f.set_target_in_nid(self.trone_coords, self, self.map_data, self.toutes_colonies)
                 elif ress in [TypeItem.METAL, TypeItem.BOIS] and ress in f.inventaire:
                     if not envoyer_training(ress):
-                        f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
+                        if ress == TypeItem.METAL:
+                            if self.check_banque():
+                                meule = self.check_salle_existe(TypeSalle.MEULE)
+                                enclume = self.check_salle_existe(TypeSalle.ENCLUME)
+                                if meule is not None and meule.inventaire != meule.inventaire_necessaire:
+                                    f.set_target_in_nid(meule.noeud.coord, self, self.map_data, self.toutes_colonies)
+                                elif enclume is not None and enclume.inventaire != enclume.inventaire_necessaire:
+                                    f.set_target_in_nid(enclume.noeud.coord, self, self.map_data, self.toutes_colonies)
+                                else:
+                                    f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
+                        else: f.set_target_in_nid(self.banque_coords, self, self.map_data, self.toutes_colonies)
 
         else:
             gerer_soldats(f)
